@@ -1,0 +1,7 @@
+name = "MolecularFingerprints"
+uuid = "6289f4a8-86f2-4df5-b427-d4de5bbdeb05"
+authors = ["Lukasz Sztukiewicz <lukasz.sztukiewicz@campus.tu-berlin.de>"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1.11"
