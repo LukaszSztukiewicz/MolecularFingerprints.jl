@@ -4,3 +4,29 @@
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://LukaszSztukiewicz.github.io/MolecularFingerprints.jl/dev/)
 [![Build Status](https://github.com/LukaszSztukiewicz/MolecularFingerprints.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/LukaszSztukiewicz/MolecularFingerprints.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/LukaszSztukiewicz/MolecularFingerprints.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/LukaszSztukiewicz/MolecularFingerprints.jl)
+
+MolecularFingerprints.jl is a Julia package for calculating molecular fingerprints using various algorithms. It provides an easy-to-use interface for generating fingerprints from molecular structures, enabling efficient similarity searches, clustering, and machine learning applications in cheminformatics.
+
+## Documentation
+
+The documentation for MolecularFingerprints.jl can be found at [https://LukaszSztukiewicz.github.io/MolecularFingerprints.jl/stable/](https://LukaszSztukiewicz.github.io/MolecularFingerprints.jl/stable/).
+
+To build the documentation locally, you can use the following commands:
+
+```julia
+activate docs/
+add Documenter
+include("docs/make.jl")
+```
+This will generate the documentation in the `docs/build/` directory.
+## Testing
+To run the tests for MolecularFingerprints.jl, you can use the following commands:
+
+```julia
+activate test/
+add Test
+add ReferenceTests RDKitMinimalLib
+include("test/runtests.jl")
+```
+This will execute the test suite and report any failures or errors.
+Make sure you have the necessary dependencies installed before running the tests.
