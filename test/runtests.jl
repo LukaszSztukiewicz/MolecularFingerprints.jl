@@ -1,9 +1,8 @@
 using MolecularFingerprints
-using MolecularGraph
-using RDKitMinimalLib
 using Test
-using ReferenceTests
 
 @testset "MolecularFingerprints.jl" begin
-    # Write your tests here.
+    @testset "Unit Tests" begin
+        include("unit/utils/tanimoto_tests.jl")
+    end
 end
