@@ -1,7 +1,6 @@
 using MolecularGraph
 using Random
 
-include("../interface.jl")
 
 """
     MHFP{N}
