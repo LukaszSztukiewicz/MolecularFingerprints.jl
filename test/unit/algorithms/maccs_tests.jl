@@ -1,16 +1,18 @@
 using Test
+using MolecularGraph
+using MolecularFingerprints
 
-include("../../../src/algorithms/maccs.jl")
-using .MACCS
-
-@testset "MACCS Fingerprint – acetic acid CC(=O)O" begin
+@testset "MACCS Fingerprint - acetic acid CC(=O)O" begin
 
     @testset "Bit-based MACCS (count = false)" begin
         smiles = "CC(=O)O"
         fp = MACCSFingerprint(false, false)
         println("Created fingerprint: MACCSFingerprint(false, false) for smiles: ", smiles)
+
+        mol = MolecularGraph.smilestomol(smiles)
+        println("Molecule from SMILES: ", mol)
         
-        v = fingerprint(fp, smiles)
+        v = fingerprint(mol, fp)
         println("  Fingerprint vector:")
         println("  ", v)
 
@@ -28,7 +30,10 @@ using .MACCS
         fp = MACCSFingerprint(true, false)
         println("Created fingerprint: MACCSFingerprint(true, false) for smiles: ", smiles)
         
-        v = fingerprint(fp, smiles)
+        mol = MolecularGraph.smilestomol(smiles)
+        println("Molecule from SMILES: ", mol)
+        
+        v = fingerprint(mol, fp)
         println("  Fingerprint vector:")
         println("  ", v)
 

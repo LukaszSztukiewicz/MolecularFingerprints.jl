@@ -1,15 +1,7 @@
-module MACCS
-
 using MolecularGraph
-using SparseArrays
 using Graphs
 
 export MACCSFingerprint, fingerprint
-
-include("../interface.jl")
-
-abstract type AbstractFingerprint end
-nbits(::AbstractFingerprint) = error("nbits not implemented")
 
 struct MACCSFingerprint <: AbstractFingerprint
     count::Bool        # false = bit, true = count-based
@@ -106,12 +98,15 @@ function mol_from_smiles(smiles::AbstractString)
     return MolecularGraph.smilestomol(smiles)
 end
 
-function fingerprint(fp::MACCSFingerprint, smiles::AbstractString)
+function fingerprint_from_smiles(fp::MACCSFingerprint, smiles::AbstractString)
     mol = mol_from_smiles(smiles)  # molecular structure with atoms, bonds
     return compute_maccs(mol, fp)
 end
 
+function fingerprint(mol::SMILESMolGraph, calc::MACCSFingerprint)
+    return compute_maccs(mol, calc)
 end
+
 
 # fp = MACCSFingerprint(false, false)
 # #fp = MACCSFingerprint(true, false)
