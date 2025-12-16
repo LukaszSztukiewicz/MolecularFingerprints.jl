@@ -1,3 +1,7 @@
 [deps]
+DecisionTree = "7806a523-6efd-50cb-b5f6-3fa6f1930dbb"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 MolecularFingerprints = "6289f4a8-86f2-4df5-b427-d4de5bbdeb05"
+MolecularGraph = "6c89ec66-9cd8-5372-9f91-fabc50dd27fd"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
