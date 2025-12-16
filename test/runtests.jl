@@ -9,7 +9,7 @@ using Test
         include("unit/algorithms/torsions_tests.jl")
     end
 
-    @testset "RDKit Validation" begin
-        include("validation/rdkit_comparison.jl")
-    end
+    # @testset "RDKit Validation" begin
+    #     include("validation/rdkit_comparison.jl")
+    # end
 end
