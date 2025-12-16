@@ -1,7 +1,5 @@
 using MolecularGraph
 
-include("../interface.jl")
-
 struct TopologicalTorsion{N} <: AbstractFingerprint
     radius::Int
 end

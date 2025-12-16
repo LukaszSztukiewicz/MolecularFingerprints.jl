@@ -1,6 +1,6 @@
-using MolecularFingerprints
-using MolecularGraph
 using Test
+using MolecularGraph
+using MolecularFingerprints
 
 @testset "ECFP Fingerprint Tests" begin
 
@@ -10,6 +10,6 @@ using Test
     mol = MolecularGraph.smilestomol("CC(=O)O")
     ecfp_calc = ECFP{2}(2)  # Example type ECFP{2} with radius 2
     fp = fingerprint(mol, ecfp_calc)
-    @test length(fp) == 2048
+    @test length(fp) == 2048 #FIXME probably should be 1024, now 2048 for the demonstration purpose, change if needed
 
 end

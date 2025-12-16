@@ -3,10 +3,6 @@ using Graphs
 
 export MACCSFingerprint, fingerprint
 
-include("../interface.jl")
-
-nbits(::AbstractFingerprint) = error("nbits not implemented")
-
 struct MACCSFingerprint <: AbstractFingerprint
     count::Bool        # false = bit, true = count-based
     sparse::Bool       # false = dense, true = sparse

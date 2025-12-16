@@ -2,3 +2,5 @@
 abstract type AbstractCalculator end
 abstract type AbstractFingerprint <: AbstractCalculator end
 abstract type AbstractDescriptor <: AbstractCalculator end
+
+nbits(::AbstractFingerprint) = error("nbits not implemented")

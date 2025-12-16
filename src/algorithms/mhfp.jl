@@ -1,8 +1,6 @@
 using MolecularGraph
 using Random
 
-include("../interface.jl")
-
 struct MHFP{N} <: AbstractFingerprint
     radius::Int
 end

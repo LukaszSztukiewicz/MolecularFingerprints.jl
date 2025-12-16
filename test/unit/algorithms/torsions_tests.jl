@@ -1,6 +1,6 @@
-using MolecularFingerprints
-using MolecularGraph
 using Test
+using MolecularGraph
+using MolecularFingerprints
 
 @testset "Topological Torsion Fingerprint Tests" begin
 
