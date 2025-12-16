@@ -1,6 +1,5 @@
 module MolecularFingerprints
 
-# All files included after this line will "see" AbstractFingerprint automatically.
 include("interface.jl")
 
 include("utils/tanimoto.jl")
