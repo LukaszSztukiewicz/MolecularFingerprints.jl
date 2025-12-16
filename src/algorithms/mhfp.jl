@@ -1,10 +1,23 @@
 using MolecularGraph
 using Random
 
+
+"""
+    MHFP{N}
+
+Class for MHFP fingerprint generator/featurizer. Contains settings and parameters for 
+MHFP fingerprint generation.
+"""
 struct MHFP{N} <: AbstractFingerprint
     radius::Int
 end
 
+
+"""
+    fingerprint(mol::SMILESMolGraph, calc::MHFP{N})
+
+Calculates the MHFP fingerprint of the given molecule and returns it as a bit vector
+"""
 function fingerprint(mol::SMILESMolGraph, calc::MHFP{N}) where N
     # Placeholder implementation for MHFP fingerprint calculation
     # In a real implementation, this would compute the MHFP fingerprint
