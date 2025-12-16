@@ -19,14 +19,23 @@ add Documenter
 include("docs/make.jl")
 ```
 This will generate the documentation in the `docs/build/` directory.
+
 ## Testing
+
 To run the tests for MolecularFingerprints.jl, you can use the following commands:
 
 ```julia
-activate test/
-add Test
-add ReferenceTests RDKitMinimalLib
-include("test/runtests.jl")
+] activate .
+test
 ```
 This will execute the test suite and report any failures or errors.
-Make sure you have the necessary dependencies installed before running the tests.
+
+To set up the test environment and add necessary dependencies, you can use the following commands: 
+
+```julia
+activate test/
+add YourPackageName
+```
+
+
+

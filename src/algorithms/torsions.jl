@@ -10,5 +10,7 @@ function fingerprint(mol::SMILESMolGraph, calc::TopologicalTorsion{N}) where N
     # Placeholder implementation for Topological Torsion fingerprint calculation
     # computes the Topological Torsion fingerprint
     # based on the molecular structure and the specified radius.
-    return BitVector(rand(Bool, 1024))  # Example: return a random 1024-bit fingerprint
+    return BitVector(rand(Bool, 1024))
 end
+
+export TopologicalTorsion, fingerprint

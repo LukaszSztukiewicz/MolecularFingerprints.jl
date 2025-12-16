@@ -12,7 +12,7 @@ function fingerprint(mol::SMILESMolGraph, calc::MHFP{N}) where N
     # In a real implementation, this would compute the MHFP fingerprint
     # based on the circular substructures around each atom of the molecule,
     # depending on the specified radius.
-    return BitVector(rand(Bool, 1024))  # Example: return a random 1024-bit fingerprint
+    return BitVector(rand(Bool, 1024))
 end
 
 """
@@ -26,3 +26,5 @@ function mhfp_shingling_from_mol(mol::SMILESMolGraph)
     # the strings as well being of different lengths.
     return [randstring(10) for i in 1:100]
 end
+
+export MHFP, mhfp_shingling_from_mol, fingerprint
