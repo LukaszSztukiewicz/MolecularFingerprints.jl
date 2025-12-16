@@ -10,7 +10,7 @@ using MolecularFingerprints
         println("Created fingerprint: MACCSFingerprint(false, false) for smiles: ", smiles)
 
         mol = MolecularGraph.smilestomol(smiles)
-        println("Molecule from SMILES: ", mol)
+        # println("Molecule from SMILES: ", mol)
         
         v = fingerprint(mol, fp)
         println("  Fingerprint vector:")
@@ -31,7 +31,7 @@ using MolecularFingerprints
         println("Created fingerprint: MACCSFingerprint(true, false) for smiles: ", smiles)
         
         mol = MolecularGraph.smilestomol(smiles)
-        println("Molecule from SMILES: ", mol)
+        # println("Molecule from SMILES: ", mol)
         
         v = fingerprint(mol, fp)
         println("  Fingerprint vector:")

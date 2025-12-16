@@ -8,7 +8,3 @@ Documentation for [MolecularFingerprints](https://github.com/LukaszSztukiewicz/M
 
 ```@index
 ```
-
-```@autodocs
-Modules = [MolecularFingerprints]
-```

@@ -37,5 +37,10 @@ activate test/
 add YourPackageName
 ```
 
+## Using the package
 
+### Activate the environment
+activate .
 
+### Install all required dependencies
+instantiate
