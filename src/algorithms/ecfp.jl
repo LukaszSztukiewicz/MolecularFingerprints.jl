@@ -1,4 +1,5 @@
 using MolecularGraph
+using MolecularGraph:edge_rank
 
 struct ECFP{N} <: AbstractFingerprint
     radius::Int
@@ -82,14 +83,10 @@ function get_neighborhood_hash(current_hash, neighbor_hashes)
     return hash(combined, UInt(0xECFECF00)) % UInt32
 end
 
-function get_bond_index(mol, a_index, b_index)
-    a, b = minmax(a_index, b_index)
-    return a * nv(mol) + b # TODO: This will not scale well for large molecules; check if MolecularGraph already provides edge indices or use another method.
-end
-
 function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
     n_atoms = nv(mol)
     n_bonds = ne(mol)
+    ernk = edge_rank(mol)
 
     # Handle empty molecule
     if n_atoms == 0
@@ -107,8 +104,7 @@ function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
     features = Set{UInt32}()
 
     # Track which bonds each atom's neighborhood includes
-    # n_atoms * n_atoms size required because of the crude get_bond_index implementation
-    atom_neighborhoods = [falses(n_atoms * n_atoms) for _ in 1:n_atoms]
+    atom_neighborhoods = [falses(n_bonds) for _ in 1:n_atoms]
 
     # Track neighborhoods we've already seen (as Sets or BitVectors)
     seen_neighborhoods = Set{BitVector}()
@@ -146,7 +142,7 @@ function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
 
             for neighbor_index in neighbor_indices
                 # Get bond index and mark it in this atom's neighborhood
-                bond_idx = get_bond_index(mol, atom_index, neighbor_index)
+                bond_idx = edge_rank(ernk, atom_index, neighbor_index)
                 round_neighborhoods[atom_index][bond_idx] = true
 
                 # Union with neighbor's previous neighborhood
