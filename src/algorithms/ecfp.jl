@@ -23,6 +23,9 @@ function get_atom_invariant(mol, atom_index)
       - The atomic charge
       - The number of attached hydrogens (both implicit and explicit)
       - Whether the atom is contained in at least one ring
+
+    RDKit uses specific combinations and orders of these variants, the exact implementation can be found here:
+      https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/Fingerprints/FingerprintUtil.cpp#L244
     """
 
     atom = mol.vprops[atom_index]
@@ -32,9 +35,8 @@ function get_atom_invariant(mol, atom_index)
     explicit_hs = explicit_hydrogens(mol)[atom_index]
     total_hs = implicit_hs + explicit_hs
 
-    # Get number of heavy atom neighbors (degree in the graph)
-    total_neighbors = length(mol.graph.fadjlist[atom_index])
-    heavy_neighbors = total_neighbors - explicit_hs
+    # Get number of neighbor atoms (including the implicit hydrogens)
+    total_degree = degree(mol.graph, atom_index) + implicit_hs
 
     # Get valence
     valence_info = valence(mol)
@@ -43,8 +45,10 @@ function get_atom_invariant(mol, atom_index)
     # Get atomic number
     at_number = atom_number(atom)
 
-    # Get atomic mass (use atomic number as proxy for standard isotopes)
-    at_mass = nominal_mass(atom_symbol(atom))
+    # Get difference from atomic mass to average standard weight
+    atom_mass = exact_mass(atom)
+    standard_mass = monoiso_mass(atom)
+    delta_mass = round(Int, atom_mass - standard_mass)
 
     # Get formal charge
     at_charge = atom_charge(atom)
@@ -55,12 +59,11 @@ function get_atom_invariant(mol, atom_index)
 
     # Combine into a tuple (will be hashed)
     return (
-        heavy_neighbors,
-        v - total_hs,
         at_number,
-        at_mass,
-        at_charge,
+        total_degree,
         total_hs,
+        at_charge,
+        delta_mass,
         in_ring,
     )
 end
@@ -103,7 +106,7 @@ function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
     end
 
     # Iterate for the specified radius
-    for iteration in 1:calc.radius
+    for _ in 1:calc.radius
         # Store new hashes for all atoms
         new_hashes = Vector{UInt32}(undef, n_atoms)
 
