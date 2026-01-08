@@ -54,7 +54,7 @@ using MolecularFingerprints
     end
 
     @testset "ECFP with Different Radii" begin
-        mol = smilestomol("CCO")
+        mol = smilestomol("CC(=O)NCCC1=CNc2c1cc(OC)cc2")
 
         # Test radius 2 (ECFP4, diameter 4)
         ecfp2 = ECFP{2048}(2)

@@ -82,8 +82,14 @@ function get_neighborhood_hash(current_hash, neighbor_hashes)
     return hash(combined, UInt(0xECFECF00)) % UInt32
 end
 
+function get_bond_index(mol, a_index, b_index)
+    a, b = minmax(a_index, b_index)
+    return a * nv(mol) + b # TODO: This will not scale well for large molecules; check if MolecularGraph already provides edge indices or use another method.
+end
+
 function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
-    n_atoms = length(mol.vprops)
+    n_atoms = nv(mol)
+    n_bonds = ne(mol)
 
     # Handle empty molecule
     if n_atoms == 0
@@ -100,6 +106,16 @@ function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
     # Collect all features (hashes at each iteration)
     features = Set{UInt32}()
 
+    # Track which bonds each atom's neighborhood includes
+    # n_atoms * n_atoms size required because of the crude get_bond_index implementation
+    atom_neighborhoods = [falses(n_atoms * n_atoms) for _ in 1:n_atoms]
+
+    # Track neighborhoods we've already seen (as Sets or BitVectors)
+    seen_neighborhoods = Set{BitVector}()
+
+    # Track "dead" atoms that won't produce unique environments anymore
+    dead_atoms = falses(n_atoms)
+
     # Add initial atom hashes (iteration 0)
     for h in atom_hashes
         push!(features, h)
@@ -109,21 +125,57 @@ function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
     for _ in 1:calc.radius
         # Store new hashes for all atoms
         new_hashes = Vector{UInt32}(undef, n_atoms)
+        round_neighborhoods = deepcopy(atom_neighborhoods)
+        round_results = []  # (neighborhood, hash, atom_index)
 
         for atom_index in 1:n_atoms
-            # Get neighbor's hashes
+            # Skip if the atom is marked as dead
+            if dead_atoms[atom_index]
+                continue
+            end
+
+            # If the atom has no neighbors, skip immediately
             neighbor_indices = mol.graph.fadjlist[atom_index]
+            if isempty(neighbor_indices)
+                dead_atoms[atom_index] = true
+                continue
+            end
+
+            # Get neighbor's hashes
             neighbor_hashes = [atom_hashes[neighbor_index] for neighbor_index in neighbor_indices]
+
+            for neighbor_index in neighbor_indices
+                # Get bond index and mark it in this atom's neighborhood
+                bond_idx = get_bond_index(mol, atom_index, neighbor_index)
+                round_neighborhoods[atom_index][bond_idx] = true
+
+                # Union with neighbor's previous neighborhood
+                round_neighborhoods[atom_index] .|= atom_neighborhoods[neighbor_index]
+
+                push!(neighbor_hashes, atom_hashes[neighbor_index])
+            end
 
             # Compute new hash for this atom
             new_hashes[atom_index] = get_neighborhood_hash(atom_hashes[atom_index], neighbor_hashes)
 
             # Add to features
-            push!(features, new_hashes[atom_index])
+            push!(round_results, (round_neighborhoods[atom_index], new_hashes[atom_index], atom_index))
+        end
+
+        # Sort and deduplicate
+        sort!(round_results)
+        for (neighborhood, hash, atom_idx) in round_results
+            if neighborhood ∉ seen_neighborhoods
+                push!(features, hash)
+                push!(seen_neighborhoods, copy(neighborhood))
+            else
+                dead_atoms[atom_idx] = true
+            end
         end
 
         # Update hashes for next iteration
         atom_hashes = new_hashes
+        atom_neighborhoods = round_neighborhoods
     end
 
     # Create bit vector by folding features
