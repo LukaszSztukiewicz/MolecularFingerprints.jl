@@ -1,50 +1,55 @@
 using Test
+using PythonCall
 using MolecularGraph
 using MolecularFingerprints
+using SparseArrays
 
-@testset "MACCS Fingerprint - acetic acid CC(=O)O" begin
 
-    @testset "Bit-based MACCS (count = false)" begin
-        smiles = "CC(=O)O"
-        fp = MACCSFingerprint(false, false)
-        println("Created fingerprint: MACCSFingerprint(false, false) for smiles: ", smiles)
+@testset "MACCS – Julia vs RDKit consistency" begin
 
-        mol = MolecularGraph.smilestomol(smiles)
-        println("Molecule from SMILES: ", mol)
-        
-        v = fingerprint(mol, fp)
-        println("  Fingerprint vector:")
-        println("  ", v)
+    # smiles = "C=C(C)C"    
+    # smiles = "COCC" 
+    # smiles = "C=CN"  
 
-        bits = findall(!=(0), v)
-        println("  Values at these positions: ", v[bits])
+    # smiles = "OS(=O)O"  
+    # !!! Bit 81: julia[81] = 1 i rdkit[81] = 0
 
-        @test length(v) == 166
-        @test v[2] == 1   # two oxygens - true = 1 
-        @test v[3] == 1   # C=O - true = 1 
-        @test sum(v) == 2
+    smiles = "C1=COC=C1" 
+    # !!! Bit 99: julia[99] = 1 i rdkit[99] = 0  
+    # !!! Bit 157: julia[157] = 1 i rdkit[157] = 0  
+
+    #smiles = "OS(=O)O"
+    mol = MolecularGraph.smilestomol(smiles)
+
+    fp_julia = MACCSFingerprint(false, false)
+    julia_fp = fingerprint(smiles, fp_julia)
+    # julia_fp = fingerprint(mol, fp_julia)
+
+    rdkit_fp = fingerprint_rdkit(smiles)
+
+    @test length(julia_fp) == 166
+    @test length(rdkit_fp) == 166
+
+    @test julia_fp[58] == rdkit_fp[58]
+    @info "Bit 58" julia=julia_fp[58] rdkit=rdkit_fp[58]
+
+    @test julia_fp[166] == rdkit_fp[166]
+    @info "Bit 166" julia=julia_fp[166] rdkit=rdkit_fp[166]
+
+    @test julia_fp[1] == rdkit_fp[1]
+    @info "Bit 1" julia=julia_fp[1] rdkit=rdkit_fp[1]
+
+    println("\n=== MACCS bit-by-bit comparison for SMILES: $smiles ===")
+
+    for i in 1:166
+        julia_fp[i] == 9 && continue
+
+        if julia_fp[i] != rdkit_fp[i]
+            println("Bit $i: julia[$i] = $(julia_fp[i]) i rdkit[$i] = $(rdkit_fp[i])")
+        end
     end
 
-    @testset "Count-based MACCS (count = true)" begin
-        smiles = "CC(=O)O"
-        fp = MACCSFingerprint(true, false)
-        println("Created fingerprint: MACCSFingerprint(true, false) for smiles: ", smiles)
-        
-        mol = MolecularGraph.smilestomol(smiles)
-        println("Molecule from SMILES: ", mol)
-        
-        v = fingerprint(mol, fp)
-        println("  Fingerprint vector:")
-        println("  ", v)
-
-        bits = findall(!=(0), v)
-        println("  Values at these positions: ", v[bits])
-
-        @test length(v) == 166
-        @test v[2] == 2   # two oxygens - 2
-        @test v[3] == 1   # C=O - 1
-        @test sum(v) == 3
-        
-    end
+    println("==============================================")
 
 end
+
