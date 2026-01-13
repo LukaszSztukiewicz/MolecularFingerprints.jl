@@ -1,7 +1,7 @@
-using PythonCall
-using MolecularGraph
-using Graphs
-using SparseArrays
+using PythonCall: Py, pyimport, pyconvert
+using MolecularGraph: SMILESMolGraph, smilestomol
+using Graphs: vertices, edges, neighbors, src, dst, degree, cycle_basis
+using SparseArrays: sparse
 
 export MACCSFingerprint, fingerprint, fingerprint_rdkit
 
@@ -792,172 +792,172 @@ end
 # 'X' - halogen
 # 'A' - optional atom
 const MACCS_RULES = Dict{Int, Function}(
-    1   => mol -> 9,
-    2   => mol -> 9,
-    3   => mol -> 9,
+    1   => mol -> -1,
+    2   => mol -> -1,
+    3   => mol -> -1,
     4   => mol -> has_atom_in_set(mol, Set([:Ac,:Th,:Pa,:U,:Np,:Pu,:Am,:Cm,:Bk,:Cf,:Es,:Fm,:Md,:No,:Lr])),  # W actinide
-    5   => mol -> 9,
+    5   => mol -> -1,
     6   => mol -> has_atom_in_set(mol, Set([:La,:Ce,:Pr,:Nd,:Pm,:Sm,:Eu,:Gd,:Tb,:Dy,:Ho,:Er,:Tm,:Yb,:Lu])), # W lanthanide
-    7   => mol -> 9,
-    8   => mol -> 9,
-    9   => mol -> 9,
-    10  => mol -> 9,
+    7   => mol -> -1,
+    8   => mol -> -1,
+    9   => mol -> -1,
+    10  => mol -> -1,
     11  => mol -> has_ring_of_size(mol, 4),          # W 4-membered ring
-    12  => mol -> 9,
-    13  => mol -> 9,
+    12  => mol -> -1,
+    13  => mol -> -1,
     14  => mol -> has_bond(mol, :S, :S, 1),          # W S-S bond
-    15  => mol -> 9,
-    16  => mol -> 9,
+    15  => mol -> -1,
+    16  => mol -> -1,
     17  => mol -> has_bond(mol, :C, :C, 3),          # W C≡C bond 
-    18  => mol -> 9,
+    18  => mol -> -1,
     19  => mol -> has_ring_of_size(mol, 7),          # W 7-membered ring
     20  => mol -> count_atom(mol, :Si),              # W number of silicon atoms
-    21  => mol -> 9,
+    21  => mol -> -1,
     22  => mol -> has_ring_of_size(mol, 3),          # W 3-membered ring
-    23  => mol -> 9,
+    23  => mol -> -1,
     24  => mol -> has_bond(mol, :N, :O, 1),          # W N–O bond   
-    25  => mol -> 9,
-    26  => mol -> 9,
+    25  => mol -> -1,
+    26  => mol -> -1,
     27  => mol -> count_atom(mol, :I),               # W number of iodine atoms
-    28  => mol -> 9,
+    28  => mol -> -1,
     29  => mol -> count_atom(mol, :P),               # W number of phosphorus atoms
-    30  => mol -> 9,
+    30  => mol -> -1,
     31  => mol -> rule_31(mol),                      # W Q~X bond
     32  => mol -> has_path3(mol, :C, :S, :N),        # W C~S~N   
     33  => mol -> has_any_bond(mol, :N, :S),         # W N~S bond
-    34  => mol -> 9,
+    34  => mol -> -1,
     35  => mol -> has_atom_in_set(mol, Set([:Li, :Na, :K, :Rb, :Cs, :Fr])), # W Alkali Metal
-    36  => mol -> 9,
-    37  => mol -> 9,
-    38  => mol -> 9,
-    39  => mol -> 9,
+    36  => mol -> -1,
+    37  => mol -> -1,
+    38  => mol -> -1,
+    39  => mol -> -1,
     40  => mol -> has_bond(mol, :S, :O, 1),           # W S–O bond  
     41  => mol -> has_bond(mol, :C, :N, 3),           # W C≡N bond 
     42  => mol -> count_atom(mol, :F),                # W number of fluorine atoms
-    43  => mol -> 9,
-    44  => mol -> 9,
+    43  => mol -> -1,
+    44  => mol -> -1,
     45  => mol -> rule_45(mol),                       # W C=C~N 
     46  => mol -> count_atom(mol, :Br),               # W number of bromine atoms
     47  => mol -> has_strict_path3(mol, :S, nothing, :N), # W S~Anything~N
-    48  => mol -> 9,
-    49  => mol -> 9,
+    48  => mol -> -1,
+    49  => mol -> -1,
     50  => mol -> rule_50(mol),                       # W C=C(~C)~C 
     51  => mol -> has_path3(mol, :C, :S, :O),         # W C~S~O
     52  => mol -> has_any_bond(mol, :N, :N),          # W N~N bond   
-    53  => mol -> 9,
-    54  => mol -> 9,
+    53  => mol -> -1,
+    54  => mol -> -1,
     55  => mol -> has_path3(mol, :O, :S, :O),         # W O~S~O
     56  => mol -> rule_56(mol),                       # W O~N(~O)~C
     57  => mol -> rule_57(mol),                       # W O Heterocycle
     58  => mol -> rule_58(mol),                       # W Q~S~Q
-    59  => mol -> 9,
+    59  => mol -> -1,
     60  => mol -> has_bond(mol, :S, :O, 2),           # W S=O bond
-    61  => mol -> 9,
-    62  => mol -> 9,
+    61  => mol -> -1,
+    62  => mol -> -1,
     63  => mol -> has_bond(mol, :N, :O, 2),           # W N=O bond    
-    64  => mol -> 9,
-    65  => mol -> 9,
+    64  => mol -> -1,
+    65  => mol -> -1,
     66  => mol -> rule_66(mol),                       # W C~C(~C)(~C)~Anything
     67  => mol -> rule_67(mol),                       # W Q~S bond
-    68  => mol -> 9,
-    69  => mol -> 9,
+    68  => mol -> -1,
+    69  => mol -> -1,
     70  => mol -> rule_70(mol),                       # W Q~N~Q
     71  => mol -> has_any_bond(mol, :N, :O),          # W N~O bonds
     72  => mol -> rule_72(mol),                       # W O~Anything~Anything~O
     73  => mol -> rule_73(mol),                       # W S=Anything 
     74  => mol -> rule_74(mol),                       # W CH3~Anything~CH3
-    75  => mol -> 9,
+    75  => mol -> -1,
     76  => mol -> rule_76(mol),                       # W C=C(~Anything)~Anything
     77  => mol -> has_strict_path3(mol, :N, nothing, :N), # W N~Anything~N
     78  => mol -> has_bond(mol, :C, :N, 2),           # W C=N bond 
     79  => mol -> rule_79(mol),                       # W N~Anything~Anything~N  
     80  => mol -> rule_80(mol),                       # W N~Anything~Anything~Anything~N  
     81  => mol -> rule_81(mol),                       # W S~Anything(~Anything)~Anything
-    82  => mol -> 9,
-    83  => mol -> 9,
-    84  => mol -> 9,
+    82  => mol -> -1,
+    83  => mol -> -1,
+    84  => mol -> -1,
     85  => mol -> rule_85(mol),                       # W C~N(~C)~C
-    86  => mol -> 9,
-    87  => mol -> 9,
+    86  => mol -> -1,
+    87  => mol -> -1,
     88  => mol -> count_atom(mol, :S),                # W number of sulfur atoms
-    89  => mol -> 9,
-    90  => mol -> 9,
-    91  => mol -> 9,
+    89  => mol -> -1,
+    90  => mol -> -1,
+    91  => mol -> -1,
     92  => mol -> rule_92(mol),                       # W O~C(~N)~C
     93  => mol -> rule_93(mol),                       # W Q~CH3
     94  => mol -> rule_94(mol),                       # W Q~N bond
     95  => mol -> rule_95(mol),                       # W N~Anything~Anything~O
     96  => mol -> has_ring_of_size(mol, 5),           # W 5-membered ring  
     97  => mol -> rule_97(mol),                       # W N~Anything~Anything~Anything~O
-    98  => mol -> 9,
+    98  => mol -> -1,
     99  => mol -> has_bond(mol, :C, :C, 2),           # W C=C bond  
     100 => mol -> rule_100(mol),                      # Anything~CH2~N
-    101 => mol -> 9,
+    101 => mol -> -1,
     102 => mol -> rule_102(mol),                      # W Q~O
     103 => mol -> count_atom(mol, :Cl),               # W number of chlorine atoms
-    104 => mol -> 9,
-    105 => mol -> 9,
-    106 => mol -> 9,
-    107 => mol -> 9,
-    108 => mol -> 9,
+    104 => mol -> -1,
+    105 => mol -> -1,
+    106 => mol -> -1,
+    107 => mol -> -1,
+    108 => mol -> -1,
     109 => mol -> rule_109(mol),                      # W Anything~CH2~O
     110 => mol -> has_path3(mol, :N, :C, :O),         # W N~C~O
     111 => mol -> rule_111(mol),                      # W N~Anything~CH2~Anything
-    112 => mol -> 9,
-    113 => mol -> 9,
+    112 => mol -> -1,
+    113 => mol -> -1,
     114 => mol -> rule_114(mol),                      # W CH3~CH2~Anything
     115 => mol -> rule_115(mol),                      # W CH3~Anything~CH2~Anything
-    116 => mol -> 9,
+    116 => mol -> -1,
     117 => mol -> has_strict_path3(mol, :N, nothing, :O), # W N~Anything~O
-    118 => mol -> 9,
+    118 => mol -> -1,
     119 => mol -> rule_119(mol),                      # W N=Anything
-    120 => mol -> 9,
+    120 => mol -> -1,
     121 => mol -> any(cycle -> any(v -> safe_atom_symbol(mol.vprops[v]) == :N, cycle), cycle_basis(mol.graph)), # W N Heterocycle
-    122 => mol -> 9,                 
+    122 => mol -> -1,                 
     123 => mol -> has_path3(mol, :O, :C, :O),         # W O~C~O
     124 => mol -> rule_124(mol),                      # W C~N(~C)~C
-    125 => mol -> 9,
-    126 => mol -> 9,
-    127 => mol -> 9,
-    128 => mol -> 9,
-    129 => mol -> 9,
-    130 => mol -> 9,
-    131 => mol -> 9,
+    125 => mol -> -1,
+    126 => mol -> -1,
+    127 => mol -> -1,
+    128 => mol -> -1,
+    129 => mol -> -1,
+    130 => mol -> -1,
+    131 => mol -> -1,
     132 => mol -> rule_132(mol),                      # W O~Anything~CH2~Anything
-    133 => mol -> 9,
+    133 => mol -> -1,
     134 => mol -> has_atom(mol, :F) || has_atom(mol, :Cl) || has_atom(mol, :Br) || has_atom(mol, :I),  # W presence of any halogen
-    135 => mol -> 9,
+    135 => mol -> -1,
     136 => mol -> rule_136(mol),                       # W O=Anything>1         
     137 => mol -> any(cycle -> any(v -> safe_atom_symbol(mol.vprops[v]) != :C, cycle), cycle_basis(mol.graph)), # W Heterocycle
-    138 => mol -> 9,
+    138 => mol -> -1,
     139 => mol -> has_OH(mol),                         # W presence of an –OH group
-    140 => mol -> 9,
-    141 => mol -> 9,
+    140 => mol -> -1,
+    141 => mol -> -1,
     142 => mol -> count_atom(mol, :N) >= 2,            # W N>1
-    143 => mol -> 9,
-    144 => mol -> 9,
-    145 => mol -> 9,
+    143 => mol -> -1,
+    144 => mol -> -1,
+    145 => mol -> -1,
     146 => mol -> count_atom(mol, :O) >= 3,            # W O>2
-    147 => mol -> 9,
-    148 => mol -> 9,                      
-    149 => mol -> 9,
-    150 => mol -> 9,
+    147 => mol -> -1,
+    148 => mol -> -1,                      
+    149 => mol -> -1,
+    150 => mol -> -1,
     151 => mol -> has_NH(mol),                         # W presence of an –NH group
     152 => mol -> rule_152(mol),                       # W O~C(~C)~C
     153 => mol -> rule_153(mol),                       # W Q~CH2~Anything
     154 => mol -> has_bond(mol, :C, :O, 2),            # W C=O bond 
-    155 => mol -> 9,
+    155 => mol -> -1,
     156 => mol -> rule_156(mol),                       # N~Anything(~Anything)~Anything
     157 => mol -> has_bond(mol, :C, :O, 1),            # W C–O bond
     158 => mol -> has_bond(mol, :C, :N, 1),            # W C–N bond
     159 => mol -> count_atom(mol, :O) >= 2,            # W O>1
     160 => mol -> count_CH3(mol) > 0,                  # W number of CH₃ fragments
     161 => mol -> count_atom(mol, :N),                 # W number of nitrogen atoms
-    162 => mol -> 9,
+    162 => mol -> -1,
     163 => mol -> has_ring_of_size(mol, 6),            # W 6-membered ring
     164 => mol -> count_atom(mol, :O),                 # W number of oxygen atoms
     165 => mol -> has_ring(mol),                       # W ring
-    166 => mol -> 9,
+    166 => mol -> -1,
 )
 
 # function compute_maccs(mol, fp::MACCSFingerprint)
@@ -990,7 +990,7 @@ function compute_maccs(mol::SMILESMolGraph, fp::MACCSFingerprint; rdkit_fp::Unio
     for (idx, rule) in MACCS_RULES
         val = rule(mol)
 
-        if val == 9
+        if val == -1
             rdkit_fp === nothing &&
                 error("RDKit fingerprint required for MACCS bit $idx")
             vec[idx] = rdkit_fp[idx]
