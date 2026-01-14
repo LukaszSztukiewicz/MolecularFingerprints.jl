@@ -2,9 +2,11 @@ using Test
 using MolecularGraph
 using MolecularFingerprints
 
+bitset_to_string(bitset) = join(Int.(bitset), "")
+
 @testset "ECFP Algorithm Tests" begin
-    
-    @testset "ECFP Constructor" begin
+
+    @testset "Constructor" begin
         # Test valid construction
         ecfp2 = ECFP{1024}(2)
         @test ecfp2.radius == 2
@@ -24,7 +26,7 @@ using MolecularFingerprints
         @test_throws ArgumentError ECFP{-1}(2)
     end
 
-    @testset "ECFP Fingerprint Basic Properties" begin
+    @testset "Basic Properties" begin
         mol = smilestomol("CCO")  # Ethanol
         ecfp = ECFP{1024}(2)
 
@@ -41,7 +43,7 @@ using MolecularFingerprints
         @test !all(fp)
     end
 
-     @testset "ECFP with Different Sizes" begin
+     @testset "Different Sizes" begin
         mol = smilestomol("CCO")
 
         # Test different fingerprint sizes
@@ -53,7 +55,7 @@ using MolecularFingerprints
         end
     end
 
-    @testset "ECFP with Different Radii" begin
+    @testset "Different Radii" begin
         mol = smilestomol("CC(=O)NCCC1=CNc2c1cc(OC)cc2")
 
         # Test radius 2 (ECFP4, diameter 4)
@@ -73,7 +75,7 @@ using MolecularFingerprints
         @test fp2 != fp3
     end
 
-    @testset "ECFP Determinism" begin
+    @testset "Determinism" begin
         mol = smilestomol("CCO")
         ecfp = ECFP{2048}(2)
 
@@ -87,7 +89,7 @@ using MolecularFingerprints
         @test fp2 == fp3
     end
 
-    @testset "ECFP Different Molecules" begin
+    @testset "Different Molecules" begin
         ecfp = ECFP{2048}(2)
 
         # Test different molecules
@@ -111,7 +113,7 @@ using MolecularFingerprints
         @test fp_ethanol != fp_methanol
     end
 
-    @testset "ECFP Similarity" begin
+    @testset "Similarity" begin
         ecfp = ECFP{2048}(2)
 
         # Similar molecules should have similar fingerprints
@@ -127,7 +129,7 @@ using MolecularFingerprints
         @test tanimoto(fp1, fp2) > tanimoto(fp1, fp3)
     end
 
-    @testset "ECFP with Ring Structures" begin
+    @testset "Ring Structures" begin
         ecfp = ECFP{2048}(2)
 
         # Test molecules with rings
@@ -142,10 +144,6 @@ using MolecularFingerprints
         @test any(fp_benzene)
         @test any(fp_cyclohexane)
         @test any(fp_toluene)
-
-        println("Benzene-Toluene:     overlap=$(sum(fp_benzene .& fp_toluene)), tanimoto=$(tanimoto(fp_benzene, fp_toluene))")
-        println("Benzene-Cyclohexane: overlap=$(sum(fp_benzene .& fp_cyclohexane)), tanimoto=$(tanimoto(fp_benzene, fp_cyclohexane))")
-        println("Bits set: benzene=$(sum(fp_benzene)), toluene=$(sum(fp_toluene)), cyclohexane=$(sum(fp_cyclohexane))")
 
         # Benzene and toluene should be at least as similar as benzene and cyclohexane
         # (toluene contains benzene as a substructure)

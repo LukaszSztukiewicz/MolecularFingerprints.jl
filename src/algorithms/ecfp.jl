@@ -11,7 +11,7 @@ struct ECFP{N} <: AbstractFingerprint
     end
 end
 
-function get_atom_invariant(mol, atom_index)
+function atom_invariant(mol, atom_index)
     """
     From the ECFP Paper:
 
@@ -96,7 +96,7 @@ function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
     # Initialize atom identifiers
     atom_hashes = Vector{UInt32}(undef, n_atoms)
     for i in 1:n_atoms
-        invariant = get_atom_invariant(mol, i)
+        invariant = atom_invariant(mol, i)
         atom_hashes[i] = hash_invariant(invariant)
     end
 
@@ -151,8 +151,12 @@ function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
                 push!(neighbor_hashes, atom_hashes[neighbor_index])
             end
 
-            # Compute new hash for this atom
-            new_hashes[atom_index] = get_neighborhood_hash(atom_hashes[atom_index], neighbor_hashes)
+            # Sort neighbor hashes for canonical ordering
+            sorted_neighbors = sort(neighbor_hashes)
+
+            # Combine current hash with sorted neighbor hashes and store it as the new hash for this atom
+            combined = (atom_hashes[atom_index], sorted_neighbors...)
+            new_hashes[atom_index] = hash_invariant(combined)
 
             # Add to features
             push!(round_results, (round_neighborhoods[atom_index], new_hashes[atom_index], atom_index))
@@ -185,4 +189,4 @@ function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
     return fp
 end
 
-export ECFP, fingerprint
+export atom_invariant, hash_invariant, ECFP, fingerprint
