@@ -32,7 +32,7 @@ function atom_invariant(mol, atom_index)
     atom = mol.vprops[atom_index]
 
     # Get number of implicit and explicit hydrogens
-    implicit_hs = implicit_hydrogens(mol)[atom_index]
+    implicit_hs = implicit_hydrogens(mol, atom_index)
     explicit_hs = explicit_hydrogens(mol)[atom_index]
     total_hs = implicit_hs + explicit_hs
 
