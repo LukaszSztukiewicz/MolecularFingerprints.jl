@@ -2,16 +2,105 @@ using MolecularGraph
 using Random
 using Graphs
 using RDKitMinimalLib
+using SHA
 
 """
-    MHFP{N}
+    MHFP
 
 Class for MHFP fingerprint generator/featurizer. Contains settings and parameters for 
 MHFP fingerprint generation.
 """
-struct MHFP{N} <: AbstractFingerprint
+struct MHFP <: AbstractFingerprint
     radius::Int
+    min_radius::Int
+    rings::Bool
+    n_permutations::Int
+    max_hash::Int
+    seed::Int
+    _mersenne_prime::Int
+    _permutations_a::Vector{UInt32}
+    _permutations_b::Vector{UInt32}
+
+    function MHFP(
+        radius::Int,
+        min_radius::Int, 
+        rings::Bool, 
+        n_permutations::Int, 
+        max_hash::Int, 
+        seed::Int,
+        _mersenne_prime::Int,
+        _permutations_a::Vector{UInt32},
+        _permutations_b::Vector{UInt32})
+        
+        # Inner constructor to ensure mersenne prime is not given manually.
+        _mersenne_prime == (1 << 61) - 1 || error(
+            """Incorrect value set for the mersenne prime, must be $((1 << 61) - 1), 
+            got $_mersenne_prime. Don't give this value explicitly.""")
+        
+        return new(
+            radius, 
+            min_radius,
+            rings,
+            n_permutations,
+            max_hash,
+            seed,
+            _mersenne_prime,
+            _permutations_a,
+            _permutations_b)
+    end
+
 end
+
+##### Outer constructur for the MHFP encoder ##############################################
+
+# The most detailed call a user should ever do manually. All other attributes are calculated
+# automatically.
+function MHFP(
+    radius::Int = 3, 
+    min_radius::Int = 1,
+    rings::Bool = true;
+    n_permutations::Int = 2048,  # keyword arguments
+    max_hash::Int = (1 << 32) - 1, 
+    seed::Int = 42)
+    
+    _mersenne_prime = (1 << 61) -1
+
+    _permutations_a = Vector{UInt32}()
+    _permutations_b = Vector{UInt32}()
+
+    Random.seed!(seed)
+
+    for i in 1:n_permutations
+        a = rand(UInt32(1):UInt32(max_hash))
+        b = rand(UInt32(0):UInt32(max_hash))
+
+        # redraw values if already present in _permutations_a
+        while a in _permutations_a
+            a = rand(UInt32(1):UInt32(max_hash))
+        end
+
+        # redraw values if already present in _permutations_b
+        while b in _permutations_b
+            b = rand(UInt32(0):UInt32(max_hash))
+        end
+
+        push!(_permutations_a, a)
+        push!(_permutations_b, b)
+    end
+    
+    return MHFP(
+        radius,
+        min_radius,
+        rings,
+        n_permutations,
+        max_hash,
+        seed,
+        _mersenne_prime,
+        _permutations_a,
+        _permutations_b
+    )
+end
+
 
 
 """
@@ -19,12 +108,10 @@ end
 
 Calculates the MHFP fingerprint of the given molecule and returns it as a bit vector
 """
-function fingerprint(mol::SMILESMolGraph, calc::MHFP{N}) where {N}
-    # Placeholder implementation for MHFP fingerprint calculation
-    # In a real implementation, this would compute the MHFP fingerprint
-    # based on the circular substructures around each atom of the molecule,
-    # depending on the specified radius.
-    return BitVector(rand(Bool, 1024))
+function fingerprint(mol::MolGraph, calc::MHFP)
+    return mhfp_hash_from_molecular_shingling(  # TODO make mhfp_shingling_from_mol accept the encoder "calc" as a parameter instead of separate arguments, and change call here correspondingly
+        mhfp_shingling_from_mol(mol, calc.radius, calc.rings, calc.min_radius),
+        calc)  # FIXME This doesn't return a BitVector yet, but a vector of UInt32's
 end
 
 """
@@ -209,4 +296,48 @@ function smiles_from_circular_substructures(mol::MolGraph, radius::Int, min_radi
     return shingling_snippet
 end
 
-export MHFP, mhfp_shingling_from_mol, fingerprint
+"""
+    mhfp_hash_from_molecular_shingling(shingling::Vector{String}, Encoder::MHFP)
+
+Calculate the MinHash values from a given Molecular shingling.
+
+The given encoder contains parameters such as the length of the hashed vector or the 
+maximum permitted hash number, but also the seed of the rng, and the random numbers that
+were generated using this seed, that are used in the hashing process.
+
+The algorithm is described in more detail in the original authors paper.
+"""
+function mhfp_hash_from_molecular_shingling(shingling::Vector{String}, Encoder::MHFP)
+    hash_values = zeros(UInt32, (Encoder.n_permutations))
+    fill!(hash_values, Encoder.max_hash)
+
+    for s in shingling
+        sha_from_string = sha1(s)[begin:4]  # create sha1 hash from the string
+        # Note: we are only using the first 4 sha1 bytes, as we want a 32-bit hash
+
+        #let 
+        buf = IOBuffer(sha_from_string)  # make the sha bytes a buffer
+        s_h = Int(  # read bytes from sha hash into integer
+            htol(  # ensure little-endian format of the integer
+                 read(buf, UInt8)))  # read the buffer bytes as unsigned integer
+        # end
+
+        hashes = mod.(
+            mod.(
+                Encoder._permutations_a * s_h + Encoder._permutations_b,
+                Encoder._mersenne_prime
+            ), Encoder.max_hash
+        )
+        
+        hash_values = min.(hash_values, hashes)
+
+        
+    end
+
+
+    return hash_values
+end
+
+# FIXME remove mhfp_hash_from_molecular_shingling and mhfp_shingling_from_mol from export
+# later (it is useful right now for (manual))
+export MHFP, mhfp_shingling_from_mol, fingerprint, mhfp_hash_from_molecular_shingling
