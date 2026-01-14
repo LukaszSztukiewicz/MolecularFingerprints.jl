@@ -1,0 +1,39 @@
+to run:
+
+cd MolecularFingerprints.jl  
+julia --project=.
+using PythonCall
+exit()
+julia --project=. .\test\unit\algorithms\maccs_tests.jl
+
+# =========================================================
+To connect RDkit with Julia:
+Assuming you are on Windows, and already have Julia, Pyhton and Miniconda installed
+
+1. open powershell:
+- conda create -n rdkit -c conda-forge rdkit python=3.10 - your python version 
+- conda activate rdkit 
+- where python
+  expected output: C:\Users\YOURUSER\miniconda3\envs\rdkit\python.exe
+- setx PYTHONCALL_USE_CONDAPKG 0
+- setx JULIA_PYTHONCALL_EXE "C:\Users\YOURUSER\miniconda3\envs\rdkit\python.exe"
+close powershell completely
+
+2. open julia:
+- julia
+- julia> ]
+- pkg> activate .
+- pkg> add PythonCall
+- pkg> exit
+- julia> exit()
+close julia,
+
+3. open julia again:
+- julia
+- julia> ENV["PYTHONCALL_USE_CONDAPKG"]
+  expected output: "0"
+- julia> ENV["JULIA_PYTHONCALL_EXE"]
+  expected output: "C:\\Users\\YOURUSER\\miniconda3\\envs\\rdkit\\python.exe"
+- julia> using PythonCall
+- julia> pyimport("sys").executable
+  expected output: "C:\\Users\\YOURUSER\\miniconda3\\envs\\rdkit\\python.exe"
