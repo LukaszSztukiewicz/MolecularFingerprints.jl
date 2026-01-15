@@ -10,6 +10,8 @@ struct ECFP{N} <: AbstractFingerprint
     end
 end
 
+ecfp_atom_invariant(smiles::AbstractString) = ecfp_atom_invariant(smilestomol(smiles))
+
 ecfp_atom_invariant(mol::AbstractMolGraph) = [ecfp_atom_invariant(mol, i) for i in 1:nv(mol)]
 
 function ecfp_atom_invariant(mol::AbstractMolGraph, atom_index)
@@ -59,19 +61,31 @@ function ecfp_atom_invariant(mol::AbstractMolGraph, atom_index)
     ring_info = is_in_ring(mol)
     in_ring = ring_info[atom_index]
 
-    # Return all invariants as an UInt32 Vector
-    return convert(Vector{UInt32}, [
-        at_number, # atom number
+    # Return all invariants as an UInt32 Vector. Add an extra component if we are in a ring.
+    components = UInt32[
+        at_number, # atomic number
         total_degree, # number of neighbors (including implicit hydrogens)
         total_hs, # total number of hydrogens
         at_charge, # atomic charge
         delta_mass, # difference between atom and standard mass
-        in_ring, # if the atom is part of a ring
-    ])
+    ]
+
+    if in_ring
+        push!(components, UInt32(1))
+    end
+
+    return components
 end
 
-function ecfp_hash(invariant)
-    return hash(invariant, UInt(0xECFECF00)) % UInt32
+function ecfp_hash(v::Vector{UInt32})
+    # return hash(invariant, UInt(0xECFECF00)) % UInt32
+
+    # Reference: https://github.com/rdkit/rdkit/blob/master/Code/RDGeneral/hash/hash.hpp
+    seed = UInt32(0)
+    for val in v
+        seed ⊻= val + UInt32(0x9e3779b9) + (seed << 6) + (seed >> 2)
+    end
+    return seed
 end
 
 function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N

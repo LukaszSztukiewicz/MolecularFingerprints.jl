@@ -2,7 +2,7 @@ using Test
 using MolecularGraph
 using MolecularFingerprints
 
-using PythonCall: Py, pyimport, pyconvert
+using PythonCall: Py, pyimport, pyconvert, pybuiltins
 using Graphs: nv
 
 
@@ -10,32 +10,40 @@ using Graphs: nv
 const rdkitChem = pyimport("rdkit.Chem")
 const rdkitMolDescriptors = pyimport("rdkit.Chem.rdMolDescriptors")
 
-function rdkit_single_atom_invariant(mol::Py, i)
+function rdkit_single_atom_invariant(mol::Py, i; include_ring_membership=true)
+    # Reference: https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/Fingerprints/FingerprintUtil.cpp#L244
+
     atom = mol.GetAtoms()[i - 1] # note: Python is 0-indexed
 
-    # see https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/Fingerprints/FingerprintUtil.cpp#L244
-    return [
-        pyconvert(UInt32, atom.GetAtomicNum()),
-        pyconvert(UInt32, atom.GetTotalDegree()),
-        pyconvert(UInt32, atom.GetTotalNumHs(true)),
-        pyconvert(UInt32, atom.GetFormalCharge()),
-        trunc(UInt32,
+    atomic_num = pyconvert(Int, atom.GetAtomicNum())
+
+    components = UInt32[
+        atomic_num % UInt32,
+        pyconvert(Int, atom.GetTotalDegree()) % UInt32,
+        pyconvert(Int, atom.GetTotalNumHs(true)) % UInt32,
+        pyconvert(Int, atom.GetFormalCharge()) % UInt32,
+        trunc(Int,
             pyconvert(Float64, atom.GetMass()) -
-            pyconvert(Float64, (rdkitChem.GetPeriodicTable().GetAtomicWeight(atom.GetAtomicNum())))
-        ),
-        convert(UInt32, pyconvert(UInt32, mol.GetRingInfo().NumAtomRings(i - 1)) != 0),
+            pyconvert(Float64, rdkitChem.GetPeriodicTable().GetAtomicWeight(atomic_num))
+        ) % UInt32,
     ]
+
+    if include_ring_membership && pyconvert(Int, mol.GetRingInfo().NumAtomRings(i - 1)) != 0
+        push!(components, UInt32(1))
+    end
+
+    return components
 end
 
 function rdkit_atom_invariants(smiles::AbstractString)
-    mol = rdkitChem.MolFromSmiles(smiles)
+    mol::Py = rdkitChem.MolFromSmiles(smiles)
     n = pyconvert(UInt, mol.GetNumAtoms())
     return [rdkit_single_atom_invariant(mol, i) for i in 1:n]
 end
 
 function rdkit_hashed_atom_invariants(smiles::AbstractString)
-    mol = rdkitChem.MolFromSmiles(smiles)
-    result = rdkitMolDescriptors.GetConnectivityInvariants(mol)
+    mol::Py = rdkitChem.MolFromSmiles(smiles)
+    result = rdkitMolDescriptors.GetConnectivityInvariants(mol; includeRingMembership = true)
     return pyconvert(Vector{UInt32}, result)
 end
 
@@ -44,25 +52,50 @@ bitset_to_string(bitset) = join(Int.(bitset), "")
 
 
 @testset "ECFP Algorithm Tests" begin
-    @testset "Atom Invariant" begin
+    @testset "Atom and hash invariants" begin
         test_cases = [
+            "C",
+            "CC",
+            "CCC",
             "CC[2H]",
+            "CC(=O)OCC[N+](C)(C)C",
+            "CC(C[N+](C)(C)C)OC(=O)C",
+            "O=C1CCCN1CC#CC[N+](C)(C)C",
+            "NC(=O)OCC[N+](C)(C)C",
+            "CC(C[N+](C)(C)C)OC(=O)N",
+            "COC(=O)C1=CCCN(C1)C",
+            "O=C1CCCN1CC#CCN1CCCC1",
+            "CON=CC1=CCCN(C1)C",
+            "CN1CC(=CCC1)C(=O)OCC#C",
         ]
 
         for tc in test_cases
-            expected = rdkit_atom_invariants(tc)
+            expected_invariants = rdkit_atom_invariants(tc)
+            expected_hashes = rdkit_hashed_atom_invariants(tc)
 
             mol = smilestomol(tc)
-            actual = ecfp_atom_invariant(mol)
+            actual_invariants = ecfp_atom_invariant(mol)
 
-            @test actual == expected
+            @testset "Molecule $tc, atom index $i" for (i, (actual, expected, expected_hash)) in enumerate(zip(actual_invariants, expected_invariants, expected_hashes))
+                # Check length of returned invariant
+                @test length(actual) == length(expected)
+                @test length(actual) == 5 || length(actual) == 6
 
-            # expected = rdkit_hashed_atom_invariants(mol_smiles)
+                # Check individual components
+                @test actual[1] == expected[1] # atomic number
+                @test actual[2] == expected[2] # number of neighbors
+                @test actual[3] == expected[3] # number of hydrogens
+                @test actual[4] == expected[4] # atomic charge
+                @test actual[5] == expected[5] # atomic mass difference
 
-            # mol = smilestomol(mol_smiles)
-            # actual = [ecfp_hash(ecfp_atom_invariant(mol, i)) for i in 1:nv(mol)]
+                if length(actual) == 6
+                    @test actual[6] == expected[6] # is part of a ring
+                end
 
-            # @test actual == expected
+                # Check hash result
+                actual_hash = ecfp_hash(actual)
+                @test actual_hash == expected_hash
+            end
         end
     end
 
