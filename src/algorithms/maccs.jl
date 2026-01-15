@@ -13,7 +13,7 @@ const _MACCS = Ref{Py}()
 
 function __init__()
     #----------------------
-    ENV["PATH"] = raw"C:\Users\...\miniconda3\envs\rdkit\Library\bin;" * ENV["PATH"] 
+    # ENV["PATH"] = raw"C:\Users\...\miniconda3\envs\rdkit\Library\bin;" * ENV["PATH"] 
     # change it locally
     #----------------------
     _Chem[]  = pyimport("rdkit.Chem")
