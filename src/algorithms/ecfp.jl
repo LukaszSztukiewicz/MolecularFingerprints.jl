@@ -11,7 +11,7 @@ struct ECFP{N} <: AbstractFingerprint
     end
 end
 
-function atom_invariant(mol, atom_index)
+function ecfp_atom_invariant(mol, atom_index)
     """
     From the ECFP Paper:
 
@@ -69,18 +69,8 @@ function atom_invariant(mol, atom_index)
     )
 end
 
-function hash_invariant(invariant)
+function ecfp_hash(invariant)
     return hash(invariant, UInt(0xECFECF00)) % UInt32
-end
-
-function get_neighborhood_hash(current_hash, neighbor_hashes)
-    # Sort neighbor hashes for canonical ordering
-    sorted_neighbors = sort(neighbor_hashes)
-
-    # Combine current hash with sorted neighbor hashes
-    combined = (current_hash, sorted_neighbors...)
-
-    return hash(combined, UInt(0xECFECF00)) % UInt32
 end
 
 function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
@@ -96,8 +86,8 @@ function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
     # Initialize atom identifiers
     atom_hashes = Vector{UInt32}(undef, n_atoms)
     for i in 1:n_atoms
-        invariant = atom_invariant(mol, i)
-        atom_hashes[i] = hash_invariant(invariant)
+        invariant = ecfp_atom_invariant(mol, i)
+        atom_hashes[i] = ecfp_hash(invariant)
     end
 
     # Collect all features (hashes at each iteration)
@@ -156,7 +146,7 @@ function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
 
             # Combine current hash with sorted neighbor hashes and store it as the new hash for this atom
             combined = (atom_hashes[atom_index], sorted_neighbors...)
-            new_hashes[atom_index] = hash_invariant(combined)
+            new_hashes[atom_index] = ecfp_hash(combined)
 
             # Add to features
             push!(round_results, (round_neighborhoods[atom_index], new_hashes[atom_index], atom_index))
@@ -189,4 +179,4 @@ function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
     return fp
 end
 
-export atom_invariant, hash_invariant, ECFP, fingerprint
+export ecfp_atom_invariant, ecfp_hash, ECFP, fingerprint
