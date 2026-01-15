@@ -77,18 +77,24 @@ function ecfp_atom_invariant(mol::AbstractMolGraph, atom_index)
     return components
 end
 
+function ecfp_hash_combine(seed::UInt32, value::UInt32)
+    return seed ⊻ (value + UInt32(0x9e3779b9) + (seed << 6) + (seed >> 2))
+end
+
 function ecfp_hash(v::Vector{UInt32})
     # return hash(invariant, UInt(0xECFECF00)) % UInt32
 
     # Reference: https://github.com/rdkit/rdkit/blob/master/Code/RDGeneral/hash/hash.hpp
     seed = UInt32(0)
-    for val in v
-        seed ⊻= val + UInt32(0x9e3779b9) + (seed << 6) + (seed >> 2)
+    for value in v
+        seed = ecfp_hash_combine(seed, value)
     end
     return seed
 end
 
 function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
+    # Reference: https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/Fingerprints/MorganGenerator.cpp#L257
+
     n_atoms = nv(mol)
     n_bonds = ne(mol)
     ernk = edge_rank(mol)
@@ -123,7 +129,7 @@ function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
     end
 
     # Iterate for the specified radius
-    for _ in 1:calc.radius
+    for layer in 1:calc.radius
         # Store new hashes for all atoms
         new_hashes = Vector{UInt32}(undef, n_atoms)
         round_neighborhoods = deepcopy(atom_neighborhoods)
@@ -135,7 +141,7 @@ function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
                 continue
             end
 
-            # If the atom has no neighbors, skip immediately
+            # If the atom has no neighbors, also skip
             neighbor_indices = mol.graph.fadjlist[atom_index]
             if isempty(neighbor_indices)
                 dead_atoms[atom_index] = true
@@ -160,8 +166,13 @@ function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
             sorted_neighbors = sort(neighbor_hashes)
 
             # Combine current hash with sorted neighbor hashes and store it as the new hash for this atom
-            combined = (atom_hashes[atom_index], sorted_neighbors...)
-            new_hashes[atom_index] = ecfp_hash(combined)
+            # combined = [atom_hashes[atom_index], sorted_neighbors...]
+            invar::UInt32 = layer - 1;
+            invar = ecfp_hash_combine(invar, atom_hashes[atom_index])
+            for neighbor_invar in sorted_neighbors
+                invar = ecfp_hash_combine(invar, neighbor_invar)
+            end
+            new_hashes[atom_index] = invar
 
             # Add to features
             push!(round_results, (round_neighborhoods[atom_index], new_hashes[atom_index], atom_index))
