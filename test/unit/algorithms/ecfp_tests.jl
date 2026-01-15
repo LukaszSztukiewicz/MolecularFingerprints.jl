@@ -2,29 +2,68 @@ using Test
 using MolecularGraph
 using MolecularFingerprints
 
-using PythonCall: Py, pyimport
+using PythonCall: Py, pyimport, pyconvert
+using Graphs: nv
 
-const rdkitChem = Ref{Py}()
-const rdkitMolDescriptors = Ref{Py}()
-function __init__()
-    rdkitChem[] = pyimport("rdkit.Chem")
-    rdkitMolDescriptors[] = pyimport("rdkit.Chem.rdMolDescriptors")
+
+
+const rdkitChem = pyimport("rdkit.Chem")
+const rdkitMolDescriptors = pyimport("rdkit.Chem.rdMolDescriptors")
+
+function rdkit_single_atom_invariant(mol::Py, i)
+    atom = mol.GetAtoms()[i - 1] # note: Python is 0-indexed
+
+    # see https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/Fingerprints/FingerprintUtil.cpp#L244
+    return [
+        pyconvert(UInt32, atom.GetAtomicNum()),
+        pyconvert(UInt32, atom.GetTotalDegree()),
+        pyconvert(UInt32, atom.GetTotalNumHs(true)),
+        pyconvert(UInt32, atom.GetFormalCharge()),
+        trunc(UInt32,
+            pyconvert(Float64, atom.GetMass()) -
+            pyconvert(Float64, (rdkitChem.GetPeriodicTable().GetAtomicWeight(atom.GetAtomicNum())))
+        ),
+        convert(UInt32, pyconvert(UInt32, mol.GetRingInfo().NumAtomRings(i - 1)) != 0),
+    ]
+end
+
+function rdkit_atom_invariants(smiles::AbstractString)
+    mol = rdkitChem.MolFromSmiles(smiles)
+    n = pyconvert(UInt, mol.GetNumAtoms())
+    return [rdkit_single_atom_invariant(mol, i) for i in 1:n]
 end
 
 function rdkit_hashed_atom_invariants(smiles::AbstractString)
     mol = rdkitChem.MolFromSmiles(smiles)
-    return rdkitMolDescriptors.GetConnectivityInvariants(mol)
+    result = rdkitMolDescriptors.GetConnectivityInvariants(mol)
+    return pyconvert(Vector{UInt32}, result)
 end
 
 bitset_to_string(bitset) = join(Int.(bitset), "")
 
+
+
 @testset "ECFP Algorithm Tests" begin
     @testset "Atom Invariant" begin
-        mol = smilestomol("CC[2H]")
-        ecfp_hashes = [ecfp_hash(ecfp_atom_invariant(mol, i)) for i in 1:nv(mol)]
-        rdkit_hashes = rdkit_hashed_atom_invariants("CC[2H]")
+        test_cases = [
+            "CC[2H]",
+        ]
 
-        @test ecfp_hashes == rdkit_hashes
+        for tc in test_cases
+            expected = rdkit_atom_invariants(tc)
+
+            mol = smilestomol(tc)
+            actual = ecfp_atom_invariant(mol)
+
+            @test actual == expected
+
+            # expected = rdkit_hashed_atom_invariants(mol_smiles)
+
+            # mol = smilestomol(mol_smiles)
+            # actual = [ecfp_hash(ecfp_atom_invariant(mol, i)) for i in 1:nv(mol)]
+
+            # @test actual == expected
+        end
     end
 
     # @testset "Constructor" begin

@@ -1,5 +1,4 @@
-using MolecularGraph
-using MolecularGraph:edge_rank
+using MolecularGraph: AbstractMolGraph, edge_rank
 
 struct ECFP{N} <: AbstractFingerprint
     radius::Int
@@ -11,7 +10,9 @@ struct ECFP{N} <: AbstractFingerprint
     end
 end
 
-function ecfp_atom_invariant(mol, atom_index)
+ecfp_atom_invariant(mol::AbstractMolGraph) = [ecfp_atom_invariant(mol, i) for i in 1:nv(mol)]
+
+function ecfp_atom_invariant(mol::AbstractMolGraph, atom_index)
     """
     From the ECFP Paper:
 
@@ -49,7 +50,7 @@ function ecfp_atom_invariant(mol, atom_index)
     # Get difference from atomic mass to average standard weight
     atom_mass = exact_mass(atom)
     standard_mass = monoiso_mass(atom)
-    delta_mass = round(Int, atom_mass - standard_mass)
+    delta_mass = trunc(Int, atom_mass - standard_mass)
 
     # Get formal charge
     at_charge = atom_charge(atom)
@@ -58,15 +59,15 @@ function ecfp_atom_invariant(mol, atom_index)
     ring_info = is_in_ring(mol)
     in_ring = ring_info[atom_index]
 
-    # Combine into a tuple (will be hashed)
-    return (
-        at_number,
-        total_degree,
-        total_hs,
-        at_charge,
-        delta_mass,
-        in_ring,
-    )
+    # Return all invariants as an UInt32 Vector
+    return convert(Vector{UInt32}, [
+        at_number, # atom number
+        total_degree, # number of neighbors (including implicit hydrogens)
+        total_hs, # total number of hydrogens
+        at_charge, # atomic charge
+        delta_mass, # difference between atom and standard mass
+        in_ring, # if the atom is part of a ring
+    ])
 end
 
 function ecfp_hash(invariant)
