@@ -92,51 +92,88 @@ function ecfp_hash(v::Vector{UInt32})
     return seed
 end
 
+struct MorganAtomEnv 
+    code::UInt32
+    atom_id::Int
+    layer::Int
+
+    MorganAtomEnv(code::UInt32, atom_id::Int, layer::Int) = new(code, atom_id, layer)
+end
+
+struct AccumTuple
+    bits::Vector{Bool}
+    invariant::UInt32
+    atom_index::Int
+
+    AccumTuple(bits::Vector{Bool}, invariant::UInt32, atom_index::Int) = new(bits, invariant, atom_index)
+end
+
+function Base.isless(a::AccumTuple, b::AccumTuple)
+    a.bits != b.bits && return a.bits < b.bits
+    a.invariant != b.invariant && return a.invariant < b.invariant
+    a.atom_index < b.atom_index
+end
+
+function get_atom_invariants(mol::SMILESMolGraph)
+    # Reference: https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/Fingerprints/MorganGenerator.cpp#L42
+    return [ecfp_hash(x) for x in ecfp_atom_invariant(mol)]
+end
+
+function rdkit_bond_type(bond::SMILESBond)
+    # Reference: https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/Bond.h#L55
+
+    if bond.isaromatic
+        return 12 # AROMATIC
+    elseif bond.order == 0
+        return 21 # ZERO
+    elseif bond.order in 1:6
+        return bond.order # SINGLE..HEXTUPLE
+    else
+        return 20 # OTHER
+    end
+end
+
+function get_bond_invariants(mol::SMILESMolGraph)
+    # Reference: https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/Fingerprints/MorganGenerator.cpp#L126
+    return[UInt32(rdkit_bond_type(bond)) for (_, bond) in mol.eprops]
+end
+
 function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
     # Reference: https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/Fingerprints/MorganGenerator.cpp#L257
 
-    n_atoms = nv(mol)
-    n_bonds = ne(mol)
+    num_atoms = nv(mol)
+    num_bonds = ne(mol)
     ernk = edge_rank(mol)
 
-    # Handle empty molecule
-    if n_atoms == 0
-        return falses(N)
+    # Generate atom hashes
+    atom_invariants::Vector{UInt32} = get_atom_invariants(mol)
+    bond_invariants::Vector{UInt32} = get_bond_invariants(mol)
+
+    result::Vector{MorganAtomEnv} = []
+
+    current_invariants::Vector{UInt32} = copy(atom_invariants)
+    next_layer_invariants::Vector{UInt32} = zeros(num_atoms)
+
+    neighborhood_invariants::Vector{Pair{UInt32, UInt32}} = []
+
+    neighborhoods::Set{Vector{Bool}} = Set()
+    atom_neighborhoods::Vector{Vector{Bool}} = [falses(num_bonds) for _ in 1:num_atoms]
+    round_atom_neighborhoods::Vector{Vector{Bool}} = atom_neighborhoods
+
+    # These atoms are skipped
+    dead_atoms = falses(num_atoms)
+
+    # Add round 0 invariants
+    for (i, hash) in enumerate(current_invariants)
+        push!(result, MorganAtomEnv(hash, i, 0))
     end
 
-    # Initialize atom identifiers
-    atom_hashes = Vector{UInt32}(undef, n_atoms)
-    for i in 1:n_atoms
-        invariant = ecfp_atom_invariant(mol, i)
-        atom_hashes[i] = ecfp_hash(invariant)
-    end
-
-    # Collect all features (hashes at each iteration)
-    features = Set{UInt32}()
-
-    # Track which bonds each atom's neighborhood includes
-    atom_neighborhoods = [falses(n_bonds) for _ in 1:n_atoms]
-
-    # Track neighborhoods we've already seen (as Sets or BitVectors)
-    seen_neighborhoods = Set{BitVector}()
-
-    # Track "dead" atoms that won't produce unique environments anymore
-    dead_atoms = falses(n_atoms)
-
-    # Add initial atom hashes (iteration 0)
-    for h in atom_hashes
-        push!(features, h)
-    end
-
-    # Iterate for the specified radius
+    # Do subsequent rounds
     for layer in 1:calc.radius
-        # Store new hashes for all atoms
-        new_hashes = Vector{UInt32}(undef, n_atoms)
-        round_neighborhoods = deepcopy(atom_neighborhoods)
-        round_results = []  # (neighborhood, hash, atom_index)
+        all_neighborhoods_this_round::Vector{AccumTuple} = []
 
-        for atom_index in 1:n_atoms
-            # Skip if the atom is marked as dead
+        for atom_index in 1:num_atoms
+            # If the atom is marked as dead, skip
             if dead_atoms[atom_index]
                 continue
             end
@@ -148,58 +185,76 @@ function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
                 continue
             end
 
-            # Get neighbor's hashes
-            neighbor_hashes = [atom_hashes[neighbor_index] for neighbor_index in neighbor_indices]
+            # Add up-to-date variants of neighbors
+            empty!(neighborhood_invariants)
 
             for neighbor_index in neighbor_indices
-                # Get bond index and mark it in this atom's neighborhood
-                bond_idx = edge_rank(ernk, atom_index, neighbor_index)
-                round_neighborhoods[atom_index][bond_idx] = true
+                bond_index = edge_rank(ernk, atom_index, neighbor_index)
+                round_atom_neighborhoods[atom_index][bond_index] = true;
 
-                # Union with neighbor's previous neighborhood
-                round_neighborhoods[atom_index] .|= atom_neighborhoods[neighbor_index]
-
-                push!(neighbor_hashes, atom_hashes[neighbor_index])
+                round_atom_neighborhoods[atom_index] .|= atom_neighborhoods[neighbor_index]
+                push!(neighborhood_invariants, Pair(
+                    bond_invariants[bond_index],
+                    current_invariants[neighbor_index],
+                ))
             end
 
-            # Sort neighbor hashes for canonical ordering
-            sorted_neighbors = sort(neighbor_hashes)
+            # Sort neighbor list
+            sort!(neighborhood_invariants)
 
-            # Combine current hash with sorted neighbor hashes and store it as the new hash for this atom
-            # combined = [atom_hashes[atom_index], sorted_neighbors...]
-            invar::UInt32 = layer - 1;
-            invar = ecfp_hash_combine(invar, atom_hashes[atom_index])
-            for neighbor_invar in sorted_neighbors
+            # Calculate the new atom invariant by combining the neighbors'
+            invar::UInt32 = layer - 1
+            invar = ecfp_hash_combine(invar, current_invariants[atom_index])
+
+            for (bond_invar, neighbor_invar) in neighborhood_invariants
+                invar = ecfp_hash_combine(invar, bond_invar)
                 invar = ecfp_hash_combine(invar, neighbor_invar)
             end
-            new_hashes[atom_index] = invar
 
-            # Add to features
-            push!(round_results, (round_neighborhoods[atom_index], new_hashes[atom_index], atom_index))
+            next_layer_invariants[atom_index] = invar;
+            push!(all_neighborhoods_this_round, AccumTuple(
+                round_atom_neighborhoods[atom_index],
+                invar,
+                atom_index,
+            ))
         end
 
-        # Sort and deduplicate
-        sort!(round_results)
-        for (neighborhood, hash, atom_idx) in round_results
-            if neighborhood ∉ seen_neighborhoods
-                push!(features, hash)
-                push!(seen_neighborhoods, copy(neighborhood))
+        sort!(all_neighborhoods_this_round)
+
+        for nbh in all_neighborhoods_this_round
+            if nbh.bits in neighborhoods
+                # If this bit sequence has been seen before, mark the atom as dead
+                dead_atoms[nbh.atom_index] = true
             else
-                dead_atoms[atom_idx] = true
+                # Add the neighborhood invariant to the result list
+                push!(result, MorganAtomEnv(
+                    nbh.invariant,
+                    nbh.atom_index,
+                    layer,
+                ))
+                push!(neighborhoods, nbh.bits)
             end
         end
 
-        # Update hashes for next iteration
-        atom_hashes = new_hashes
-        atom_neighborhoods = round_neighborhoods
+        # Swap current and next layer invariant vectors
+        current_invariants = next_layer_invariants
+        next_layer_invariants = zeros(num_atoms)
+
+        # Start with this round's neighbors on the next rounds
+        atom_neighborhoods = round_atom_neighborhoods
     end
 
-    # Create bit vector by folding features
-    fp = falses(N)
-    for feature in features
-        # Use module to fold feature into bit vector
-        bit_index = (feature % N) + 1 # +1 for 1-based indexing
-        fp[bit_index] = true
+    fp::Vector{Integer} = zeros(N)
+
+    for env in result
+        seed::UInt32 = env.code
+
+        bit_id = seed
+        if N != 0
+            bit_id %= N
+        end
+
+        fp[bit_id] = fp[bit_id] + 1
     end
 
     return fp
