@@ -1,8 +1,10 @@
 [deps]
 Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
 MolecularGraph = "6c89ec66-9cd8-5372-9f91-fabc50dd27fd"
+PythonCall = "6099a3de-0909-46bc-b1f4-468b9a2dfc0d"
 RDKitMinimalLib = "44044271-7623-48dc-8250-42433c44e4b7"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 ReferenceTests = "324d217c-45ce-50fc-942e-d289b448e8cf"
 SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
