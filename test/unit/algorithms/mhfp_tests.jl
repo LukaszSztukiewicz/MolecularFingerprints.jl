@@ -234,19 +234,30 @@ include("../../../src/algorithms/mhfp.jl")
 
         @testset "Complete shingling tests" begin
             ##### Testing mhfp_shingling_from_mol #########################################
-            calculated_shingling = mhfp_shingling_from_mol(mol, 3, true, 0)
+            
+            # set up calculator with parameters
+            calculator = MHFP(3, 0, true)  # radius, min_radius, rings
+
+            # calculate shingling
+            calculated_shingling = mhfp_shingling_from_mol(mol, calculator)
 
             # Test that the shingling returned from mhfp_shingling_from_mol is the union
             # of smiles_from_rings, smiles_from_atoms & smiles_from_circular_substructures
             @test symdiff(calculated_shingling, union(smiles_from_rings(mol), 
                 smiles_from_atoms(mol), 
-                smiles_from_circular_substructures(mol, 3, 1))) == []
+                # Note: min_radius is now 1, even though we set it to 0 in the calculator 
+                # above. This is because the mhfp_shingling_from_mol function increases the
+                # min_radius to at least 1 before calling
+                # smiles_from_circular_substructures, as the special case of radius 0 is 
+                # already taken care of by the function smiles_from_atoms
+                smiles_from_circular_substructures(mol, 3, 1))  # radius, min_radius
+                ) == []
         end
     end
 
     @testset "MHFP Hashing function tests" begin
-        ##### Testing default encoder #####################################################
-        mhfp_encoder = MHFP()
+        ##### Testing default calculator ##################################################
+        mhfp_calc = MHFP()
 
         # Taken from the original authors tests.
         # (See https://github.com/reymond-group/mhfp/blob/ea514f8fd4b21b0d0d732452cf7062c282edfbde/test/test_encoder.py#L12)
@@ -258,7 +269,7 @@ include("../../../src/algorithms/mhfp.jl")
         # one used in julia, hence, this is not surprising.
         @test length(ref_hashed_shingling) == length(mhfp_hash_from_molecular_shingling(
             ref_shingling, 
-            mhfp_encoder))
+            mhfp_calc))
 
         # TODO add some other test that goes deeper.
     end
