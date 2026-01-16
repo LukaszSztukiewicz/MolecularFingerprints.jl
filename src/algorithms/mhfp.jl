@@ -9,15 +9,20 @@ using SHA
 
 Class for MHFP fingerprint generator/featurizer. Contains settings and parameters for 
 MHFP fingerprint generation.
+
+Also contains the fields `_mersenne_prime`, `_max_hash`, `_permutations_a` and 
+`_permutations_b`, which are internal and should not be set explicitly.
+The first two have default values which should not be changed, and the second two are
+random vectors which are generated automatically based on the given `seed`.
 """
 struct MHFP <: AbstractFingerprint
     radius::Int
     min_radius::Int
     rings::Bool
     n_permutations::Int
-    max_hash::Int
     seed::Int
     _mersenne_prime::Int
+    _max_hash::Int
     _permutations_a::Vector{UInt32}
     _permutations_b::Vector{UInt32}
 
@@ -26,25 +31,28 @@ struct MHFP <: AbstractFingerprint
         min_radius::Int, 
         rings::Bool, 
         n_permutations::Int, 
-        max_hash::Int, 
         seed::Int,
         _mersenne_prime::Int,
+        _max_hash::Int, 
         _permutations_a::Vector{UInt32},
         _permutations_b::Vector{UInt32})
         
-        # Inner constructor to ensure mersenne prime is not given manually.
+        # Inner constructor to ensure mersenne prime and max hash is not given manually.
         _mersenne_prime == (1 << 61) - 1 || error(
             """Incorrect value set for the mersenne prime, must be $((1 << 61) - 1), 
             got $_mersenne_prime. Don't give this value explicitly.""")
+        _max_hash == (1 << 32) - 1 || error(
+            """Incorrect value set for max_hash, must be $((1 << 32) - 1), 
+            got $_max_hash. Don't give this value explicitly.""")
         
         return new(
             radius, 
             min_radius,
             rings,
             n_permutations,
-            max_hash,
             seed,
             _mersenne_prime,
+            _max_hash,
             _permutations_a,
             _permutations_b)
     end
@@ -55,15 +63,42 @@ end
 
 # The most detailed call a user should ever do manually. All other attributes are calculated
 # automatically.
+"""
+    MHFP(
+        radius::Int = 3,
+        min_radius::Int = 1,
+        rings::Bool = true;
+        n_permutations::Int = 2048,
+        seed::Int = 42)
+
+Outer constructor for the MHFP type, which contains parameters for the generation of an 
+MHFP fingerprint.
+
+# Arguments
+- `radius::Int = 3`: Radius up to which the circular substructures around each heavy atom
+    of a molecule should be considered. Default is 3.
+- `min_radius::Int = 1`: Smallest radius for which the circular substructures around each
+    heavy atom of a molecule should be considered. Default is 1. `min_radius=0` is also 
+    allowed, then information about each heavy atom will be included explicitly in the 
+    fingerprint.
+- `rings::Bool = true`: If true (default), include information about rings in molecules in
+    their fingerprints explicitly.
+
+# Keyword arguments
+- `n_permutations::Int = 2048`: length of the random vectors a and b which are used in 
+    the hashing process. Also corresponds to the length of the final fingerprint.
+- `seed::Int = 42`: seed for the generation of the random vectors `a` and `b` which are used
+     in the hashing process. Must be the same for comparable fingerprints.
+"""
 function MHFP(
     radius::Int = 3, 
     min_radius::Int = 1,
     rings::Bool = true;
     n_permutations::Int = 2048,  # keyword arguments
-    max_hash::Int = (1 << 32) - 1, 
     seed::Int = 42)
     
     _mersenne_prime = (1 << 61) -1
+    _max_hash = (1 << 32) - 1
 
     _permutations_a = Vector{UInt32}()
     _permutations_b = Vector{UInt32}()
@@ -71,17 +106,17 @@ function MHFP(
     Random.seed!(seed)
 
     for i in 1:n_permutations
-        a = rand(UInt32(1):UInt32(max_hash))
-        b = rand(UInt32(0):UInt32(max_hash))
+        a = rand(UInt32(1):UInt32(_max_hash))
+        b = rand(UInt32(0):UInt32(_max_hash))
 
         # redraw values if already present in _permutations_a
         while a in _permutations_a
-            a = rand(UInt32(1):UInt32(max_hash))
+            a = rand(UInt32(1):UInt32(_max_hash))
         end
 
         # redraw values if already present in _permutations_b
         while b in _permutations_b
-            b = rand(UInt32(0):UInt32(max_hash))
+            b = rand(UInt32(0):UInt32(_max_hash))
         end
 
         push!(_permutations_a, a)
@@ -93,9 +128,9 @@ function MHFP(
         min_radius,
         rings,
         n_permutations,
-        max_hash,
         seed,
         _mersenne_prime,
+        _max_hash,
         _permutations_a,
         _permutations_b
     )
@@ -104,14 +139,14 @@ end
 
 
 """
-    fingerprint(mol::SMILESMolGraph, calc::MHFP{N})
+    fingerprint(mol::SMILESMolGraph, calc::MHFP)
 
-Calculates the MHFP fingerprint of the given molecule and returns it as a bit vector
+Calculates the MHFP fingerprint of the given molecule and returns it as a vector of UInt32's
 """
 function fingerprint(mol::MolGraph, calc::MHFP)
     return mhfp_hash_from_molecular_shingling(  # TODO make mhfp_shingling_from_mol accept the encoder "calc" as a parameter instead of separate arguments, and change call here correspondingly
-        mhfp_shingling_from_mol(mol, calc.radius, calc.rings, calc.min_radius),
-        calc)  # FIXME This doesn't return a BitVector yet, but a vector of UInt32's
+        mhfp_shingling_from_mol(mol, calc),# .radius, calc.rings, calc.min_radius),
+        calc)
 end
 
 """
@@ -129,6 +164,9 @@ around each heavy (=non-hydrogen) atom of the molecule.
 
 # Arguments
 - `mol::MolGraph`: the molecule for which to calculate the shingling.
+- `calc::MHFP`: fingeprint "calculator" object, containing the relevant parameters for the 
+    fingerprint calculation, e.g., the radii of the circular substructures to be considered
+    and whether to include ring information explicitly in the fingerprints
 - `radius::Int=3`: the radius up to which the substructures around each atom should 
     be considered
 - `rings::Bool=true`: if true (default), extract the smallest set of smallest rings
@@ -141,10 +179,14 @@ around each heavy (=non-hydrogen) atom of the molecule.
 """
 function mhfp_shingling_from_mol(
     mol::MolGraph,
-    radius::Int = 3,
-    rings::Bool = true,
-    min_radius::Int = 1,
+    calc::MHFP
+    # radius::Int = 3,
+    # rings::Bool = true,
+    # min_radius::Int = 1,
 )
+    radius = calc.radius
+    rings = calc.rings
+    min_radius = calc.min_radius
 
     # remove all hydrogens in the molecule, as we only want to consider heavy atoms in all 
     # following steps
