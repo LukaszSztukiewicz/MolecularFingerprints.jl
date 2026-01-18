@@ -1,2 +1,3 @@
 [dev.pip.deps]
-rdkit = "==2025.9.3"
+rdkit = "==2025.3.6"
+scikit-fingerprints = "==1.18.0"
