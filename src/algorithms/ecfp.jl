@@ -101,15 +101,20 @@ struct MorganAtomEnv
 end
 
 struct AccumTuple
-    bits::Vector{Bool}
+    bits::BitVector
     invariant::UInt32
     atom_index::Int
 
-    AccumTuple(bits::Vector{Bool}, invariant::UInt32, atom_index::Int) = new(bits, invariant, atom_index)
+    AccumTuple(bits::BitVector, invariant::UInt32, atom_index::Int) = new(bits, invariant, atom_index)
 end
 
 function Base.isless(a::AccumTuple, b::AccumTuple)
-    a.bits != b.bits && return a.bits < b.bits
+    # Compare ra and rb in reverse order, because this is how boost::dynamic_bitset does it
+    for (abit, bbit) in zip(Iterators.reverse(a.bits), Iterators.reverse(b.bits))
+        abit != bbit && return abit < bbit
+    end
+    length(a.bits) != length(b.bits) && return length(a.bits) < length(b.bits) # Should not occur in our case, but let's put it here for completeness
+
     a.invariant != b.invariant && return a.invariant < b.invariant
     a.atom_index < b.atom_index
 end
@@ -135,7 +140,7 @@ end
 
 function get_bond_invariants(mol::SMILESMolGraph)
     # Reference: https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/Fingerprints/MorganGenerator.cpp#L126
-    return[UInt32(rdkit_bond_type(bond)) for (_, bond) in mol.eprops]
+    return [UInt32(rdkit_bond_type(bond)) for (_, bond) in mol.eprops]
 end
 
 function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
@@ -156,16 +161,16 @@ function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
 
     neighborhood_invariants::Vector{Pair{UInt32, UInt32}} = []
 
-    neighborhoods::Set{Vector{Bool}} = Set()
-    atom_neighborhoods::Vector{Vector{Bool}} = [falses(num_bonds) for _ in 1:num_atoms]
-    round_atom_neighborhoods::Vector{Vector{Bool}} = atom_neighborhoods
+    neighborhoods::Set{BitVector} = Set()
+    atom_neighborhoods::Vector{BitVector} = [falses(num_bonds) for _ in 1:num_atoms]
+    round_atom_neighborhoods::Vector{BitVector} = [falses(num_bonds) for _ in 1:num_atoms]
 
     # These atoms are skipped
     dead_atoms = falses(num_atoms)
 
     # Add round 0 invariants
     for (i, hash) in enumerate(current_invariants)
-        push!(result, MorganAtomEnv(hash, i, 0))
+        push!(result, MorganAtomEnv(hash, i, 0)) # Note: atom id should start at 0
     end
 
     # Do subsequent rounds
@@ -207,8 +212,9 @@ function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
             invar = ecfp_hash_combine(invar, current_invariants[atom_index])
 
             for (bond_invar, neighbor_invar) in neighborhood_invariants
-                invar = ecfp_hash_combine(invar, bond_invar)
-                invar = ecfp_hash_combine(invar, neighbor_invar)
+                # hash the pair separately first, then combine with the total invariant (this is how rdkit does it)
+                nb_invar = ecfp_hash([bond_invar, neighbor_invar])
+                invar = ecfp_hash_combine(invar, nb_invar)
             end
 
             next_layer_invariants[atom_index] = invar;
@@ -219,6 +225,8 @@ function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
             ))
         end
 
+        # Sort the boolean array in reverse order, the other tuple members in forward order.
+        # This is consistent with the way C++ sorts the Bitstream member
         sort!(all_neighborhoods_this_round)
 
         for nbh in all_neighborhoods_this_round
@@ -237,24 +245,27 @@ function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
         end
 
         # Swap current and next layer invariant vectors
-        current_invariants = next_layer_invariants
+        current_invariants = copy(next_layer_invariants)
         next_layer_invariants = zeros(num_atoms)
 
         # Start with this round's neighbors on the next rounds
         atom_neighborhoods = round_atom_neighborhoods
     end
 
-    fp::Vector{Integer} = zeros(N)
+    fp::BitVector = falses(N)
 
     for env in result
         seed::UInt32 = env.code
 
         bit_id = seed
         if N != 0
-            bit_id %= N
+            bit_id = mod(bit_id, N)
         end
 
-        fp[bit_id] = fp[bit_id] + 1
+        # We could also use an integer vector for the fingerprint here, in that case we would
+        # add one and get a count instead of just a bit map (rdkit provides a configuration option for this)
+        # Note: use 1-based indexing
+        fp[bit_id + 1] = true
     end
 
     return fp

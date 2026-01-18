@@ -230,9 +230,15 @@ bitset_to_string(bitset) = join(Int.(bitset), "")
 
     @testset "Fingerprint: Comparison to RDKit" begin
         test_cases = [
-            ("C", 1),
-            ("CC", 1),
-            ("CCC", 1),
+            ("C", 2),
+            ("CC", 2),
+            ("CCC", 2),
+            ("C", 3),
+            ("CC", 3),
+            ("CCC", 3),
+            ("C", 4),
+            ("CC", 4),
+            ("CCC", 4),
         ]
 
         @testset "Molecule $smiles, radius=$radius" for (smiles, radius) in test_cases
@@ -245,17 +251,4 @@ bitset_to_string(bitset) = join(Int.(bitset), "")
             @test actual == expected
         end
     end
-
 end
-
-# @testset "ECFP Fingerprint Tests" begin
-
-#     # dummy test to ensure the test file is being executed
-#     # Replace with actual ECFP fingerprint tests when implemented
-
-#     mol = MolecularGraph.smilestomol("CC(=O)O")
-#     ecfp_calc = ECFP{2}(2)  # Example type ECFP{2} with radius 2
-#     fp = fingerprint(mol, ecfp_calc)
-#     @test length(fp) == 2048 #FIXME probably should be 1024, now 2048 for the demonstration purpose, change if needed
-
-# end
