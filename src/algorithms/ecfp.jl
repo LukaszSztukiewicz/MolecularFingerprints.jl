@@ -272,10 +272,10 @@ we currently only support the most common bond types (1 to 6).
 RDKit bond types: https://github.com/rdkit/rdkit/blob/Release_2025_09_4/Code/GraphMol/Bond.h#L55
 """
 function rdkit_bond_type(bond::SMILESBond)
-    if bond.order in 1:6
+    if !bond.isaromatic && bond.order in 1:6
         return bond.order # SINGLE..HEXTUPLE
     else
-        error("Unsupported bond type!")
+        error("Unsupported bond type")
     end
 
     # This is not well tested on out of scope for this project

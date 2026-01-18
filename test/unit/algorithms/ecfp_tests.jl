@@ -249,4 +249,10 @@ bitset_to_string(bitset) = join(Int.(bitset), "")
             @test actual == expected
         end
     end
+
+    @testset "Unsupported Bond Type" begin
+        mol = smilestomol("C1C:C:C:C:C1")
+        fp = ECFP{16}(3)
+        @test_throws "Unsupported bond type" fingerprint(mol, fp)
+    end
 end
