@@ -1,5 +1,32 @@
 using MolecularGraph: AbstractMolGraph, edge_rank
 
+"""
+    ECFP{N} <: AbstractFingerprint
+
+Extended-Connectivity Fingerprint (ECFP) calculator.
+
+ECFPs are circular fingerprints encoding a local molecular environment around each atom
+up to a specified radius. This implementation closely follows the RDKit algorithm.
+
+# Fields
+- `radius::Int`: The maximum number of bonds to traverse from each atom (default: 2)
+
+# Type Parameters
+- `N`: The size of the fingerprint bit vector
+
+# Examples
+```julia
+# Create ECFP4 (radius=2) with 2048 bits
+fp_calc = ECFP{2048}(2)
+
+# Create ECFP6 (radius=3) with 1024 bits
+fp_calc = ECFP{1024}(3)
+```
+
+# References
+Rogers, D., & Hahn, M. (2010). Extended-connectivity fingerprints.
+Journal of Chemical Information and Modeling, 50(5), 742-754.
+"""
 struct ECFP{N} <: AbstractFingerprint
     radius::Int
 
@@ -10,28 +37,42 @@ struct ECFP{N} <: AbstractFingerprint
     end
 end
 
+"""
+    ecfp_atom_invariant(smiles::AbstractString)
+    ecfp_atom_invariant(mol::AbstractMolGraph)
+    ecfp_atom_invariant(mol::AbstractMolGraph, atom_index)
+
+Calculate atomic invariants for ECFP fingerprint generation.
+
+The atomic invariants are properties of an atom that don't depend on initial atom numbering,
+based on the Daylight atomic invariants. This implementation follows the RDKit approach.
+
+# Arguments
+- `smiles::AbstractString`: SMILES string representation of a molecule
+- `mol::AbstractMolGraph`: Molecular graph structure
+- `atom_index`: Index of the specific atom to compute invariants for. If not specified, invariants for all atoms are computed and returned
+
+# Returns
+- For single atom: `Vector{UInt32}` containing the invariant components
+- For all atoms: `Vector{Vector{UInt32}}` with invariants for each atom
+
+# Invariant Components
+The computed invariants include (in order):
+1. Atomic number
+2. Total degree (number of neighbors including implicit hydrogens)
+3. Total number of hydrogens (implicit + explicit)
+4. Atomic charge
+5. Delta mass (difference from standard isotope mass)
+6. Ring membership indicator (1 if atom is in a ring, omitted otherwise)
+
+# References
+RDKit implementation: https://github.com/rdkit/rdkit/blob/Release_2025_09_4/Code/GraphMol/Fingerprints/FingerprintUtil.cpp#L244
+"""
 ecfp_atom_invariant(smiles::AbstractString) = ecfp_atom_invariant(smilestomol(smiles))
 
 ecfp_atom_invariant(mol::AbstractMolGraph) = [ecfp_atom_invariant(mol, i) for i in 1:nv(mol)]
 
 function ecfp_atom_invariant(mol::AbstractMolGraph, atom_index)
-    """
-    From the ECFP Paper:
-
-    The Daylight atomic invariants are six properties of an atom in a molecule that do not depend
-    on initial atom numbering. These properties are:
-      - The number of immediate neighbors who are "heavy" (non-hydrogen) atoms
-      - The valence minus the number of hydrogens
-      - The atomic number
-      - The atomic mass
-      - The atomic charge
-      - The number of attached hydrogens (both implicit and explicit)
-      - Whether the atom is contained in at least one ring
-
-    RDKit uses specific combinations and orders of these variants, the exact implementation can be found here:
-      https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/Fingerprints/FingerprintUtil.cpp#L244
-    """
-
     atom = mol.vprops[atom_index]
 
     # Get number of implicit and explicit hydrogens
@@ -77,14 +118,46 @@ function ecfp_atom_invariant(mol::AbstractMolGraph, atom_index)
     return components
 end
 
+"""
+    ecfp_hash_combine(seed::UInt32, value::UInt32)
+
+Combine two hash values using the boost hash_combine algorithm.
+
+This function implements the hash combining strategy used in RDKit's ECFP implementation,
+which is based on the boost C++ library's hash_combine function.
+
+# Arguments
+- `seed::UInt32`: Current hash seed value
+- `value::UInt32`: New value to combine into the hash
+
+# Returns
+- `UInt32`: Combined hash value
+
+# References
+Boost hash implementation, as provided by RDKit: https://github.com/rdkit/rdkit/blob/Release_2025_09_4/Code/RDGeneral/hash/hash.hpp
+"""
 function ecfp_hash_combine(seed::UInt32, value::UInt32)
     return seed ⊻ (value + UInt32(0x9e3779b9) + (seed << 6) + (seed >> 2))
 end
 
-function ecfp_hash(v::Vector{UInt32})
-    # return hash(invariant, UInt(0xECFECF00)) % UInt32
+"""
+    ecfp_hash(v::Vector{UInt32})
 
-    # Reference: https://github.com/rdkit/rdkit/blob/master/Code/RDGeneral/hash/hash.hpp
+Generate a hash value from a vector of UInt32 values.
+
+Iteratively combines all values in the vector using the ECFP hash combining algorithm
+to produce a single hash value representing the entire vector.
+
+# Arguments
+- `v::Vector{UInt32}`: Vector of values to hash
+
+# Returns
+- `UInt32`: Hash value representing the input vector
+
+# References
+Boost hash implementation, as provided by RDKit: https://github.com/rdkit/rdkit/blob/Release_2025_09_4/Code/RDGeneral/hash/hash.hpp
+"""
+function ecfp_hash(v::Vector{UInt32})
     seed = UInt32(0)
     for value in v
         seed = ecfp_hash_combine(seed, value)
@@ -92,7 +165,20 @@ function ecfp_hash(v::Vector{UInt32})
     return seed
 end
 
-struct MorganAtomEnv 
+"""
+    MorganAtomEnv
+
+Internal structure representing a Morgan atom environment.
+
+Stores the hash code, atom identifier (index), and layer/radius for each atomic environment
+encountered during ECFP fingerprint generation.
+
+# Fields
+- `code::UInt32`: Hash code representing the atomic environment
+- `atom_id::Int`: Identifier of the central atom
+- `layer::Int`: Radius/layer at which this environment was computed
+"""
+struct MorganAtomEnv
     code::UInt32
     atom_id::Int
     layer::Int
@@ -100,6 +186,19 @@ struct MorganAtomEnv
     MorganAtomEnv(code::UInt32, atom_id::Int, layer::Int) = new(code, atom_id, layer)
 end
 
+"""
+    AccumTuple
+
+Internal structure for tracking and comparing atomic neighborhoods during ECFP generation.
+
+Used to detect duplicate neighborhoods and maintain consistency with RDKit's algorithm
+by storing bond connectivity patterns along with invariant hashes.
+
+# Fields
+- `bits::BitVector`: Bit representation of the bond neighborhood
+- `invariant::UInt32`: Hash invariant for this neighborhood
+- `atom_index::Int`: Index of the central atom
+"""
 struct AccumTuple
     bits::BitVector
     invariant::UInt32
@@ -108,6 +207,21 @@ struct AccumTuple
     AccumTuple(bits::BitVector, invariant::UInt32, atom_index::Int) = new(bits, invariant, atom_index)
 end
 
+"""
+    Base.isless(a::AccumTuple, b::AccumTuple)
+
+Define ordering for AccumTuple objects to match RDKit's sorting behavior.
+
+Compares AccumTuples by first checking the bit vectors in reverse order (matching
+boost::dynamic_bitset comparison), then by invariant value, then by atom index.
+
+# Arguments
+- `a::AccumTuple`: First tuple to compare
+- `b::AccumTuple`: Second tuple to compare
+
+# Returns
+- `Bool`: true if a < b according to the defined ordering
+"""
 function Base.isless(a::AccumTuple, b::AccumTuple)
     # Compare ra and rb in reverse order, because this is how boost::dynamic_bitset does it
     for (abit, bbit) in zip(Iterators.reverse(a.bits), Iterators.reverse(b.bits))
@@ -119,14 +233,41 @@ function Base.isless(a::AccumTuple, b::AccumTuple)
     a.atom_index < b.atom_index
 end
 
+"""
+    get_atom_invariants(mol::SMILESMolGraph)
+
+Compute hashed atom invariants for all atoms in a molecule.
+
+# Arguments
+- `mol::SMILESMolGraph`: Input molecular graph
+
+# Returns
+- `Vector{UInt32}`: Hashed invariant values for each atom
+
+# References
+RDKit implementation: https://github.com/rdkit/rdkit/blob/Release_2025_09_4/Code/GraphMol/Fingerprints/MorganGenerator.cpp#L42
+"""
 function get_atom_invariants(mol::SMILESMolGraph)
-    # Reference: https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/Fingerprints/MorganGenerator.cpp#L42
     return [ecfp_hash(x) for x in ecfp_atom_invariant(mol)]
 end
 
-function rdkit_bond_type(bond::SMILESBond)
-    # Reference: https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/Bond.h#L55
+"""
+    rdkit_bond_type(bond::SMILESBond)
 
+Convert a SMILES bond to RDKit's bond type encoding.
+
+Maps bond properties to integer codes matching RDKit's bond type enumeration.
+
+# Arguments
+- `bond::SMILESBond`: Input bond object
+
+# Returns
+- `Int`: Bond type code (1-6 for single-hextuple, 12 for aromatic, 20 for other, 21 for zero)
+
+# References
+RDKit bond types: https://github.com/rdkit/rdkit/blob/Release_2025_09_4/Code/GraphMol/Bond.h#L55
+"""
+function rdkit_bond_type(bond::SMILESBond)
     if bond.isaromatic
         return 12 # AROMATIC
     elseif bond.order == 0
@@ -138,14 +279,67 @@ function rdkit_bond_type(bond::SMILESBond)
     end
 end
 
+"""
+    get_bond_invariants(mol::SMILESMolGraph)
+
+Compute bond type invariants for all bonds in a molecule.
+
+# Arguments
+- `mol::SMILESMolGraph`: Input molecular graph
+
+# Returns
+- `Vector{UInt32}`: Bond type codes for each bond in the molecule
+
+# Known Issue
+The edge properties provided by [MolecularGraph.jl](https://github.com/mojaie/MolecularGraph.jl) are not in the same order as in RDKit.
+This results in different hashes and, ultimately, in different fingerprints for larger
+molecules compared to RDKit. As this would require rework on the smilestomol algorithm
+provided by [MolecularGraph.jl](https://github.com/mojaie/MolecularGraph.jl), a fix for this issue is currently not in scope of this project.
+
+# References
+RDKit implementation: https://github.com/rdkit/rdkit/blob/Release_2025_09_4/Code/GraphMol/Fingerprints/MorganGenerator.cpp#L126
+"""
 function get_bond_invariants(mol::SMILESMolGraph)
-    # Reference: https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/Fingerprints/MorganGenerator.cpp#L126
     return [UInt32(rdkit_bond_type(bond)) for (_, bond) in mol.eprops]
 end
 
-function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
-    # Reference: https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/Fingerprints/MorganGenerator.cpp#L257
+"""
+    fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
 
+Generate an ECFP (Extended-Connectivity Fingerprint) for a molecule.
+
+This function implements the Morgan/ECFP algorithm as described in the original paper
+and matching the RDKit implementation. It generates circular fingerprints by iteratively
+expanding atomic neighborhoods up to the specified radius.
+
+# Algorithm Overview
+1. Compute initial atom invariants (layer 0)
+2. For each layer up to the specified radius:
+   - Expand atomic neighborhoods by one bond
+   - Hash neighborhood information to create new invariants
+   - Detect and eliminate duplicate neighborhoods
+   - Store unique atomic environments
+3. Map all environment hashes to bit positions in the fingerprint
+
+# Arguments
+- `mol::SMILESMolGraph`: Input molecular graph
+- `calc::ECFP{N}`: ECFP calculator specifying radius and fingerprint size
+
+# Returns
+- `BitVector`: Binary fingerprint of length N with bits set for detected molecular features
+
+# Examples
+```julia
+mol = smilestomol("CCO")  # Ethanol
+fp_calc = ECFP{2048}(2)   # ECFP4 with 2048 bits
+fp = fingerprint(mol, fp_calc)
+```
+
+# References
+- Rogers, D., & Hahn, M. (2010). Extended-connectivity fingerprints. J. Chem. Inf. Model., 50(5), 742-754.
+- RDKit implementation: https://github.com/rdkit/rdkit/blob/Release_2025_09_4/Code/GraphMol/Fingerprints/MorganGenerator.cpp#L257
+"""
+function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
     num_atoms = nv(mol)
     num_bonds = ne(mol)
     ernk = edge_rank(mol)
