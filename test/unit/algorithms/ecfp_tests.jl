@@ -78,9 +78,7 @@ bitset_to_string(bitset) = join(Int.(bitset), "")
         for tc in test_cases
             expected_invariants = rdkit_atom_invariants(tc)
             expected_hashes = rdkit_hashed_atom_invariants(tc)
-
-            mol = smilestomol(tc)
-            actual_invariants = ecfp_atom_invariant(mol)
+            actual_invariants = ecfp_atom_invariant(tc)
 
             @testset "Molecule $tc, atom index $i" for (i, (actual, expected, expected_hash)) in enumerate(zip(actual_invariants, expected_invariants, expected_hashes))
                 # Check length of returned invariant

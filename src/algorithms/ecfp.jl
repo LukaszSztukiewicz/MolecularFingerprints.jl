@@ -262,21 +262,32 @@ Maps bond properties to integer codes matching RDKit's bond type enumeration.
 - `bond::SMILESBond`: Input bond object
 
 # Returns
-- `Int`: Bond type code (1-6 for single-hextuple, 12 for aromatic, 20 for other, 21 for zero)
+- `Int`: Bond type code (1-6 for single to hextuple, 12 for aromatic, 20 for other, 21 for zero)
+
+# Known Issues
+Due to differences in the internal representation of bonds within MolecularGraph.jl,
+we currently only support the most common bond types (1 to 6).
 
 # References
 RDKit bond types: https://github.com/rdkit/rdkit/blob/Release_2025_09_4/Code/GraphMol/Bond.h#L55
 """
 function rdkit_bond_type(bond::SMILESBond)
-    if bond.isaromatic
-        return 12 # AROMATIC
-    elseif bond.order == 0
-        return 21 # ZERO
-    elseif bond.order in 1:6
+    if bond.order in 1:6
         return bond.order # SINGLE..HEXTUPLE
     else
-        return 20 # OTHER
+        error("Unsupported bond type!")
     end
+
+    # This is not well tested on out of scope for this project
+    # if bond.isaromatic
+    #     return 12 # AROMATIC
+    # elseif bond.order == 0
+    #     return 21 # ZERO
+    # elseif bond.order in 1:6
+    #     return bond.order # SINGLE..HEXTUPLE
+    # else
+    #     return 20 # OTHER
+    # end
 end
 
 """
