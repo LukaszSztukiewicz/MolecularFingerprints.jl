@@ -179,7 +179,7 @@ function mhfp_shingling_from_mol(
     # following steps
     remove_all_hydrogens!(mol)
 
-    shingling = []
+    shingling::Vector{String} = []
 
     # Consider rings of the molecule, if corresponding parameter is set
     if rings
@@ -224,7 +224,7 @@ In most cases, this will not have any effect, but for some molecules, such as cu
 will.
 """
 function smiles_from_rings(mol::MolGraph)
-    shingling_snippet = []
+    shingling_snippet::Vector{String} = []
 
 
     # Go through all rings in the sssr
@@ -243,7 +243,7 @@ end
 Return vector containing SMILES strings of all atoms of the given molecule.
 """
 function smiles_from_atoms(mol::MolGraph)
-    shingling_snippet = []
+    shingling_snippet::Vector{String} = []
 
     aromatic_atoms = is_aromatic(mol)
 
@@ -285,7 +285,7 @@ For each atom of the given molecule, extract the substructures of radii min_radi
 radius, and generate their corresponding SMILES strings.
 """
 function smiles_from_circular_substructures(mol::MolGraph, radius::Int, min_radius::Int)
-    shingling_snippet = []
+    shingling_snippet::Vector{String} = []
 
     # Ensure radius >= 1
     radius >=   0 || error("""radius must be strictly positive in this function.\nGot
