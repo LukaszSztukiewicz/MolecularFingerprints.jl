@@ -1,7 +1,3 @@
-using Test
-using MolecularGraph
-using MolecularFingerprints
-
 @testset "Topological Torsion Fingerprint Tests" begin
     @testset "testPathFinder" begin
             data = "c1ccccc1"
