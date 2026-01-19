@@ -17,7 +17,7 @@ using SparseArrays: sparse
 
 using MolecularGraph
 using SHA
-using Graphs
+using Graphs: induced_subgraph, nv, vertices, all_simple_paths
 using SparseArrays
 
 """

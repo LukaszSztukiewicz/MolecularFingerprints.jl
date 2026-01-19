@@ -1,12 +1,3 @@
-using Test
-using MolecularGraph
-using MolecularFingerprints
-
-using PythonCall: Py, pyimport, pyconvert, pybuiltins
-using Graphs: nv
-
-
-
 const rdkitChem = pyimport("rdkit.Chem")
 const rdkitMolDescriptors = pyimport("rdkit.Chem.rdMolDescriptors")
 const skfpFingerprints = pyimport("skfp.fingerprints")
