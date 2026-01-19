@@ -1,5 +1,25 @@
-using MolecularFingerprints
 using Test
+using MolecularGraph
+using MolecularFingerprints
+using Random
+using Graphs: vertices, induced_subgraph
+
+using Test
+using MolecularGraph
+using MolecularFingerprints
+
+using PythonCall: Py, pyimport, pyconvert, pybuiltins
+using Graphs: nv
+
+using Test
+using PythonCall
+using MolecularGraph
+using MolecularFingerprints
+using SparseArrays
+
+using Test
+using MolecularGraph
+using MolecularFingerprints
 
 @testset "MolecularFingerprints.jl" begin
     @testset "Unit Tests" begin

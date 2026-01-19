@@ -1,10 +1,3 @@
-using PythonCall: Py, pyimport, pyconvert
-using MolecularGraph: SMILESMolGraph, smilestomol
-using Graphs: vertices, edges, neighbors, src, dst, degree, cycle_basis
-using SparseArrays: sparse
-
-export MACCSFingerprint, fingerprint, fingerprint_rdkit
-
 # ==============================================================================
 # Python / RDKit setup
 # ==============================================================================
@@ -980,20 +973,24 @@ const MACCS_RULES = Dict{Int, Function}(
 #     # fingerprint looks often like [0,0,1,0,0,0,0,1,0,0,0,...] - mostly zeros → waste of memory - use sparse vector
 # end
 
-# function fingerprint(mol::SMILESMolGraph, calc::MACCSFingerprint)
+# function fingerprint(mol::MolGraph, calc::MACCSFingerprint)
 #     return compute_maccs(mol, calc)
 # end
 
-function compute_maccs(mol::SMILESMolGraph, fp::MACCSFingerprint; rdkit_fp::Union{Nothing,Vector{Int}} = nothing)
-    vec = zeros(Int, nbits(fp))  # length 166
+function compute_maccs(mol::MolGraph, fp::MACCSFingerprint; rdkit_fp::Union{Nothing,Vector{Int}} = nothing, bypass_rdkit::Bool = true)
+    vec = BitVector(zeros(Bool, nbits(fp))) # [0, 0, 0, 0, 0, ..., 0]  (166 elemetns)
 
     for (idx, rule) in MACCS_RULES
         val = rule(mol)
 
         if val == -1
-            rdkit_fp === nothing &&
+            if bypass_rdkit #FIXME RDKIT
+                val = 0
+            else
+                rdkit_fp === nothing &&
                 error("RDKit fingerprint required for MACCS bit $idx")
-            vec[idx] = rdkit_fp[idx]
+                val = rdkit_fp[idx]
+            end
         else
             vec[idx] = fp.count ? val : (val > 0 ? 1 : 0)
         end
@@ -1006,10 +1003,14 @@ function compute_maccs(mol::SMILESMolGraph, fp::MACCSFingerprint; rdkit_fp::Unio
     end
 end
 
-function fingerprint(smiles::AbstractString, calc::MACCSFingerprint)
-    mol = MolecularGraph.smilestomol(smiles)
-    rdkit_fp = fingerprint_rdkit(smiles)
-    return compute_maccs(mol, calc; rdkit_fp=rdkit_fp)
+# function fingerprint(smiles::AbstractString, calc::MACCSFingerprint)
+#     mol = MolecularGraph.smilestomol(smiles)
+#     rdkit_fp = fingerprint_rdkit(smiles)
+#     return compute_maccs(mol, calc; rdkit_fp=rdkit_fp)
+# end
+
+function fingerprint(mol::MolGraph, calc::MACCSFingerprint)
+    return compute_maccs(mol, calc)
 end
 
 function fingerprint_rdkit(smiles::AbstractString)

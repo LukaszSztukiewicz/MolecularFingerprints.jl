@@ -1,11 +1,5 @@
-using Test
-using PythonCall
-using MolecularGraph
-using MolecularFingerprints
-using SparseArrays
 
-
-@testset "MACCS – Julia vs RDKit consistency" begin
+@testset "MACCS - Julia vs RDKit consistency" begin
 
     # smiles = "C=C(C)C"    
     # smiles = "COCC" 
