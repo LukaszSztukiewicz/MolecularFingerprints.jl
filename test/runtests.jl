@@ -2,7 +2,8 @@ using Test
 using MolecularGraph
 using MolecularFingerprints
 using Random
-using Graphs: vertices, induced_subgraph
+using SHA
+using Graphs: vertices, induced_subgraph, neighborhood
 
 using Test
 using MolecularGraph
