@@ -28,7 +28,7 @@ molecular structure using paths of length pathLength.
 - `mol::Graph`: the molecule for which to calculate the fingerprint
 - `calc::TopologicalTorsion`: struct containing parameters for fingerprint computation
 """
-function _fingerprint(mol::MolGraph, calc::TopologicalTorsion) 
+function fingerprint(mol::MolGraph, calc::TopologicalTorsion) 
     FP = getTopologicalTorsionFP(mol, calc.pathLength)
     return FP
 end

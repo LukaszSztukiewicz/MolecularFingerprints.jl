@@ -1005,7 +1005,7 @@ end
 #     return compute_maccs(mol, calc; rdkit_fp=rdkit_fp)
 # end
 
-function _fingerprint(mol::MolGraph, calc::MACCSFingerprint)
+function fingerprint(mol::MolGraph, calc::MACCSFingerprint)
     return compute_maccs(mol, calc)
 end
 

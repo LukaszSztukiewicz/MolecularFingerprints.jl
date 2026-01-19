@@ -102,7 +102,7 @@ end
 
 Calculates the MHFP fingerprint of the given molecule and returns it as a bit vector
 """
-function _fingerprint(mol::MolGraph, calc::MHFP)
+function fingerprint(mol::MolGraph, calc::MHFP)
     return mhfp_hash_from_molecular_shingling(  # TODO make mhfp_shingling_from_mol accept the encoder "calc" as a parameter instead of separate arguments, and change call here correspondingly
         mhfp_shingling_from_mol(mol, calc.radius, calc.rings, calc.min_radius),
         calc)  # FIXME This doesn't return a BitVector yet, but a vector of UInt32's

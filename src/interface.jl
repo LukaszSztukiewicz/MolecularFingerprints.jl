@@ -13,7 +13,13 @@ Uses parallelization over input vector.
 # Returns a vector of fingerprints.
 """
 function fingerprint(smiles_list::Vector{String}, calc::AbstractCalculator) 
-    fingerprints = Vector{Any}(undef, length(smiles_list))
+    
+    # Convert first element to determine return type safely
+    first_fp = fingerprint(smiles_list[1], calc)
+    ResultType = typeof(first_fp)
+    
+    fingerprints = Vector{ResultType}(undef, length(smiles_list))
+    fingerprints[1] = first_fp
 
     # Use Threads for parallel computation
     Threads.@threads for i in eachindex(smiles_list)
@@ -37,18 +43,19 @@ function fingerprint(smiles::String, calc::AbstractCalculator)
     return fingerprint(mol, calc)
 end
 
-function fingerprint(mol::MolGraph, calc::ECFP{N}) where N
-    return _fingerprint(mol, calc)
-end
+# # --- Specific fingerprint calculation methods ---
+# function fingerprint(mol::MolGraph, calc::ECFP{N}) where N
+#     return _fingerprint(mol, calc::ECFP{N})
+# end
 
-function fingerprint(mol::MolGraph, calc::MHFP)
-    return _fingerprint(mol, calc)
-end
+# function fingerprint(mol::MolGraph, calc::MHFP)
+#     return _fingerprint(mol, calc::MHFP)
+# end
 
-function fingerprint(mol::MolGraph, calc::MACCSFingerprint)
-    return _fingerprint(mol, calc)
-end
+# function fingerprint(mol::MolGraph, calc::MACCSFingerprint)
+#     return _fingerprint(mol, calc::MACCSFingerprint)
+# end
 
-function fingerprint(mol::MolGraph, calc::TopologicalTorsion)
-    return _fingerprint(mol, calc)
-end
+# function fingerprint(mol::MolGraph, calc::TopologicalTorsion)
+#     return _fingerprint(mol, calc::TopologicalTorsion)
+# end

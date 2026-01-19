@@ -348,7 +348,7 @@ fp = fingerprint(mol, fp_calc)
 - Rogers, D., & Hahn, M. (2010). Extended-connectivity fingerprints. J. Chem. Inf. Model., 50(5), 742-754.
 - RDKit implementation: https://github.com/rdkit/rdkit/blob/Release_2025_09_4/Code/GraphMol/Fingerprints/MorganGenerator.cpp#L257
 """
-function _fingerprint(mol::MolGraph, calc::ECFP{N}) where N
+function fingerprint(mol::MolGraph, calc::ECFP{N}) where N
     num_atoms = nv(mol)
     num_bonds = ne(mol)
     ernk = edge_rank(mol)
