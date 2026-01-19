@@ -8,6 +8,31 @@
 
 MolecularFingerprints.jl is a Julia package for calculating molecular fingerprints using various algorithms. It provides an easy-to-use interface for generating fingerprints from molecular structures, enabling efficient similarity searches, clustering, and machine learning applications in cheminformatics.
 
+## Quick Start
+```julia
+(@v1.12) pkg> add https://github.com/LukaszSztukiewicz/MolecularFingerprints.jl
+julia> using MolecularFingerprints
+julia> using MolecularGraph  # Required to represent molecular structures
+julia> fp = ECFP{2048}(3)  # Create an ECFP fingerprint generator of size 2048 with radius 3
+julia> mol = smilestomol("CCO")  # Ethanol
+julia> result = fingerprint(mol, fp)  # Calculate the fingerprint and output the resulting sparse BitVector
+0
+0
+0
+⋮
+0
+0
+0
+julia> findall(result)  # To see which bits are set, use this command
+6-element Vector{Int64}:
+   81
+  223
+  295
+  808
+ 1058
+ 1411
+```
+
 ## Documentation
 
 The documentation for MolecularFingerprints.jl can be found at [https://molecularfingerprints.lukaszsztukiewicz.com/stable](https://molecularfingerprints.lukaszsztukiewicz.com/stable/).
