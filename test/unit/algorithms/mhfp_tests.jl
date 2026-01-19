@@ -1,6 +1,3 @@
-using Test
-using MolecularGraph
-using MolecularFingerprints
 import MolecularFingerprints: fingerprint
 
 # must be included, otherwise mhfp.jl cannot be included

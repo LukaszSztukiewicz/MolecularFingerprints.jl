@@ -1,9 +1,3 @@
-using MolecularGraph
-using Random
-using Graphs
-using RDKitMinimalLib
-using SHA
-
 """
     MHFP
 
@@ -386,10 +380,5 @@ function mhfp_hash_from_molecular_shingling(shingling::Vector{String}, calc::MHF
         
     end
 
-
     return hash_values
 end
-
-# FIXME remove mhfp_hash_from_molecular_shingling and mhfp_shingling_from_mol etc from 
-# export later (it is useful right now for (manual) testing)
-export MHFP, mhfp_shingling_from_mol, fingerprint, mhfp_hash_from_molecular_shingling, smiles_from_atoms
