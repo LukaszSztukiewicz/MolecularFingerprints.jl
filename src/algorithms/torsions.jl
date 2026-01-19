@@ -1,8 +1,4 @@
-using MolecularGraph
-using SHA
-using Graphs
-using SparseArrays
-
+# --- Topological Torsion Fingerprint Calculation ---
 # define parameters to generate fingerprint
 # the topological torsion fingerprint uses the number of non-hydrogen branches, the number of pi-bonds 
 # and the atomic number for each atom in certain paths of the molecular graph to generate an integer ("atom code") 
@@ -238,4 +234,3 @@ function getAtomCode(degree::Int, piBond::Int, atomicNumber::Int)
 	return code 
 end
 
-export TopologicalTorsion, fingerprint, getAtomCode, get4paths, getTopologicalTorsionFP, getPathsOfLengthN # FIXME remove unnecessary exports
