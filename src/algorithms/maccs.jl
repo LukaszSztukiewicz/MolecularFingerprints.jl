@@ -999,10 +999,14 @@ function compute_maccs(mol::MolGraph, fp::MACCSFingerprint; rdkit_fp::Union{Noth
     end
 end
 
-function fingerprint(smiles::AbstractString, calc::MACCSFingerprint)
-    mol = MolecularGraph.smilestomol(smiles)
-    rdkit_fp = fingerprint_rdkit(smiles)
-    return compute_maccs(mol, calc; rdkit_fp=rdkit_fp)
+# function fingerprint(smiles::AbstractString, calc::MACCSFingerprint)
+#     mol = MolecularGraph.smilestomol(smiles)
+#     rdkit_fp = fingerprint_rdkit(smiles)
+#     return compute_maccs(mol, calc; rdkit_fp=rdkit_fp)
+# end
+
+function _fingerprint(mol::MolGraph, calc::MACCSFingerprint)
+    return compute_maccs(mol, calc)
 end
 
 function fingerprint_rdkit(smiles::AbstractString)

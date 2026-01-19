@@ -1,5 +1,4 @@
-
-
+# --- Topological Torsion Fingerprint Calculation ---
 # define parameters to generate fingerprint
 # the topological torsion fingerprint uses the number of non-hydrogen branches, the number of pi-bonds 
 # and the atomic number for each atom in certain paths of the molecular graph to generate an integer ("atom code") 
@@ -29,7 +28,7 @@ molecular structure using paths of length pathLength.
 - `mol::Graph`: the molecule for which to calculate the fingerprint
 - `calc::TopologicalTorsion`: struct containing parameters for fingerprint computation
 """
-function fingerprint(mol::MolGraph, calc::TopologicalTorsion) 
+function _fingerprint(mol::MolGraph, calc::TopologicalTorsion) 
     FP = getTopologicalTorsionFP(mol, calc.pathLength)
     return FP
 end
