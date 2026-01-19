@@ -1,7 +1,4 @@
-using MolecularGraph
-using SHA
-using Graphs
-using SparseArrays
+
 
 # define parameters to generate fingerprint
 # the topological torsion fingerprint uses the number of non-hydrogen branches, the number of pi-bonds 
@@ -238,4 +235,3 @@ function getAtomCode(degree::Int, piBond::Int, atomicNumber::Int)
 	return code 
 end
 
-export TopologicalTorsion, fingerprint, getAtomCode, get4paths, getTopologicalTorsionFP, getPathsOfLengthN # FIXME remove unnecessary exports

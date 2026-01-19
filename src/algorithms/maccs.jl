@@ -1,10 +1,3 @@
-using PythonCall: Py, pyimport, pyconvert
-using MolecularGraph: SMILESMolGraph, smilestomol
-using Graphs: vertices, edges, neighbors, src, dst, degree, cycle_basis
-using SparseArrays: sparse
-
-export MACCSFingerprint, fingerprint, fingerprint_rdkit
-
 # ==============================================================================
 # Python / RDKit setup
 # ==============================================================================

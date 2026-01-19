@@ -1,5 +1,3 @@
-using MolecularGraph: AbstractMolGraph, edge_rank
-
 """
     ECFP{N} <: AbstractFingerprint
 
@@ -476,4 +474,3 @@ function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
     return fp
 end
 
-export ecfp_atom_invariant, ecfp_hash, ECFP, fingerprint
