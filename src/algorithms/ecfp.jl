@@ -232,12 +232,12 @@ function Base.isless(a::AccumTuple, b::AccumTuple)
 end
 
 """
-    get_atom_invariants(mol::SMILESMolGraph)
+    get_atom_invariants(mol::MolGraph)
 
 Compute hashed atom invariants for all atoms in a molecule.
 
 # Arguments
-- `mol::SMILESMolGraph`: Input molecular graph
+- `mol::MolGraph`: Input molecular graph
 
 # Returns
 - `Vector{UInt32}`: Hashed invariant values for each atom
@@ -245,7 +245,7 @@ Compute hashed atom invariants for all atoms in a molecule.
 # References
 RDKit implementation: https://github.com/rdkit/rdkit/blob/Release_2025_09_4/Code/GraphMol/Fingerprints/MorganGenerator.cpp#L42
 """
-function get_atom_invariants(mol::SMILESMolGraph)
+function get_atom_invariants(mol::MolGraph)
     return [ecfp_hash(x) for x in ecfp_atom_invariant(mol)]
 end
 
@@ -289,12 +289,12 @@ function rdkit_bond_type(bond::SMILESBond)
 end
 
 """
-    get_bond_invariants(mol::SMILESMolGraph)
+    get_bond_invariants(mol::MolGraph)
 
 Compute bond type invariants for all bonds in a molecule.
 
 # Arguments
-- `mol::SMILESMolGraph`: Input molecular graph
+- `mol::MolGraph`: Input molecular graph
 
 # Returns
 - `Vector{UInt32}`: Bond type codes for each bond in the molecule
@@ -308,12 +308,12 @@ provided by [MolecularGraph.jl](https://github.com/mojaie/MolecularGraph.jl), a 
 # References
 RDKit implementation: https://github.com/rdkit/rdkit/blob/Release_2025_09_4/Code/GraphMol/Fingerprints/MorganGenerator.cpp#L126
 """
-function get_bond_invariants(mol::SMILESMolGraph)
+function get_bond_invariants(mol::MolGraph)
     return [UInt32(rdkit_bond_type(bond)) for (_, bond) in mol.eprops]
 end
 
 """
-    fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
+    fingerprint(mol::MolGraph, calc::ECFP{N}) where N
 
 Generate an ECFP (Extended-Connectivity Fingerprint) for a molecule.
 
@@ -331,7 +331,7 @@ expanding atomic neighborhoods up to the specified radius.
 3. Map all environment hashes to bit positions in the fingerprint
 
 # Arguments
-- `mol::SMILESMolGraph`: Input molecular graph
+- `mol::MolGraph`: Input molecular graph
 - `calc::ECFP{N}`: ECFP calculator specifying radius and fingerprint size
 
 # Returns
@@ -348,7 +348,7 @@ fp = fingerprint(mol, fp_calc)
 - Rogers, D., & Hahn, M. (2010). Extended-connectivity fingerprints. J. Chem. Inf. Model., 50(5), 742-754.
 - RDKit implementation: https://github.com/rdkit/rdkit/blob/Release_2025_09_4/Code/GraphMol/Fingerprints/MorganGenerator.cpp#L257
 """
-function fingerprint(mol::SMILESMolGraph, calc::ECFP{N}) where N
+function fingerprint(mol::MolGraph, calc::ECFP{N}) where N
     num_atoms = nv(mol)
     num_bonds = ne(mol)
     ernk = edge_rank(mol)

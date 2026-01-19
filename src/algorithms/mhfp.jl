@@ -98,7 +98,7 @@ end
 
 
 """
-    fingerprint(mol::SMILESMolGraph, calc::MHFP{N})
+    fingerprint(mol::MolGraph, calc::MHFP{N})
 
 Calculates the MHFP fingerprint of the given molecule and returns it as a bit vector
 """
@@ -327,7 +327,6 @@ function mhfp_hash_from_molecular_shingling(shingling::Vector{String}, Encoder::
 
         
     end
-
 
     return hash_values
 end
