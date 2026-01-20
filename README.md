@@ -88,5 +88,13 @@ activate test/
 add YourPackageName
 ```
 
+### Update Test Dependencies
 
+To update the test dependencies, you can use the following commands from the root of the repository:
 
+```julia
+using Pkg
+Pkg.activate("test")
+Pkg.update()
+Pkg.develop(path=".")
+```
