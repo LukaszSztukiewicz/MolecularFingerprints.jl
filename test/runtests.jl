@@ -9,48 +9,44 @@ using Graphs: nv, all_simple_paths, degree
 using Graphs: vertices, induced_subgraph, neighborhood
 using PythonCall: Py, pyimport, pyconvert, pybuiltins
 
+# Set seed for reproducibility across all tests
+Random.seed!(42)
 
 @testset "MolecularFingerprints.jl" begin
 
-    @testset "1. Unit Tests" begin
-
-        @testset "1.1 Interface Tests" begin
+    @testset "Unit Tests" begin
+        
+        @testset "Interface" begin
             @info "Running Interface Tests..."
             include("unit/interface/mock_interface_tests.jl")
         end
 
-        @testset "1.2 Utility Function Tests" begin
+        @testset "Utilities" begin
             @info "Running Utility Function Tests..."
             include("unit/utils/tanimoto_tests.jl")
         end
 
-        @testset "1.3 Fingerprint Algorithm Tests" begin
-            @info "Running Fingerprint Algorithm Tests..."
+        @testset "Algorithms" begin
+            # Using a loop for repetitive algorithm test sets
+            algorithms = [
+                ("ECFP", "unit/algorithms/ecfp_tests.jl"),
+                ("MHFP", "unit/algorithms/mhfp_tests.jl"),
+                ("MACCS", "unit/algorithms/maccs_tests.jl"),
+                ("Topological Torsion", "unit/algorithms/torsions_tests.jl")
+            ]
 
-            @testset "1.3.1 ECFP Tests" begin
-                @info "Running ECFP Tests..."
-                include("unit/algorithms/ecfp_tests.jl")
-            end
-
-            @testset "1.3.2 MHFP Tests" begin
-                @info "Running MHFP Tests..."
-                include("unit/algorithms/mhfp_tests.jl")
-            end
-
-            @testset "1.3.3 MACCS Tests" begin
-                @info "Running MACCS Tests..."
-                include("unit/algorithms/maccs_tests.jl")
-            end
-
-            @testset "1.3.4 Topological Torsion Tests" begin
-                @info "Running Topological Torsion Tests..."
-                include("unit/algorithms/torsions_tests.jl")
+            for (name, path) in algorithms
+                @testset "$name" begin
+                    @info "$(findfirst(x -> x[1] == name, algorithms)). Running $name Tests..."
+                    include(path)
+                end
             end
         end
     end
 
-    @testset "2. Reference Tests (Validation)" begin
-        @info "Running Validation Reference Tests..."
+    @testset "Reference Validation (RDKit)" begin
+        @info "Running Reference Validation Tests..."
         include("validation/rdkit_comparison_tests.jl")
     end
+
 end
