@@ -1,4 +1,9 @@
 # --- Topological Torsion Fingerprint Calculation ---
+# The implemented fingerprint was proposed in "Topological Torsion: A New Molecular Descriptor for SAR Applications. Comparison with
+# Other Descriptors" by Nilakantan, Bauman and Dixon. 
+# It is also described in the paper "TFD: Torsion Fingerprints As a New Measure To Compare Small Molecule Conformations" by Schulz-Gasch, Schärfer, Guba and Rarey.
+# For further information the implementation in C++ provided by the function "getTopologicalTorsionFingerprint()" was used.
+
 # define parameters to generate fingerprint
 # the topological torsion fingerprint uses the number of non-hydrogen branches, the number of pi-bonds 
 # and the atomic number for each atom in certain paths of the molecular graph to generate an integer ("atom code") 
@@ -22,14 +27,14 @@ struct TopologicalTorsion <: AbstractFingerprint
 end
 
 """
-	fingerprint(mol::Graph, calc::TopologicalTorsion)
+	fingerprint(mol::MolGraph, calc::TopologicalTorsion)
 
 Returns a topological torsion fingerprint as an integer vector for the molecule belonging to mol. 
 This function calls function which computes the Topological Torsion fingerprint based on the
 molecular structure using paths of length pathLength.
 
 # Arguments
-- `mol::Graph`: the molecule for which to calculate the fingerprint
+- `mol::MolGraph`: the molecule for which to calculate the fingerprint
 - `calc::TopologicalTorsion`: struct containing parameters for fingerprint computation, which is just the path length. 
    must be at least 2
 """
@@ -41,14 +46,14 @@ function fingerprint(mol::MolGraph, calc::TopologicalTorsion)
 end
 
 """
-	getTopologicalTorsionFP(mol::Graph, pathLength::Int)
+	getTopologicalTorsionFP(mol::MolGraph, pathLength::Int)
 
 Returns the Topological Torsion Fingerprint of a molecule as a sparse Int Vector.
 This function loops over all simple paths of length pathLength and all cycles of length pathLength - 1 of the molecular graph, 
 and gets a number for each atom in a path, an "Atom Code" from which a sparse IntVector is calculated.
 
 # Arguments
-- `mol::Graph`: the molecule for which to calculate the fingerprint
+- `mol::MolGraph`: the molecule for which to calculate the fingerprint
 - `pathLength::Int`: length of walks from molecular graph used to calculated fingerprint
 """
 function getTopologicalTorsionFP(mol::MolGraph, pathLength::Int)
@@ -97,11 +102,11 @@ function getTopologicalTorsionFP(mol::MolGraph, pathLength::Int)
 end
  
 """
-	getPathsOfLengthN(mol::Graph, N::Int)
+	getPathsOfLengthN(mol::MolGraph, N::Int)
 Returns a list of all simple paths of length N and cycles of length N - 1 in the Molecular Graph.
 
 # Arguments
-- `mol::Graph`: the molecule from which to extract the walks
+- `mol::MolGraph`: the molecule from which to extract the walks
 - `N::Int`: length of the walks, meaning number of vertices in walk
 
 """
@@ -138,19 +143,17 @@ end
 
 
 """
-	canonicalize(atomSymbols::Vector{Symbol}, path::Vector{Int})
+	canonicalize(path::Vector{Int})
 
 # Arguments
-- `path::Vector`: Vertex indices of a path from the molecular graph
-- `atomSymbols::Vector`: Vector of symbols (e.g. "C", "N") of the entire molecular graph
+- `path::Vector`: Vertex indices of a cycle from the molecular graph
 
 Canonicalization is done to obtain unique fingerprints for different smiles strings
-as described in https://depth-first.com/articles/2021/10/06/molecular-graph-canonicalization/. 
-The canonicalization  in the function getTTFPCode does not work for rings. 
-Since every ring is found pathLength times, we have to abandon the rings 
-which are not lexicographically sorted. 
+as described in https://depth-first.com/articles/2021/10/06/molecular-graph-canonicalization/.  
+Since every ring is found pathLength times, we have to abandon all but one ring.  
+We only keep the ring which starts at the lowest numbered vertex.
 """
-#FIXME fix doc string
+
 function canonicalize(path::Vector) 
 	# if we have a ring with n vertices, this will be found n times by getPathsOfLengthN.
 	# e.g.:  [5,1,3,4,5], [1,3,4,5,1], [3,4,5,1,3], [4,5,1,3,4]. We only want unique paths.
@@ -167,10 +170,10 @@ end
 
 """ 
 	getTTFPCode(pathCodes::Vector)
-Calculates the fragments which will build the topological torsion fingerprint from the atom codes of each path.
-
+Calculates an integer from a number calculated from the atom codes of a path which will serve 
+as an index for which the fingerprint will be increased by 1.
 # Arguments
-- `pathCodes::Vector`: contains all atom codes of all N-paths and cycles
+- `pathCodes::Vector`: contains a code generated from the atom codes of molecules of a path
 """
 function getTTFPCode(pathCodes::Vector)
 	# canonicalization
@@ -230,7 +233,7 @@ function getAtomCode(degree::Int, piBond::Int, atomicNumber::Int)
 	end
 	
     if typeIdx == nTypes 
-    	typeIdx = UInt(typeIdx - 1)
+    	typeIdx -= 1
   	end
 
   	code |= UInt32(typeIdx) << (numBranchBits + numPiBits)
