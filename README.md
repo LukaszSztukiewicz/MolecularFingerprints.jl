@@ -75,8 +75,13 @@ This will generate the documentation in the `docs/build/` directory.
 To run the tests for MolecularFingerprints.jl, you can use the following commands:
 
 ```julia
-] activate .
-test
+] activate test
+test MolecularFingerprints
+```
+
+or
+```julia
+julia --project=test test/runtests.jl
 ```
 
 This will execute the test suite and report any failures or errors.
