@@ -25,25 +25,24 @@
     @test length(rdkit_fp) == 166
 
     @test julia_fp[58] == rdkit_fp[58]
-    @info "Bit 58" julia=julia_fp[58] rdkit=rdkit_fp[58]
+    @debug "Bit 58" julia=julia_fp[58] rdkit=rdkit_fp[58]
 
     @test julia_fp[166] == rdkit_fp[166]
-    @info "Bit 166" julia=julia_fp[166] rdkit=rdkit_fp[166]
+    @debug "Bit 166" julia=julia_fp[166] rdkit=rdkit_fp[166]
 
     @test julia_fp[1] == rdkit_fp[1]
-    @info "Bit 1" julia=julia_fp[1] rdkit=rdkit_fp[1]
+    @debug "Bit 1" julia=julia_fp[1] rdkit=rdkit_fp[1]
 
-    println("\n=== MACCS bit-by-bit comparison for SMILES: $smiles ===")
+    @debug("\n=== MACCS bit-by-bit comparison for SMILES: $smiles ===")
 
     for i in 1:166
         julia_fp[i] == 9 && continue
 
         if julia_fp[i] != rdkit_fp[i]
-            println("Bit $i: julia[$i] = $(julia_fp[i]) i rdkit[$i] = $(rdkit_fp[i])")
+            @debug "Bit $i" julia=julia_fp[i] rdkit=rdkit_fp[i]
         end
     end
 
-    println("==============================================")
-
+    @debug "=============================================="
 end
 

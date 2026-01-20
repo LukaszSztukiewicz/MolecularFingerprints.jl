@@ -49,13 +49,13 @@ include("algorithms/ecfp.jl")
 include("algorithms/maccs.jl")
 include("algorithms/torsions.jl")
 
-#FIXME in the end, probably we shouldn't export mhfp_shingling_from_mol
-export tanimoto, mhfp_shingling_from_mol, fingerprint
+export AbstractCalculator, AbstractFingerprint, AbstractDescriptor
+export tanimoto
 # FIXME remove mhfp_hash_from_molecular_shingling and mhfp_shingling_from_mol from export
 # later (it is useful right now for (manual))
 export MHFP, mhfp_shingling_from_mol, fingerprint, mhfp_hash_from_molecular_shingling 
 export ecfp_atom_invariant, ecfp_hash, ECFP, fingerprint
 export MACCSFingerprint, fingerprint, fingerprint_rdkit
 export TopologicalTorsion, fingerprint, getAtomCode, get4paths, getTopologicalTorsionFP, getPathsOfLengthN # FIXME remove unnecessary exports
-
+export fingerprint
 end

@@ -1,23 +1,20 @@
 import MolecularFingerprints: fingerprint
 
-# must be included, otherwise mhfp.jl cannot be included
-include("../../../src/interface.jl")
-
 include("../../../src/algorithms/mhfp.jl")
 
 @testset "MHFP Fingerprint Tests" begin
 
     ##### Definition of the molecules used for testing ################################
         
-        # Larger molecule, taken from mhfp python implementation, 
-        # written by the original authors
-        # https://github.com/reymond-group/mhfp/blob/master/test/test_encoder.py
-        mol = MolecularGraph.smilestomol(
-            "CCCC1=NN(C2=C1NC(=NC2=O)C3=C(C=CC(=C3)S(=O)(=O)N4CCN(CC4)C)OCC)C")
+    # Larger molecule, taken from mhfp python implementation, 
+    # written by the original authors
+    # https://github.com/reymond-group/mhfp/blob/master/test/test_encoder.py
+    mol = MolecularGraph.smilestomol(
+        "CCCC1=NN(C2=C1NC(=NC2=O)C3=C(C=CC(=C3)S(=O)(=O)N4CCN(CC4)C)OCC)C")
 
-        # Simpler molecule (Benzoic acid), taken from 
-        # https://chemicbook.com/2021/02/13/smiles-strings-explained-for-beginners-part-1.html
-        simpler_mol = smilestomol("c1cc(C(O)=O)ccc1")
+    # Simpler molecule (Benzoic acid), taken from 
+    # https://chemicbook.com/2021/02/13/smiles-strings-explained-for-beginners-part-1.html
+    simpler_mol = smilestomol("c1cc(C(O)=O)ccc1")
 
     
     @testset "MHFP Molecular shingling tests" begin
