@@ -1,3 +1,7 @@
+# include("../../../src/interface.jl")
+
+include("../../../src/algorithms/torsions.jl")
+
 @testset "Topological Torsion Fingerprint Tests" begin
     @testset "testPathFinder" begin
             # this molecule is just a ring made from 6 carbon atoms 

@@ -15,9 +15,11 @@ codeSize = UInt32(numTypeBits + numPiBits + numBranchBits)
 # struct containing parameters for generating the fingerprint
 struct TopologicalTorsion <: AbstractFingerprint
 	pathLength::Int
-end
 
-TopologicalTorsion() = TopologicalTorsion(4)  # default pathLength = 4
+	function TopologicalTorsion(pathLength::Int = 4)  # default pathLength = 4
+		return new(pathLength)
+	end
+end
 
 """
 	fingerprint(mol::Graph, calc::TopologicalTorsion)
@@ -33,7 +35,7 @@ molecular structure using paths of length pathLength.
 """
 function fingerprint(mol::MolGraph, calc::TopologicalTorsion) 
 	calc.pathLength > 1 || throw(ArgumentError("pathLength must be larger than 1."))
-	nv(mol) < calc.pathLength || @warn("Number of atoms smaller than path length. This will result in an all zero fingerprint.")
+	nv(mol) ≥ calc.pathLength || @warn "Number of atoms smaller than path length. This will result in an all zero fingerprint."
     FP = getTopologicalTorsionFP(mol, calc.pathLength)
     return FP
 end
