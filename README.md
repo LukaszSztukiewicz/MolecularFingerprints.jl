@@ -79,6 +79,11 @@ To run the tests for MolecularFingerprints.jl, you can use the following command
 test MolecularFingerprints
 ```
 
+```julia
+] activate .
+test 
+```
+
 or
 ```julia
 julia --project=test test/runtests.jl

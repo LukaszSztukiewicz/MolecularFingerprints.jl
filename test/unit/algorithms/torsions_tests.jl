@@ -1,4 +1,4 @@
-include("../../../src/algorithms/torsions.jl")
+# include("../../../src/algorithms/torsions.jl")
 
 @testset "Topological Torsion Fingerprint Tests" begin
     @testset "testPathFinder" begin
@@ -10,7 +10,7 @@ include("../../../src/algorithms/torsions.jl")
             paths = MolecularFingerprints.getPathsOfLengthN(mol, 4)
             @test length(pathList) == length(paths)
 
-            # the direction in which the paths are found is arbitrary, to obtain a unique fingerprint the paths are canonicalized
+            # the direction in which the paths are found is arbitrary, to obtain a unique fingerprint the paths are MolecularFingerprints.canonicalized
             # later in TTFP code, this is why we have to check if either the found path or the reversed path is in our list
             for path in paths
                 @test path in pathList || reverse(path) in pathList
@@ -88,7 +88,7 @@ include("../../../src/algorithms/torsions.jl")
         keepRing = [false, true, false, false]
 
         for i = 1:length(paths)
-            @test canonicalize(paths[i]) == keepRing[i]
+            @test MolecularFingerprints.canonicalize(paths[i]) == keepRing[i]
         end
 
         data = "CCOC"

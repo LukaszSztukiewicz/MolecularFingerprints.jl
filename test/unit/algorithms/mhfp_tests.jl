@@ -1,7 +1,3 @@
-import MolecularFingerprints: fingerprint
-
-# include("../../../src/algorithms/mhfp.jl")
-
 @testset "MHFP Fingerprint Tests" begin
 
     ##### Definition of the molecules used for testing ################################

@@ -1,4 +1,3 @@
-
 @testset "MACCS - Julia vs RDKit consistency" begin
 
     # smiles = "C=C(C)C"    
