@@ -1,6 +1,6 @@
 import MolecularFingerprints: fingerprint
 
-include("../../../src/algorithms/mhfp.jl")
+# include("../../../src/algorithms/mhfp.jl")
 
 @testset "MHFP Fingerprint Tests" begin
 
@@ -64,12 +64,12 @@ include("../../../src/algorithms/mhfp.jl")
         #       atoms of the molecule. The strings from the circular substructures of
         #       the molecule differ already for this smaller molecule.
         # - Lastly, we verify for the large atom that the shingling returned by 
-        #   mhfp_shingling_from_mol is the union of the strings returned by
-        #   smiles_from_rings, smiles_from_atoms and smiles_from_circular_substructures.
+        #   MolecularFingerprints.mhfp_shingling_from_mol is the union of the strings returned by
+        #   MolecularFingerprints.smiles_from_rings, MolecularFingerprints.smiles_from_atoms and MolecularFingerprints.smiles_from_circular_substructures.
         
         # A last note: As the function implemented by the original authors returns the
         # entire shingling at once, the reference strings that we test against were 
-        # generated manually by running parts of their function mhfp_shingling_from_mol
+        # generated manually by running parts of their function MolecularFingerprints.mhfp_shingling_from_mol
         # separately.
 
         @testset "Shingling snippet from rings test" begin
@@ -78,7 +78,7 @@ include("../../../src/algorithms/mhfp.jl")
             # this was manually calculated using the original author's code applied to the
             # above molecule
             ref_shingling_snippet_rings = ["c1cnnc1", "c1cnc[nH]c1", "c1ccccc1", "C1CNCCN1"]
-            calculated_shingling_snippet_rings = smiles_from_rings(mol)
+            calculated_shingling_snippet_rings = MolecularFingerprints.smiles_from_rings(mol)
             
             # test if number of returned strings is correct
             @test length(ref_shingling_snippet_rings) == length(
@@ -97,7 +97,7 @@ include("../../../src/algorithms/mhfp.jl")
 
             ##### Testing if the actual string generated matches, on the simpler molecule #
             ref_shingling_snippet_rings_simplemol = ["c1ccccc1"]
-            @test ref_shingling_snippet_rings_simplemol == smiles_from_rings(simpler_mol)
+            @test ref_shingling_snippet_rings_simplemol == MolecularFingerprints.smiles_from_rings(simpler_mol)
             
         end
 
@@ -110,14 +110,14 @@ include("../../../src/algorithms/mhfp.jl")
             "c", "n", "c", "O", "c", "c", "c", "c", "c", "c", "S", "O", "O", "N", "C", "C",
             "N", "C", "C", "C", "O", "C","C", "C"]
 
-            @test length(ref_shingling_snippet_atoms) == length(smiles_from_atoms(mol))
+            @test length(ref_shingling_snippet_atoms) == length(MolecularFingerprints.smiles_from_atoms(mol))
 
             ##### Testing if the actual strings are correct, on the smaller molecule ######
 
             ref_shingling_snippet_atoms_simplemol = [
                 "c", "c", "c", "C", "O", "O", "c", "c", "c"]
 
-            @test ref_shingling_snippet_atoms_simplemol == smiles_from_atoms(simpler_mol)
+            @test ref_shingling_snippet_atoms_simplemol == MolecularFingerprints.smiles_from_atoms(simpler_mol)
         end
 
         @testset "Shingling snippet from circular substructures tests" begin
@@ -227,7 +227,7 @@ include("../../../src/algorithms/mhfp.jl")
                 "Cn(nc)c(c)c"]
 
             ## calculating with radius 3, min_radius 1 
-            calc_shingling_snippet_circ_subst_r_3_mr_1 = smiles_from_circular_substructures(
+            calc_shingling_snippet_circ_subst_r_3_mr_1 = MolecularFingerprints.smiles_from_circular_substructures(
                 mol, 3, 1)
             # ensure length of shingling is the same as the reference shingling
             @test length(ref_shingling_snippet_circular_substructures) == length(
@@ -235,7 +235,7 @@ include("../../../src/algorithms/mhfp.jl")
                 )
 
             ## calculating with radius 2, min_radius 1
-            calc_shingling_snippet_circ_subst_r_2_mr_1 = smiles_from_circular_substructures(
+            calc_shingling_snippet_circ_subst_r_2_mr_1 = MolecularFingerprints.smiles_from_circular_substructures(
                 mol, 2, 1)
             # ensure shingling is smaller as a smaller radius was used
             @test length(ref_shingling_snippet_circular_substructures) > length(
@@ -246,7 +246,7 @@ include("../../../src/algorithms/mhfp.jl")
                 calc_shingling_snippet_circ_subst_r_3_mr_1)
 
             ## calculating with radius 3, min_radius 2
-            calc_shingling_snippet_circ_subst_r_3_mr_2 = smiles_from_circular_substructures(
+            calc_shingling_snippet_circ_subst_r_3_mr_2 = MolecularFingerprints.smiles_from_circular_substructures(
                 mol, 3, 2)
             # ensure shingling is smaller as a smaller radius was used
             @test length(ref_shingling_snippet_circular_substructures) > length(
@@ -259,24 +259,24 @@ include("../../../src/algorithms/mhfp.jl")
         end
 
         @testset "Complete shingling tests" begin
-            ##### Testing mhfp_shingling_from_mol #########################################
+            ##### Testing MolecularFingerprints.mhfp_shingling_from_mol #########################################
             
             # set up calculator with parameters
             calculator = MHFP(3, 0, true)  # radius, min_radius, rings
 
             # calculate shingling
-            calculated_shingling = mhfp_shingling_from_mol(mol, calculator)
+            calculated_shingling = MolecularFingerprints.mhfp_shingling_from_mol(mol, calculator)
 
-            # Test that the shingling returned from mhfp_shingling_from_mol is the union
-            # of smiles_from_rings, smiles_from_atoms & smiles_from_circular_substructures
-            @test symdiff(calculated_shingling, union(smiles_from_rings(mol), 
-                smiles_from_atoms(mol), 
+            # Test that the shingling returned from MolecularFingerprints.mhfp_shingling_from_mol is the union
+            # of MolecularFingerprints.smiles_from_rings, MolecularFingerprints.smiles_from_atoms & MolecularFingerprints.smiles_from_circular_substructures
+            @test symdiff(calculated_shingling, union(MolecularFingerprints.smiles_from_rings(mol), 
+                MolecularFingerprints.smiles_from_atoms(mol), 
                 # Note: min_radius is now 1, even though we set it to 0 in the calculator 
-                # above. This is because the mhfp_shingling_from_mol function increases the
+                # above. This is because the MolecularFingerprints.mhfp_shingling_from_mol function increases the
                 # min_radius to at least 1 before calling
-                # smiles_from_circular_substructures, as the special case of radius 0 is 
-                # already taken care of by the function smiles_from_atoms
-                smiles_from_circular_substructures(mol, 3, 1))  # radius, min_radius
+                # MolecularFingerprints.smiles_from_circular_substructures, as the special case of radius 0 is 
+                # already taken care of by the function MolecularFingerprints.smiles_from_atoms
+                MolecularFingerprints.smiles_from_circular_substructures(mol, 3, 1))  # radius, min_radius
                 ) == []
             
             # test that explicitly given hydrogens are removed and not included in smiles
@@ -289,13 +289,13 @@ include("../../../src/algorithms/mhfp.jl")
             calc_with_atoms = MHFP(3, 0)  # radius, min_radius
 
             # test that "[H]" is not in the shingling
-            @test "[H]" ∉ mhfp_shingling_from_mol(simple_mol_with_hydrogen, MHFP(3, 0))
+            @test "[H]" ∉ MolecularFingerprints.mhfp_shingling_from_mol(simple_mol_with_hydrogen, MHFP(3, 0))
 
         end
     end
 
     @testset "MHFP Hashing function tests" begin
-        ##### Testing mhfp_hash_from_molecular_shingling ##################################
+        ##### Testing MolecularFingerprints.mhfp_hash_from_molecular_shingling ##################################
 
         for n_permutations in [512, 2048]  # test default 2048, and 2048/4 = 512
             for seed in [42, (1 << 31)]  # test default value 42 and some high number
@@ -315,7 +315,7 @@ include("../../../src/algorithms/mhfp.jl")
                 # (See https://github.com/reymond-group/mhfp/blob/ea514f8fd4b21b0d0d732452cf7062c282edfbde/test/test_encoder.py#L12)
                 ref_shingling = sort(["c1cnnc1", "Cn(nc)c(c)c", "C(C)Oc", "c1(OCC)ccccc1-c([nH])n", "S(c)(N)(=O)=O", "c(nc)([nH]c)-c(c)c", "CN(C)C", "n(c(-c)[nH])c(c)=O", "C(C)O", "N(C)(C)S", "S(=O)(=O)(c(cc)cc)N(CC)CC", "CC", "c1(CCC)nn(C)c(c)c1[nH]c", "c1(S(=O)(=O)N(C)C)cccc(-c)c1", "N(C)(C)C", "c(cc)c(c)S", "N1(S(=O)(=O)c(c)c)CCNCC1", "c(c)(c)[nH]", "O=c(nc)c(c)n", "N(C)(CC)CC", "n(c(c)C)n(c)C", "C1CNCCN1", "c1ccccc1", "C(C)N", "n(c)(C)n", "C(CC)c(c)n", "c(c(c)-c)c(c)S", "O(c)C", "CCO", "CN(CC)CC", "[nH](c)c", "n(c)c", "n1c(-c(c)c)[nH]cc(n)c1=O", "N(CC)(CC)S(c)(=O)=O", "C(CN)N(C)C", "S(=O)(=O)(c(c)c)N(C)C", "O(CC)c(cc)c(c)-c", "C(C)Oc(c)c", "C(C)Cc", "C(CN)N(C)S", "c1(-c(nc)[nH]c)cc(S)ccc1OC", "c(cc)(OC)c(c)-c", "n1c(CC)c([nH])c(c)n1C", "c(c)(c)-c", "c([nH]c)(c(C)n)c(c)n", "c(c)(c)O", "c1cc(O)ccc1S(N)(=O)=O", "O=S(c)(N)=O", "c12[nH]c(-c)nc(=O)c1n(C)nc2CC", "c(-c)([nH])n", "c1(=O)nc(-c)[nH]c(c)c1n(C)n", "c1cc(S)cc(-c)c1OC", "O(CC)c(c)c", "c(c)(c)n", "C(C)C", "n(c)n", "CCOc", "c(cc)(-c([nH])n)c(c)O", "c(CC)(nn)c(c)[nH]", "c(c)(c)S", "CCC", "N1(C)CCNCC1", "c(c(n)=O)(c(c)[nH])n(C)n", "n(C)(nc)c(c)c", "c(c)(n)=O", "Cn(c)n", "c(cc)(cc)S(N)(=O)=O", "O=c(c)n", "c(c)c", "n1(C)nc(C)c([nH])c1c(n)=O", "c1c(S(N)(=O)=O)ccc(O)c1-c([nH])n", "C(C)Cc(c)n", "C(C)c", "c(=O)(nc)c(c)n","[nH](c(-c)n)c(c)c", "C(CC)c(nn)c(c)[nH]", "O=c", "c1(-c(cc)c(c)O)nc(=O)cc(c)[nH]1", "c(cc)c(c)O", "c(c)(C)n", "O=S", "c1cnc[nH]c1", "O=S(=O)(c(c)c)N(C)C", "C1CN(C)CCN1S(c)(=O)=O", "c12c(=O)nc[nH]c1c(C)nn2C", "C1CN(S)CCN1C", "[nH]1c(-c(c)c)ncc(n)c1c(C)n", "Cn", "CCCc", "CN"])
                 
-                @test n_permutations == length(mhfp_hash_from_molecular_shingling(
+                @test n_permutations == length(MolecularFingerprints.mhfp_hash_from_molecular_shingling(
                     ref_shingling, 
                     mhfp_calc))
 
@@ -385,9 +385,9 @@ include("../../../src/algorithms/mhfp.jl")
                         push!(original_tanimoto_values, original_tanimoto_similarity)
                         
                         # Calculate hash vectors from the given test sets
-                        minhash_1 = mhfp_hash_from_molecular_shingling(
+                        minhash_1 = MolecularFingerprints.mhfp_hash_from_molecular_shingling(
                             test_set_1, mhfp_calc)
-                        minhash_2 = mhfp_hash_from_molecular_shingling(
+                        minhash_2 = MolecularFingerprints.mhfp_hash_from_molecular_shingling(
                             test_set_2, mhfp_calc)
 
                         # Calculating tanimoto (jaccard) similarity of the hash vectors.
@@ -456,18 +456,18 @@ include("../../../src/algorithms/mhfp.jl")
         # giving non-positive n_permutations
         @test_throws "must be strictly positive" MHFP(n_permutations = 0)
 
-        ##### Testing smiles_from_circular_substructures ##################################
+        ##### Testing MolecularFingerprints.smiles_from_circular_substructures ##################################
         test_mol = smilestomol("c1cc(C(O)=O)ccc1")
         
         # giving non-positive radius
-        @test_throws "must be strictly positive" smiles_from_circular_substructures(
+        @test_throws "must be strictly positive" MolecularFingerprints.smiles_from_circular_substructures(
             test_mol,
             0,  # radius
             0   # min_radius
         )
 
         # giving non-positive min_radius
-        @test_throws "must be strictly positive" smiles_from_circular_substructures(
+        @test_throws "must be strictly positive" MolecularFingerprints.smiles_from_circular_substructures(
             test_mol,
             3,  # radius
             0   # min_radius
