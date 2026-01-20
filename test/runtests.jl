@@ -10,7 +10,7 @@ using MolecularGraph
 using MolecularFingerprints
 
 using PythonCall: Py, pyimport, pyconvert, pybuiltins
-using Graphs: nv
+using Graphs: nv, all_simple_paths, degree
 
 using Test
 using PythonCall
