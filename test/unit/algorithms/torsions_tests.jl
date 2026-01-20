@@ -1,5 +1,3 @@
-# include("../../../src/interface.jl")
-
 include("../../../src/algorithms/torsions.jl")
 
 @testset "Topological Torsion Fingerprint Tests" begin
