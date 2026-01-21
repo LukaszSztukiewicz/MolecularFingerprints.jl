@@ -1,6 +1,32 @@
 # --- Abstract Interfaces for Fingerprint Calculators ---
+
+"""
+    AbstractCalculator
+An abstract type representing a general calculator for molecular properties.
+We differentiate between calculators for fingerprints and descriptors.
+"""
 abstract type AbstractCalculator end
+
+
+"""
+    AbstractFingerprint
+An abstract type representing a calculator for molecular fingerprints.
+
+Fingerprint is a binary representation of molecular features.
+It captures the presence or absence of specific substructures or properties in a molecule.
+It is often used in cheminformatics for similarity searching, clustering, and machine learning tasks.
+
+We differentiate it from descriptors, which are typically numerical values.
+"""
 abstract type AbstractFingerprint <: AbstractCalculator end
+
+"""
+    AbstractDescriptor
+An abstract type representing a calculator for molecular descriptors.
+
+Descriptors are numerical values that describe molecular properties. 
+For example, molecular weight, logP, etc.
+"""
 abstract type AbstractDescriptor <: AbstractCalculator end
 
 # --- Fingerprint calculation functions ---
