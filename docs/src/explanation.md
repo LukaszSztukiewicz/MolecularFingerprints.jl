@@ -1,5 +1,7 @@
 # Why MolecularFingerprints.jl?
 
+If you are coming from a computer science background, you are likely used to thinking about data in terms of arrays, hashes, or objects. In chemoinformatics, our primary challenge is representing a real chemical molecule in a format that a computer can actually work with efficiently.
+
 ## Why we need fingerprints
 
 Most chemical data is stored as Simplified Molecular Input Line Entry System [(SMILES)](https://en.wikipedia.org/wiki/Simplified_molecular-input_line-entry_system) strings, like `CCO` for ethanol or `C1=CC=CC=C1` for benzene. While these are great for humans to read and for databases to store, they are pretty difficult to use for actual computation. 

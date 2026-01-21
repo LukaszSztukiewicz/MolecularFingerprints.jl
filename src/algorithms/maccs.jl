@@ -15,15 +15,24 @@ end
 
 
 # ----------------------------------------------------------------
-# MACCSFingerprint struct
+# MACCS struct
 # ----------------------------------------------------------------
-struct MACCSFingerprint <: AbstractFingerprint
+"""
+    MACCS(count::Bool=false, sparse::Bool=false)
+MACCS (Molecular ACCess System) fingerprint calculator.
+# Arguments
+- `count`: If `false`, produces a bit vector (presence/absence). If `true`, produces a count-based fingerprint.
+- `sparse`: If `false`, produces a dense representation. If `true`, produces a sparse representation.
+# References
+- [Durant et al., 2002](https://doi.org/10.1021/ci010132r)
+"""
+struct MACCS <: AbstractFingerprint
     count::Bool        # false = bit, true = count-based
     sparse::Bool       # false = dense, true = sparse
 end
 
 # 166 bits
-nbits(::MACCSFingerprint) = 166
+nbits(::MACCS) = 166
 
 
 # ------------------------------------------------------------------------------
@@ -953,7 +962,7 @@ const MACCS_RULES = Dict{Int, Function}(
     166 => mol -> -1,
 )
 
-# function compute_maccs(mol, fp::MACCSFingerprint)
+# function compute_maccs(mol, fp::MACCS)
 #     vec = zeros(Int, nbits(fp)) # [0, 0, 0, 0, 0, ..., 0]  (166 elemetns)
 
 #     for (idx, rule) in MACCS_RULES
@@ -973,11 +982,11 @@ const MACCS_RULES = Dict{Int, Function}(
 #     # fingerprint looks often like [0,0,1,0,0,0,0,1,0,0,0,...] - mostly zeros → waste of memory - use sparse vector
 # end
 
-# function fingerprint(mol::MolGraph, calc::MACCSFingerprint)
+# function fingerprint(mol::MolGraph, calc::MACCS)
 #     return compute_maccs(mol, calc)
 # end
 
-function compute_maccs(mol::MolGraph, fp::MACCSFingerprint; rdkit_fp::Union{Nothing,Vector{Int}} = nothing, bypass_rdkit::Bool = true)
+function compute_maccs(mol::MolGraph, fp::MACCS; rdkit_fp::Union{Nothing,Vector{Int}} = nothing, bypass_rdkit::Bool = true)
     vec = BitVector(zeros(Bool, nbits(fp))) # [0, 0, 0, 0, 0, ..., 0]  (166 elemetns)
 
     for (idx, rule) in MACCS_RULES
@@ -1003,13 +1012,13 @@ function compute_maccs(mol::MolGraph, fp::MACCSFingerprint; rdkit_fp::Union{Noth
     end
 end
 
-# function fingerprint(smiles::AbstractString, calc::MACCSFingerprint)
+# function fingerprint(smiles::AbstractString, calc::MACCS)
 #     mol = MolecularGraph.smilestomol(smiles)
 #     rdkit_fp = fingerprint_rdkit(smiles)
 #     return compute_maccs(mol, calc; rdkit_fp=rdkit_fp)
 # end
 
-function fingerprint(mol::MolGraph, calc::MACCSFingerprint)
+function fingerprint(mol::MolGraph, calc::MACCS)
     return compute_maccs(mol, calc)
 end
 
