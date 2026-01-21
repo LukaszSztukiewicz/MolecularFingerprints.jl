@@ -2,30 +2,28 @@
 
 """
     AbstractCalculator
-An abstract type representing a general calculator for molecular properties.
-We differentiate between calculators for fingerprints and descriptors.
+
+Supertype for all molecular property calculators. Subtypes should implement 
+specific calculation logic for molecular properties.
 """
 abstract type AbstractCalculator end
 
-
 """
-    AbstractFingerprint
-An abstract type representing a calculator for molecular fingerprints.
+    AbstractFingerprint <: AbstractCalculator
 
-Fingerprint is a binary representation of molecular features.
-It captures the presence or absence of specific substructures or properties in a molecule.
-It is often used in cheminformatics for similarity searching, clustering, and machine learning tasks.
+Abstract type for calculators that produce representations 
+of molecular features (e.g., MACCS, ECFP).
 
-We differentiate it from descriptors, which are typically numerical values.
+Unlike descriptors, fingerprints typically represent the presence or absence 
+of specific substructures or patterns within a molecule.
 """
 abstract type AbstractFingerprint <: AbstractCalculator end
 
 """
-    AbstractDescriptor
-An abstract type representing a calculator for molecular descriptors.
+    AbstractDescriptor <: AbstractCalculator
 
-Descriptors are numerical values that describe molecular properties. 
-For example, molecular weight, logP, etc.
+Abstract type for calculators that produce scalar or numerical molecular properties 
+(e.g., LogP, Molecular Weight, TPSA).
 """
 abstract type AbstractDescriptor <: AbstractCalculator end
 
@@ -33,40 +31,51 @@ abstract type AbstractDescriptor <: AbstractCalculator end
 
 """
     fingerprint(smiles::String, calc::AbstractCalculator)
-Calculates the fingerprint for a single SMILES string using the specified calculator.
 
-# Returns the fingerprint.
+Calculate the fingerprint for a single SMILES string using the provided `calc`.
+
+# Arguments
+- `smiles`: A string representing the molecule in SMILES format.
+- `calc`: A subtype of `AbstractCalculator` defining the fingerprint type.
+
+# Returns
+- A fingerprint representation (the specific type depends on `calc`).
 """
 function fingerprint(smiles::String, calc::AbstractCalculator)
-    
-    # Convert SMILES to molecular graph #RDKitMinimalLib (MolecularGraph)
     mol = smilestomol(smiles)
-
     return fingerprint(mol, calc)
 end
 
 """
     fingerprint(smiles_list::Vector{String}, calc::AbstractCalculator)
-Calculates the fingerprint for a list of SMILES strings using the specified calculator.
 
-Uses parallelization over input vector.
+Calculate fingerprints for a collection of SMILES strings.
 
-# Returns a vector of fingerprints.
+This method uses multithreading to process the list. Ensure that `JULIA_NUM_THREADS` 
+is set appropriately in your environment to see performance gains.
+
+# Arguments
+- `smiles_list`: A vector of SMILES strings.
+- `calc`: The calculator instance to apply to each molecule.
+
+# Returns
+- `Vector`: A collection of fingerprints, typed according to the first successful calculation.
+
+!!! note
+    This function is thread-parallelized using `Threads.@threads`.
 """
 function fingerprint(smiles_list::Vector{String}, calc::AbstractCalculator) 
-    
-    # Convert first element to determine return type safely
+    # Determine return type from the first element
     first_fp = fingerprint(smiles_list[1], calc)
     ResultType = typeof(first_fp)
     
     fingerprints = Vector{ResultType}(undef, length(smiles_list))
     fingerprints[1] = first_fp
 
-    # Use Threads for parallel computation
-    Threads.@threads for i in eachindex(smiles_list)
+    Threads.@threads for i in 2:length(smiles_list)
+        # Assuming smilestomol is thread-safe
         fingerprints[i] = fingerprint(smilestomol(smiles_list[i]), calc)
     end
     
     return fingerprints
- end 
-
+end
