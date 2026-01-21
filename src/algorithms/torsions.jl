@@ -1,3 +1,13 @@
+#Standard Library and Data Structures
+using SparseArrays: spzeros
+
+# Graph Theory Framework
+using Graphs: nv, vertices, degree, all_simple_paths
+
+# Molecular Informatics Framework
+using MolecularGraph: MolGraph, AbstractMolGraph
+using MolecularGraph: remove_all_hydrogens!, pi_electron, atom_number
+
 # --- Topological Torsion Fingerprint Calculation ---
 # The implemented fingerprint was proposed in "Topological Torsion: A New Molecular Descriptor for SAR Applications. Comparison with
 # Other Descriptors" by Nilakantan, Bauman and Dixon. 

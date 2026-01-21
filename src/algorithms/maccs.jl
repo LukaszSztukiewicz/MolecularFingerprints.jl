@@ -1,3 +1,16 @@
+# Python Integration
+using PythonCall: Py, pyimport, pyconvert
+
+# Standard Library and Data Structures
+using SparseArrays: sparse
+using Base: Ref, BitVector, Dict, Set, Union
+
+# Graph Theory Framework
+using Graphs: vertices, neighbors, edges, src, dst, cycle_basis, degree
+
+# Molecular Informatics Framework
+using MolecularGraph: MolGraph, AbstractMolGraph, atom_symbol, smilestomol
+
 # ==============================================================================
 # Python / RDKit setup
 # ==============================================================================
@@ -196,7 +209,7 @@ function has_OH(mol)
         # check if atom is O
         safe_atom_symbol(mol.vprops[v]) == :O || continue
         # count how amny invisible H atoms does this O have
-        implicit_hydrogens(mol, v) ≥ 1 && return true
+        internal_implicit_hydrogens(mol, v) ≥ 1 && return true
     end
     return false
 end
@@ -207,7 +220,7 @@ function has_NH(mol)
         # check if atom is N
         safe_atom_symbol(mol.vprops[v]) == :N || continue
         # count how amny invisible H atoms does this N have
-        implicit_hydrogens(mol, v) ≥ 1 && return true
+        internal_implicit_hydrogens(mol, v) ≥ 1 && return true
     end
     return false
 end
@@ -222,7 +235,7 @@ function count_CH3(mol)
 end
 
 # count invisible hydrogens of a given atom
-function implicit_hydrogens(mol, v)
+function internal_implicit_hydrogens(mol, v)
     sym = safe_atom_symbol(mol.vprops[v])
     # maximum number of bonds atom can have
     maxv = max_valence(sym)
@@ -260,13 +273,13 @@ end
 # check wheter atom is in group CH3
 function is_CH3(mol, v)
     safe_atom_symbol(mol.vprops[v]) != :C && return false
-    implicit_hydrogens(mol, v) == 3
+    internal_implicit_hydrogens(mol, v) == 3
 end
 
 # check wheter atom is in group CH2
 function is_CH2(mol, v)
     safe_atom_symbol(mol.vprops[v]) != :C && return false
-    implicit_hydrogens(mol, v) == 2
+    internal_implicit_hydrogens(mol, v) == 2
 end
 
 # neighbors of atom v which are NOT hydrogen

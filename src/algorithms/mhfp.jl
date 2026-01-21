@@ -1,3 +1,19 @@
+# Standard Library and Utilities
+using Random: seed!, rand
+using SHA: sha1
+using Base: htol, IOBuffer
+
+# Graph Theory Framework
+using Graphs: nv, ne, vertices, fadjlist, neighborhood, induced_subgraph
+
+# Molecular Informatics Framework
+using MolecularGraph: MolGraph, AbstractMolGraph, SMILESBond
+using MolecularGraph: smilestomol, smiles, sssr
+using MolecularGraph: implicit_hydrogens, explicit_hydrogens, valence
+using MolecularGraph: atom_number, exact_mass, monoiso_mass, atom_charge
+using MolecularGraph: is_in_ring, is_aromatic, edge_rank, remove_all_hydrogens!
+using MolecularGraph: MolGraph, smiles, sssr, is_aromatic, subgraph, remove_all_hydrogens!, subset
+
 """
     MHFP
 
@@ -96,7 +112,7 @@ struct MHFP <: AbstractFingerprint
         _permutations_b = Vector{UInt32}()
 
         # set seed
-        Random.seed!(seed)
+        seed!(seed)
 
         # fill vectors entry by entry, to ensure pairwise unique entries within the vectors
         for i in 1:n_permutations
@@ -302,7 +318,7 @@ function smiles_from_circular_substructures(mol::MolGraph, radius::Int, min_radi
 
             submol, atom_map = induced_subgraph(mol, atoms_in_substructure_of_radius_i)
 
-            # TODO: This test is copied from the original authors.
+            # NOTE: This test is copied from the original authors.
             # I don't know what this test is for, as I don't see why it could be that 
             # atom_index is not contained in the atom map.
             # I guess this is just to make sure that we don't get an error but simply

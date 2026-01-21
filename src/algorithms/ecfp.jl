@@ -1,3 +1,11 @@
+using MolecularGraph
+using Graphs
+using Graphs: nv, ne, degree
+using MolecularGraph: AbstractMolGraph, MolGraph, SMILESBond
+using MolecularGraph: smilestomol, implicit_hydrogens, explicit_hydrogens, valence
+using MolecularGraph: atom_number, exact_mass, monoiso_mass, atom_charge, is_in_ring
+using MolecularGraph: edge_rank
+
 """
     ECFP{N} <: AbstractFingerprint
 
@@ -74,7 +82,7 @@ function ecfp_atom_invariant(mol::AbstractMolGraph, atom_index)
     atom = mol.vprops[atom_index]
 
     # Get number of implicit and explicit hydrogens
-    implicit_hs = implicit_hydrogens(mol, atom_index)
+    implicit_hs = implicit_hydrogens(mol)[atom_index]
     explicit_hs = explicit_hydrogens(mol)[atom_index]
     total_hs = implicit_hs + explicit_hs
 

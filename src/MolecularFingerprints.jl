@@ -1,32 +1,18 @@
 module MolecularFingerprints
 
-using MolecularGraph
-using Random
-using Graphs
-using RDKitMinimalLib
-using SHA
-using MolecularGraph
-using SparseArrays
+# using MolecularGraph
+using Random: seed!, randstring
+# using Graphs
+# using RDKitMinimalLib
+# using SHA
+# using MolecularGraph
+# using SparseArrays
 
-using PythonCall: Py, pyimport, pyconvert
-using MolecularGraph: SMILESMolGraph, smilestomol, AbstractMolGraph, edge_rank
-using Graphs: vertices, edges, neighbors, src, dst, degree, cycle_basis
-using Graphs: induced_subgraph, nv, vertices, all_simple_paths
-using SparseArrays: sparse
-
-"""
-    MolecularFingerprints
-
-    A Julia package for computing various molecular fingerprints used in cheminformatics.
-
-    # Modules Included
-    - Abstract Interfaces
-    - Utility Functions
-    - Fingerprint Algorithms
-
-    # Exported Functions
-    - `tanimoto`
-"""
+# using PythonCall: Py, pyimport, pyconvert
+# using MolecularGraph: SMILESMolGraph, smilestomol, AbstractMolGraph, edge_rank
+# using Graphs: vertices, edges, neighbors, src, dst, degree, cycle_basis
+# using Graphs: induced_subgraph, nv, vertices, all_simple_paths
+# using SparseArrays: sparse
 
 # In julia inclusion of files make the further iclusions to see previously defined symbols,
 # so the order of includes matters.

@@ -14,7 +14,7 @@ using MolecularFingerprints
 using MolecularGraph
 
 # For reproducibility
-Random.seed!(42)
+seed!(42)
 
 # Small subset of the Delaney Solubility Dataset (SMILES, Measured LogS)
 data = [
