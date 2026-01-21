@@ -14,7 +14,7 @@
     #smiles = "OS(=O)O"
     mol = MolecularGraph.smilestomol(smiles)
 
-    fp_julia = MACCSFingerprint(false, false)
+    fp_julia = MACCS(false, false)
     julia_fp = fingerprint(smiles, fp_julia)
     # julia_fp = fingerprint(mol, fp_julia)
 

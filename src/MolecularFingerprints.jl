@@ -44,7 +44,7 @@ include("algorithms/maccs.jl")
 include("algorithms/torsions.jl")
 
 export AbstractCalculator, AbstractFingerprint, AbstractDescriptor
-export MACCSFingerprint, TopologicalTorsion, MHFP, ECFP
+export MACCS, TopologicalTorsion, MHFP, ECFP
 export tanimoto
 export fingerprint
 

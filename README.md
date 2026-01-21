@@ -26,21 +26,6 @@ Pkg.add(url="https://github.com/LukaszSztukiewicz/MolecularFingerprints.jl")
 using MolecularFingerprints
 ```
 
-### Using with Persistent Environment
-To use the MolecularFingerprints.jl package in your own projects, you can add it to your project's environment. Open a terminal, navigate to your project directory, and run the following commands:
-```bash
-git clone https://github.com/LukaszSztukiewicz/MolecularFingerprints.jl
-cd MolecularFingerprints.jl
-julia --project=.
-```
-
-Then, in the Julia REPL, run:
-```julia
-using Pkg
-Pkg.instantiate()
-using MolecularFingerprints
-```
-
 ## Usage
 Once you have installed the MolecularFingerprints.jl package, you can start using it to calculate molecular fingerprints. Here is a simple example:
 
@@ -56,55 +41,7 @@ println(fingerprint_vector)
 findall(fingerprint_vector)  # Indices of bits set to 1
 ```
 
+
 # Documentation
 
 The documentation for MolecularFingerprints.jl can be found at [https://molecularfingerprints.lukaszsztukiewicz.com/stable](https://molecularfingerprints.lukaszsztukiewicz.com/stable/).
-
-To build the documentation locally, you can use the following commands:
-
-```julia
-activate docs/
-add Documenter
-include("docs/make.jl")
-```
-
-This will generate the documentation in the `docs/build/` directory.
-
-# Testing
-
-To run the tests for MolecularFingerprints.jl, you can use the following commands:
-
-```julia
-] activate test
-test MolecularFingerprints
-```
-
-```julia
-] activate .
-test 
-```
-
-or
-```julia
-julia --project=test test/runtests.jl
-```
-
-This will execute the test suite and report any failures or errors.
-
-To set up the test environment and add necessary dependencies, you can use the following commands: 
-
-```julia
-activate test/
-add YourPackageName
-```
-
-### Update Test Dependencies
-
-To update the test dependencies, you can use the following commands from the root of the repository:
-
-```julia
-using Pkg
-Pkg.activate("test")
-Pkg.update()
-Pkg.develop(path=".")
-```
