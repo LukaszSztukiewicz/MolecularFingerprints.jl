@@ -69,7 +69,7 @@ bitset_to_string(bitset) = join(Int.(bitset), "")
         for tc in test_cases
             expected_invariants = rdkit_atom_invariants(tc)
             expected_hashes = rdkit_hashed_atom_invariants(tc)
-            actual_invariants = ecfp_atom_invariant(tc)
+            actual_invariants = MolecularFingerprints.ecfp_atom_invariant(tc)
 
             @testset "Molecule $tc, atom index $i" for (i, (actual, expected, expected_hash)) in enumerate(zip(actual_invariants, expected_invariants, expected_hashes))
                 # Check length of returned invariant
@@ -88,7 +88,7 @@ bitset_to_string(bitset) = join(Int.(bitset), "")
                 end
 
                 # Check hash result
-                actual_hash = ecfp_hash(actual)
+                actual_hash = MolecularFingerprints.ecfp_hash(actual)
                 @test actual_hash == expected_hash
             end
         end
