@@ -1,6 +1,6 @@
 # Similarity Search: Finding Chemically Related Molecules
 
-In this tutorial, we will transition from predictive modeling to **Similarity Search**. Instead of predicting a property (like solubility), we will use `MolecularFingerprints.jl` to find the most chemically similar molecules in a database relative to a "query" molecule.
+In this tutorial, we will find the most chemically similar molecules in a database relative to a "query" molecule.
 
 ---
 

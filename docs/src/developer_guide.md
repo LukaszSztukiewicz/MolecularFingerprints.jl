@@ -1,65 +1,105 @@
-# MolecularFingerprints.jl Developers Guide
+# Developer Guide
 
-## Contributing rules
+Thank you for contributing to `MolecularFingerprints.jl`. This guide outlines the technical workflow for setting up your local environment, managing dependencies, and validating your changes.
 
-We have complete CONTRIBUTING guidelines in the [CONTRIBUTING.md](https://github.com/LukaszSztukiewicz/MolecularFingerprints.jl/blob/main/CONTRIBUTING.md) file. Please read it if you are interested in contributing to the project.
+## Engineering Standards
 
-This document provides a brief overview of the miscellaneous aspects of contributing to the MolecularFingerprints.jl package.
+Before opening a Pull Request (PR), please review our [CONTRIBUTING.md](https://github.com/LukaszSztukiewicz/MolecularFingerprints.jl/blob/main/CONTRIBUTING.md).
 
-## Installation for Development
-To set up a development environment for MolecularFingerprints.jl, follow these steps:
+## Local Environment Setup
 
-Open a terminal, navigate to your project directory, and run the following commands:
+To modify the source code, you must clone the repository and instantiate its dependencies. This ensures your local environment exactly matches the project's `Manifest.toml`.
+
 ```bash
+# Clone the repository
 git clone https://github.com/LukaszSztukiewicz/MolecularFingerprints.jl
 cd MolecularFingerprints.jl
+
+# Launch Julia with the project environment active
 julia --project=.
+
 ```
 
-Then, in the Julia REPL, run:
+Inside the Julia REPL, synchronize your environment:
+
+```julia
+using Pkg
+Pkg.instantiate()  # Downloads all dependencies specified in Project.toml
+
+```
+
+## Testing
+
+We use the standard Julia `Test` library. Our test suite is located in the `test/` directory.
+
+### Running Tests
+
+There are two primary ways to run the suite. The first is preferred for rapid iteration:
+
+1. **From the REPL (Active Development):**
+```julia
+pkg> test
+
+```
+
+
+2. **From the Terminal (CI Emulation):**
+```bash
+julia --project -e 'using Pkg; Pkg.test()'
+
+```
+
+### Managing Test Dependencies
+
+The tests reside in their own environment (`test/Project.toml`). If your new tests require a new package (e.g., `BenchmarkTools`):
+
+```julia
+pkg> activate test
+pkg> add BenchmarkTools
+pkg> dev .  # Ensure the test environment points to the local source code
+
+```
+
+## Documentation Workflow
+
+Documentation is built using `Documenter.jl`. To preview your changes to docstrings or `.md` files locally, use the provided build script.
+
+### Building Locally
+
+1. **Enter the docs environment:**
+```bash
+julia --project=docs/
+
+```
+
+
+2. **Run the build script:**
 ```julia
 using Pkg
 Pkg.instantiate()
-using MolecularFingerprints
-```
-
-## Documentation
-The documentation for MolecularFingerprints.jl is built using Documenter.jl. To build the documentation locally, follow these steps:
-```julia
-activate docs/
-add Documenter
 include("docs/make.jl")
-```
-This will generate the documentation in the `docs/build/` directory.
 
+```
+This generates the HTML files in `docs/build/`. Open `index.html` in your browser to preview.
 
-## Testing
-To run the tests for MolecularFingerprints.jl, you can use the following commands:
+## Continuous Integration (CI)
+
+When you push a branch to GitHub, our **GitHub Actions** pipeline automatically triggers:
+
+* **Unit Tests:** Executed across multiple Julia versions (current stable and LTS) and OS platforms (Linux, macOS, Windows).
+* **Code Coverage:** Reports are sent to Codecov to ensure no regressions in test coverage.
+* **Documentation Preview:** A temporary version of the docs is built to verify formatting.
+
+### Updating Dependencies
+
+If you need to update the package dependencies to a newer version:
+
 ```julia
-] activate test
-test MolecularFingerprints
+pkg> activate .
+pkg> update
+pkg> activate test
+pkg> update
+
 ```
-or
-```julia
-] activate .
-test
-```
-or
-```julia
-julia --project=test test/runtests.jl
-```
-This will execute the test suite and report any failures or errors.
-To set up the test environment and add necessary dependencies, you can use the following commands: 
-```julia
-activate test/
-add YourPackageName
-```
-### Update Test Dependencies
-To update the test dependencies, you can use the following commands from the root of the repository:
-```julia
-using Pkg
-Pkg.activate("test")
-Pkg.update()
-Pkg.develop(path=".")
-```
-This will ensure that your test environment is up to date with the latest dependencies and changes in the main package.
+
+Always commit the updated `Manifest.toml` files to ensure other developers stay in sync.

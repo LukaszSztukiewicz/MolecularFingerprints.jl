@@ -6,7 +6,7 @@ This guide will help you set up your environment and compute your first molecula
 
 We recommend using Julia's built-in package manager (`Pkg`) to manage dependencies. Choose the method that best fits your workflow:
 
-### Option 1: Sandbox (Trial)
+#### Option 1: Sandbox (Trial)
 
 Best for a quick "Hello World" or testing a specific feature without modifying your global state.
 
@@ -18,7 +18,7 @@ using MolecularFingerprints
 
 ```
 
-### Option 2: Project-Specific (Recommended)
+#### Option 2: Project-Specific (Recommended)
 
 Best for building reproducible research or production pipelines. This ensures your project’s dependencies are locked in a `Project.toml` file.
 
@@ -33,7 +33,7 @@ Pkg.add(url="https://github.com/LukaszSztukiewicz/MolecularFingerprints.jl")
 
 ## Usage
 
-Molecular fingerprints are essentially **feature extraction** steps in a pipeline. The API is designed to be functional: you define a **Calculator** (the model) and apply it to your **Data**.
+Molecular fingerprints are essentially feature extraction steps in a pipeline. The API is designed to be functional: you define a Calculator (the model) and apply it to your Data.
 
 ### Basic Pipeline
 
@@ -47,7 +47,7 @@ smiles = "C1=CC=CC=C1"
 # Parameters: <Bit-length>(Radius)
 calc = ECFP{1024}(2) 
 
-# 3. Execution: Map graph to bit-vector
+# 3. Execution: Compute the fingerprint
 vector = fingerprint(smiles, calc)
 
 # 4. Analysis: Find indices of active features
@@ -58,7 +58,7 @@ println("Active bit indices: ", active_bits)
 
 ### High-Throughput Processing
 
-For large datasets, the package provides a vectorized implementation that leverages **multithreading**.
+For large datasets, the package provides a vectorized implementation that leverages multithreading.
 
 ```julia
 # A list of SMILES (e.g., from a CSV)
