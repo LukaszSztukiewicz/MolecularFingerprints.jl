@@ -1,45 +1,74 @@
+# Getting Started with MolecularFingerprints.jl
+
+This guide will help you set up your environment and compute your first molecular representations.
+
 ## Installation
 
-There are two ways of using the MolecularFingerprints.jl package: 
-1. Using it with temporary environment (best for trying out the package).
-2. Using it with a persistent environment (best for using the package in your own projects).
+We recommend using Julia's built-in package manager (`Pkg`) to manage dependencies. Choose the method that best fits your workflow:
 
-### Using with Temporary Environment
-You can try out the MolecularFingerprints.jl package without installing it permanently by using a temporary environment. Open a Julia REPL and run the following commands:
+### Option 1: Sandbox (Trial)
+
+Best for a quick "Hello World" or testing a specific feature without modifying your global state.
+
 ```julia
 using Pkg
 Pkg.activate(temp=true)
 Pkg.add(url="https://github.com/LukaszSztukiewicz/MolecularFingerprints.jl")
 using MolecularFingerprints
+
 ```
 
-### Using with Persistent Environment
-To use the MolecularFingerprints.jl package in your own projects, you can add it to your project's environment. Open a terminal, navigate to your project directory, and run the following commands:
-```bash
-git clone https://github.com/LukaszSztukiewicz/MolecularFingerprints.jl
-cd MolecularFingerprints.jl
-julia --project=.
-```
+### Option 2: Project-Specific (Recommended)
 
-Then, in the Julia REPL, run:
+Best for building reproducible research or production pipelines. This ensures your project’s dependencies are locked in a `Project.toml` file.
+
 ```julia
 using Pkg
-Pkg.instantiate()
-using MolecularFingerprints
+Pkg.activate(".") 
+Pkg.add(url="https://github.com/LukaszSztukiewicz/MolecularFingerprints.jl")
+
 ```
 
+---
 
 ## Usage
-Once you have installed the MolecularFingerprints.jl package, you can start using it to calculate molecular fingerprints. Here is a simple example:
+
+Molecular fingerprints are essentially **feature extraction** steps in a pipeline. The API is designed to be functional: you define a **Calculator** (the model) and apply it to your **Data**.
+
+### Basic Pipeline
 
 ```julia
 using MolecularFingerprints
-# Load a molecule from a SMILES string
-molecule = "C1=CC=CC=C1"  # Benzene
-# Choose the fingerprint calculator
-fp = ECFP{1024}(2)  # Create an ECFP fingerprint generator of size 1024 with radius 2
-# Calculate the fingerprint
-fingerprint_vector = fingerprint(molecule, fp)
-println(fingerprint_vector)
-findall(fingerprint_vector)  # Indices of bits set to 1
+
+# 1. Input: SMILES string (Benzene)
+smiles = "C1=CC=CC=C1"
+
+# 2. Configuration: ECFP (Extended Connectivity Fingerprints)
+# Parameters: <Bit-length>(Radius)
+calc = ECFP{1024}(2) 
+
+# 3. Execution: Map graph to bit-vector
+vector = fingerprint(smiles, calc)
+
+# 4. Analysis: Find indices of active features
+active_bits = findall(vector)
+println("Active bit indices: ", active_bits)
+
 ```
+
+### High-Throughput Processing
+
+For large datasets, the package provides a vectorized implementation that leverages **multithreading**.
+
+```julia
+# A list of SMILES (e.g., from a CSV)
+dataset = ["CCO", "C1=CC=CC=C1", "CC(=O)O"]
+
+# The vectorized call automatically parallelizes over available threads
+batch_vectors = fingerprint(dataset, calc)
+
+```
+
+If you have never used molecular fingerprints before, see [Explanation](explanation.md) for an introduction to the concept. 
+
+For more detailed examples and advanced usage, please refer to the [API Reference](api_reference.md) and tutorials on [Solubility Prediction](tutorial_solubility_prediction.md) and [Similarity Search](tutorial_similarity_search.md).

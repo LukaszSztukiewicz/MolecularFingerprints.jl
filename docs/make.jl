@@ -21,6 +21,7 @@ makedocs(;
         "API Reference" => "api_reference.md",
         "Developer Guide" => "developer_guide.md",
         "Testing" => "testing.md",
+        "Best Practices" => "best_practices.md",
         "FAQ" => "faq.md",
         
     ],

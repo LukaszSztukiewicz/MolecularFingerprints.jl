@@ -1,29 +1,33 @@
-# MolecularFingerprints.jl
+# Why MolecularFingerprints.jl?
 
-## Explanation
+## Why we need fingerprints
 
-### Why we need fingerprints
+Most chemical data is stored as Simplified Molecular Input Line Entry System [(SMILES)](https://en.wikipedia.org/wiki/Simplified_molecular-input_line-entry_system) strings, like `CCO` for ethanol or `C1=CC=CC=C1` for benzene. While these are great for humans to read and for databases to store, they are pretty difficult to use for actual computation. 
 
-Most chemical data is stored as SMILES strings, like `CCO` for ethanol or `C1=CC=CC=C1` for benzene. While these are great for humans to read and for databases to store, they are pretty difficult to use for actual computation. You cannot perform vector math on a string, and standard string distance metrics like Levenshtein distance do not correspond to chemical similarity. A tiny change in a molecule’s structure can result in a completely different string, which makes searching and machine learning nearly impossible (see the cliassic example of `CCO` vs `COC` - ethanol and dimethyl ether—which are structurally quite different but only one Levenshtein edit apart).
+You cannot perform vector math on a string, and standard string distance metrics like Levenshtein distance do not correspond to chemical similarity. A small change in a SMILES string can represent a huge change in the actual molecule, and vice versa. For example, the SMILES strings `CCO` (ethanol) and `CC=O` (acetaldehyde) differ by just one character, but the molecules have very different properties. On the other hand, `CCO` (ethanol) and `C(C)O` (also ethanol) look quite different as strings but represent the same molecule.
 
-This is why we use molecular fingerprints. We essentially take the molecular graph and transform it into a high-dimensional vector. This moves the chemistry from the world of linguistics into the world of linear algebra.
+This is why we use molecular fingerprints. We essentially take the molecular graph and transform it into a high-dimensional vector.
 
-### How they work
+## How they work
 
-A molecular fingerprint is typically a fixed-length vector where each bit represents the presence or absence of a specific structural feature. We generate these through a few different strategies:
+A molecular fingerprint is typically a fixed-length vector where each vector entry represents the presence or absence of a specific structural feature. We generate these through a few different strategies:
 
-* Path-based methods traverse the molecular graph and identify all possible paths of a certain length, hashing those paths into the bit vector.
+* Path-based methods traverse the molecular graph and identify all possible paths of a certain length, hashing those paths into the fingerprint vector.
 * Circular methods look at the local neighborhood around each individual atom, iteratively expanding outward to capture the local environment.
-* Substructure methods check the molecule against a predefined library of chemical motifs, like searching for a specific regex in a block of text.
+* Substructure methods check the molecule against a predefined library of chemical substructures [(motifs)](https://en.wikipedia.org/wiki/Chemical_substructure), like searching for a specific regex in a block of text.
 
-### Practical applications
+## Practical applications
 
-#### Similarity searching
-Once you have converted a molecule into a bit vector, you can use concepts you are already familiar with in Computer Science. For example, we use the Tanimoto similarity (which is just another name for the Jaccard similarity) to calculate how similar two molecules are. This allows us to perform lightning-fast similarity searches across databases containing millions of compounds.
+### Similarity searching
+Once you have converted a molecule into a fingerprint vector, you can use concepts you are already familiar with in Computer Science. For example, we use the Tanimoto similarity (which is just another name for the Jaccard similarity) to calculate how similar two molecules are. This allows us to perform lightning-fast similarity searches across databases containing millions of compounds.
 
-#### Machine learning
+### Machine learning
 These vectors also serve as the standard input for machine learning models. If you want to predict whether a molecule is toxic or if it will bind to a specific protein, these fingerprints provide the fixed-length feature set you need for a random forest, a support vector machine, or a neural network.
 
-### The Julia advantage
+## Why MolecularFingerprints.jl in Julia?
 
-We built this package in Julia because fingerprinting often involves processing massive datasets where performance is critical. By using Julia, we get the execution speed of C++ while maintaining the high-level syntax needed for complex data science workflows. This library is designed to be a fast, type-safe way to integrate chemical data into your computational pipelines.
+There exist several cheminformatics libraries in other programming languages, such as RDKit in Python or CDK in Java. However, we wanted to create a native Julia implementation to leverage Julia's strengths in scientific computing, performance, and ease of use. Julia's multiple dispatch system allows us to create flexible and extensible fingerprinting algorithms that can be easily integrated into larger cheminformatics workflows. 
+
+MolecularFingerprints.jl is designed to have minimal dependencies, making it lightweight and easy to install. This allows users to quickly get started with molecular fingerprinting without the overhead of large external libraries.
+
+It is also designed to interoperate seamlessly with other Julia packages in the cheminformatics ecosystem, such as MolecularGraph.jl for molecular representation and manipulation. 

@@ -4,7 +4,8 @@ CurrentModule = MolecularFingerprints
 
 # MolecularFingerprints
 
-Welcome to the documentation for [MolecularFingerprints.jl](https://github.com/LukaszSztukiewicz/MolecularFingerprints.jl), a Julia package for calculating molecular fingerprints.
+Welcome to the documentation for [MolecularFingerprints.jl](https://github.com/LukaszSztukiewicz/MolecularFingerprints.jl)!
+This is a Julia package for calculating molecular fingerprints.
 
 If you are coming from a computer science background, you are likely used to thinking about data in terms of arrays, hashes, or objects. In chemoinformatics, our primary challenge is representing a real chemical molecule in a format that a computer can actually work with efficiently.
 

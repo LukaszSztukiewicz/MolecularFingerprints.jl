@@ -1,10 +1,27 @@
 # MolecularFingerprints.jl Developers Guide
 
-## Contributing to MolecularFingerprints.jl
+## Contributing rules
 
 We have complete CONTRIBUTING guidelines in the [CONTRIBUTING.md](https://github.com/LukaszSztukiewicz/MolecularFingerprints.jl/blob/main/CONTRIBUTING.md) file. Please read it if you are interested in contributing to the project.
 
 This document provides a brief overview of the miscellaneous aspects of contributing to the MolecularFingerprints.jl package.
+
+## Installation for Development
+To set up a development environment for MolecularFingerprints.jl, follow these steps:
+
+Open a terminal, navigate to your project directory, and run the following commands:
+```bash
+git clone https://github.com/LukaszSztukiewicz/MolecularFingerprints.jl
+cd MolecularFingerprints.jl
+julia --project=.
+```
+
+Then, in the Julia REPL, run:
+```julia
+using Pkg
+Pkg.instantiate()
+using MolecularFingerprints
+```
 
 ## Documentation
 The documentation for MolecularFingerprints.jl is built using Documenter.jl. To build the documentation locally, follow these steps:
