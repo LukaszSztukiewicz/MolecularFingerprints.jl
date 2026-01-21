@@ -14,9 +14,14 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
-        "Getting Started" => "getting_started.md",
-        "Documentation" => "documentation.md",
+        "Explanation" => "explanation.md",
+        "Tutorial: Getting Started" => "tutorial_getting_started.md",
+        "Tutorial: Solubility Prediction" => "tutorial_solubility_prediction.md",
+        "Tutorial: Similarity Search" => "tutorial_similarity_search.md",
+        "API Reference" => "api_reference.md",
+        "Developer Guide" => "developer_guide.md",
         "Testing" => "testing.md",
+        "FAQ" => "faq.md",
         
     ],
 )
