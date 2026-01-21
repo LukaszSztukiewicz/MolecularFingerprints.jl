@@ -5,14 +5,9 @@ const _Chem  = Ref{Py}()
 const _MACCS = Ref{Py}()
 
 function __init__()
-    #----------------------
-    # ENV["PATH"] = raw"C:\Users\...\miniconda3\envs\rdkit\Library\bin;" * ENV["PATH"] 
-    # change it locally
-    #----------------------
     _Chem[]  = pyimport("rdkit.Chem")
     _MACCS[] = pyimport("rdkit.Chem.MACCSkeys")
 end
-
 
 # ----------------------------------------------------------------
 # MACCSFingerprint struct
@@ -25,19 +20,27 @@ end
 # 166 bits
 nbits(::MACCSFingerprint) = 166
 
-
 # ------------------------------------------------------------------------------
 # helper functions for MACCS rules 
 # ------------------------------------------------------------------------------
 
-# returns the atom as a Symbol type (:C) not string ("C")
+"""
+    safe_atom_symbol(atom)
+
+Returns the atom symbol as a Symbol type (:C) not string ("C")
+"""
 function safe_atom_symbol(atom)
     sym = atom_symbol(atom)
     # ensure the symbol is a Symbol type, if yes -> return, if not -> convert to symbol -> return
     return sym isa Symbol ? sym : Symbol(sym)
 end
 
-# check whether atom (sym::Symbol) is contained in molecule (mol)
+
+"""
+    has_atom(mol, sym::Symbol) -> Bool
+
+Check whether atom (sym::Symbol) is contained in molecule (mol)
+"""
 function has_atom(mol, sym::Symbol)
     for v in vertices(mol.graph) # iteration over atoms of a molecule
         atom = mol.vprops[v] # v = the number of the atom we are checking to see if it is the atom we are looking for, mol.vprops[v] object of the atom 
@@ -48,7 +51,12 @@ function has_atom(mol, sym::Symbol)
     return false
 end
 
-# count how many atoms (sym::Symbol) are in molecule (mol)
+
+"""
+    count_atom(mol, sym::Symbol) -> Int
+
+Count how many atoms (sym::Symbol) are in molecule (mol)
+"""
 function count_atom(mol, sym::Symbol)
     c = 0
     for v in vertices(mol.graph) # iteration over atoms of a molecule
@@ -60,7 +68,12 @@ function count_atom(mol, sym::Symbol)
     return c
 end
 
-# check whether an bond exists between atoms (s1::Symbol, s2::Symbol), order= 1(single) or 2(double) binding
+
+"""
+   has_bond(mol, s1::Symbol, s2::Symbol, order::Int) -> Bool
+
+Check whether a bond exists between atoms (s1::Symbol, s2::Symbol) with given order in molecule (mol)
+"""
 function has_bond(mol, s1::Symbol, s2::Symbol, order::Int)
     for e in edges(mol.graph) # bindings in molecule
         v1 = src(e)
@@ -80,7 +93,12 @@ function has_bond(mol, s1::Symbol, s2::Symbol, order::Int)
     return false
 end
 
-# N~S - check wheather there is at least one binding between (s1::Symbol, s2::Symbol)
+
+"""
+    has_any_bond(mol, s1::Symbol, s2::Symbol)-> Bool
+
+N~S - check whether there is at least one bond between atoms (s1::Symbol, s2::Symbol) in molecule (mol)
+"""
 function has_any_bond(mol, s1::Symbol, s2::Symbol)
     for e in edges(mol.graph) # bindings in molecule
         v1, v2 = src(e), dst(e) # atmos of binding e
@@ -93,7 +111,12 @@ function has_any_bond(mol, s1::Symbol, s2::Symbol)
     return false
 end
 
-# A~B~C - check exact 3-atom path 
+
+"""
+    has_path3(mol, s1::Union{Symbol}, s2::Union{Symbol}, s3::Union{Symbol}) -> Bool
+
+A~B~C - check whether there is a path of length 3 between atoms (s1::Symbol, s2::Symbol, s3::Symbol) in molecule (mol)
+"""
 function has_path3(mol, s1::Union{Symbol}, s2::Union{Symbol}, s3::Union{Symbol})
     for v2 in vertices(mol.graph) # iteration over atoms of a molecule
         a2 = safe_atom_symbol(mol.vprops[v2])
@@ -111,7 +134,12 @@ function has_path3(mol, s1::Union{Symbol}, s2::Union{Symbol}, s3::Union{Symbol})
     return false
 end
 
-# s1~anything~s3 - check if s2 is present
+
+"""
+    has_strict_path3(mol, s1::Symbol, s2::Nothing, s3::Symbol) -> Bool
+
+A~X~C - check whether there is a path of length 3 between atoms (s1::Symbol, s3::Symbol) in molecule (mol), where X can be any atom
+"""
 function has_strict_path3(mol, s1::Symbol, s2::Nothing, s3::Symbol)
     for v_mid in vertices(mol.graph) # iteration over atoms of a molecule
         for v1 in neighbors(mol.graph, v_mid), v3 in neighbors(mol.graph, v_mid)
@@ -128,50 +156,34 @@ function has_strict_path3(mol, s1::Symbol, s2::Nothing, s3::Symbol)
     return false
 end
 
-# looking for a length(syms) long path
-function has_path(mol, syms::Vector{Union{Symbol,Nothing}})
-    n = length(syms)
 
-    function dfs(v, i, visited)
-        a = safe_atom_symbol(mol.vprops[v])
-        syms[i] !== nothing && a != syms[i] && return false # looking for a precise atom 'a'
-        i == n && return true
+"""
+    has_atom_in_set(mol, syms::Set{Symbol}) -> Bool
 
-        for u in neighbors(mol.graph, v)
-            u in visited && continue
-            dfs(u, i+1, push!(copy(visited), u)) && return true
-        end
-        return false
-    end
-
-    for v in vertices(mol.graph) # iteration over atoms of a molecule
-        dfs(v, 1, Set([v])) && return true
-    end
-    return false
-end
-
-# checking if at least one mol's atom is in Set 
+Check whether at least one atom of molecule (mol) is in set of atoms (syms::Set{Symbol})    
+"""
 function has_atom_in_set(mol, syms::Set{Symbol})
     return any(v -> safe_atom_symbol(mol.vprops[v]) in syms, vertices(mol.graph))
 end
 
-# checking whether an atom is in a ring 
-function is_ring_atom(mol, v)
-    # cycle_basis(mol.graph) returns list of cycle in the molecule
-    for cycle in cycle_basis(mol.graph)
-        v in cycle && return true
-    end
-    return false
-end
 
-# check whether molecule (mol) has at least one ring
+"""
+    has_ring(mol) -> Bool
+
+Check whether molecule (mol) has at least one ring
+"""
 function has_ring(mol)
     # return true if cycle_basis of the molecule is not empty
     # cycle_basis(mol.graph) returns list of cycle in the molecule ([1,2,3] - atoms 1,2,3 create a cycle)  
     return !isempty(cycle_basis(mol.graph))
 end
 
-# check whether molecule (mol) has a ring of given size (n::Int)
+
+"""
+    has_ring_of_size(mol, n::Int) -> Bool
+
+Check whether molecule (mol) has a ring of given size (n::Int)
+"""
 function has_ring_of_size(mol, n::Int)
     for cycle in cycle_basis(mol.graph) # iteration over cycles of molecule
         if length(cycle) == n
@@ -181,7 +193,12 @@ function has_ring_of_size(mol, n::Int)
     return false
 end
 
-# check whether molecule (mol) has OH group 
+
+"""
+    has_OH(mol) -> Bool
+
+Check whether molecule (mol) has OH group
+"""
 function has_OH(mol)
     for v in vertices(mol.graph) # iteration over atoms of a molecule
         # check if atom is O
@@ -192,7 +209,12 @@ function has_OH(mol)
     return false
 end
 
-# check whether molecule (mol) has NH group
+
+"""
+    has_NH(mol) -> Bool
+
+Check whether molecule (mol) has NH group
+"""
 function has_NH(mol)
     for v in vertices(mol.graph) # iteration over atoms of a molecule
         # check if atom is N
@@ -203,7 +225,12 @@ function has_NH(mol)
     return false
 end
 
-# count how many CH3 groups are in molecule (mol)
+
+"""
+    count_CH3(mol) -> Int
+
+Count how many CH3 groups are in molecule (mol)
+"""
 function count_CH3(mol)
     c = 0
     for v in vertices(mol.graph) # iteration over atoms of a molecule
@@ -212,7 +239,12 @@ function count_CH3(mol)
     return c
 end
 
-# count invisible hydrogens of a given atom
+
+"""
+    implicit_hydrogens(mol, v) -> Int
+
+Count how many implicit (invisible) hydrogens atom v has in molecule (mol)
+"""
 function implicit_hydrogens(mol, v)
     sym = safe_atom_symbol(mol.vprops[v])
     # maximum number of bonds atom can have
@@ -226,7 +258,12 @@ function implicit_hydrogens(mol, v)
     return h ≥ 0 ? h : 0
 end
 
-# return maximum number of bonds atom can have
+
+"""
+    max_valence(sym::Symbol) -> Int
+
+Returns valence for given atom symbol (sym::Symbol)
+"""
 function max_valence(sym::Symbol)
     sym == :C && return 4
     sym == :N && return 3
@@ -235,7 +272,12 @@ function max_valence(sym::Symbol)
     return 0
 end
 
-# count how many bonds already occupied 
+
+"""
+    bond_order_sum(mol, v) -> Int
+
+Count sum of bond orders for atom v in molecule (mol)
+"""
 function bond_order_sum(mol, v)
     s = 0
     for e in edges(mol.graph) # iterate over bonds
@@ -248,19 +290,34 @@ function bond_order_sum(mol, v)
     return s
 end
 
-# check wheter atom is in group CH3
+
+"""
+    is_CH3(mol, v) -> Bool
+
+Check wheter atom v is in group CH3 in molecule (mol)
+"""
 function is_CH3(mol, v)
     safe_atom_symbol(mol.vprops[v]) != :C && return false
     implicit_hydrogens(mol, v) == 3
 end
 
-# check wheter atom is in group CH2
+
+"""
+    is_CH2(mol, v) -> Bool
+
+Check wheter atom v is in group CH2 in molecule (mol)
+"""
 function is_CH2(mol, v)
     safe_atom_symbol(mol.vprops[v]) != :C && return false
     implicit_hydrogens(mol, v) == 2
 end
 
-# neighbors of atom v which are NOT hydrogen
+
+"""
+    nonH_neighbors(mol, v) -> Vector{Int}
+
+Get neighbors of atom v in molecule (mol) which are NOT hydrogen
+"""
 function nonH_neighbors(mol, v)
     [u for u in neighbors(mol.graph, v) if safe_atom_symbol(mol.vprops[u]) != :H]
 end
@@ -783,7 +840,7 @@ end
 # '~' - bond between these atoms (doesn't matter which: -,=,≡ )
 # 'Q' - optinal atom, not C,H
 # 'X' - halogen
-# 'A' - optional atom
+# 'A' - anything -optional atom
 const MACCS_RULES = Dict{Int, Function}(
     1   => mol -> -1,
     2   => mol -> -1,
@@ -953,29 +1010,6 @@ const MACCS_RULES = Dict{Int, Function}(
     166 => mol -> -1,
 )
 
-# function compute_maccs(mol, fp::MACCSFingerprint)
-#     vec = zeros(Int, nbits(fp)) # [0, 0, 0, 0, 0, ..., 0]  (166 elemetns)
-
-#     for (idx, rule) in MACCS_RULES
-#         val = rule(mol)
-#         if fp.count
-#             vec[idx] = val
-#         else
-#             vec[idx] = val > 0 ? 1 : 0
-#         end
-#     end
-
-#     if fp.sparse
-#         return sparse(vec)
-#     else
-#         return vec
-#     end
-#     # fingerprint looks often like [0,0,1,0,0,0,0,1,0,0,0,...] - mostly zeros → waste of memory - use sparse vector
-# end
-
-# function fingerprint(mol::MolGraph, calc::MACCSFingerprint)
-#     return compute_maccs(mol, calc)
-# end
 
 function compute_maccs(mol::MolGraph, fp::MACCSFingerprint; rdkit_fp::Union{Nothing,Vector{Int}} = nothing, bypass_rdkit::Bool = true)
     vec = BitVector(zeros(Bool, nbits(fp))) # [0, 0, 0, 0, 0, ..., 0]  (166 elemetns)
@@ -1003,53 +1037,23 @@ function compute_maccs(mol::MolGraph, fp::MACCSFingerprint; rdkit_fp::Union{Noth
     end
 end
 
-# function fingerprint(smiles::AbstractString, calc::MACCSFingerprint)
-#     mol = MolecularGraph.smilestomol(smiles)
-#     rdkit_fp = fingerprint_rdkit(smiles)
-#     return compute_maccs(mol, calc; rdkit_fp=rdkit_fp)
-# end
-
 function fingerprint(mol::MolGraph, calc::MACCSFingerprint)
     return compute_maccs(mol, calc)
 end
 
 function fingerprint_rdkit(smiles::AbstractString)
     mol = _Chem[].MolFromSmiles(smiles)
-    # println("fingerprint_rdkit mol:", mol)
-    # println("here")
 
     fp = _MACCS[].GenMACCSKeys(mol)
-    # println("here1")
 
-    nbits = pyconvert(Int, fp.GetNumBits()) # 167 bits
-    # println("here2")
+    nbits = pyconvert(Int, fp.GetNumBits())
 
     fp_array = Vector{Int}(undef, nbits - 1) # 166 bits
-    # println("here3")
 
     for i in 1:nbits-1
         fp_array[i] = pyconvert(Bool, fp.GetBit(i)) ? 1 : 0
     end
-    # println("here4")
 
     return fp_array
-    # return rdkit_fp = fill(0, 166) 
 end
 
-
-
-
-# using MolecularGraph
-
-# include("../interface.jl")
-
-# struct MACCS{N} <: AbstractFingerprint
-#     radius::Int
-# end
-
-# function fingerprint(mol::MolecularGraph.Mol, calc::MACCS{N}) where N
-#     # Placeholder implementation for MACCS fingerprint calculation
-#     # In a real implementation, this would compute the MACCS fingerprint
-#     # based on the molecular structure and the specified radius.
-#     return BitVector(rand(Bool, 1024))  # Example: return a random 1024-bit fingerprint
-# end
