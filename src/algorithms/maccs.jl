@@ -1,16 +1,6 @@
 # Python Integration
 using PythonCall: Py, pyimport, pyconvert
 
-# Standard Library and Data Structures
-using SparseArrays: sparse
-using Base: Ref, BitVector, Dict, Set, Union
-
-# Graph Theory Framework
-using Graphs: vertices, neighbors, edges, src, dst, cycle_basis, degree
-
-# Molecular Informatics Framework
-using MolecularGraph: MolGraph, AbstractMolGraph, atom_symbol, smilestomol
-
 # ==============================================================================
 # Python / RDKit setup
 # ==============================================================================

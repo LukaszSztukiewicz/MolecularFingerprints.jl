@@ -5,7 +5,7 @@
     # Larger molecule, taken from mhfp python implementation, 
     # written by the original authors
     # https://github.com/reymond-group/mhfp/blob/master/test/test_encoder.py
-    mol = MolecularGraph.smilestomol(
+    mol = smilestomol(
         "CCCC1=NN(C2=C1NC(=NC2=O)C3=C(C=CC(=C3)S(=O)(=O)N4CCN(CC4)C)OCC)C")
 
     # Simpler molecule (Benzoic acid), taken from 

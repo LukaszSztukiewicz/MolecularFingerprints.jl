@@ -1,11 +1,3 @@
-using MolecularGraph
-using Graphs
-using Graphs: nv, ne, degree
-using MolecularGraph: AbstractMolGraph, MolGraph, SMILESBond
-using MolecularGraph: smilestomol, implicit_hydrogens, explicit_hydrogens, valence
-using MolecularGraph: atom_number, exact_mass, monoiso_mass, atom_charge, is_in_ring
-using MolecularGraph: edge_rank
-
 """
     ECFP{N} <: AbstractFingerprint
 

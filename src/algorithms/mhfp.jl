@@ -1,20 +1,5 @@
-# Standard Library and Utilities
-using Random: seed!, rand
-using SHA: sha1
-using Base: htol, IOBuffer
 using RDKitMinimalLib: smiles
-
-# Graph Theory Framework
-using Graphs: nv, ne, vertices, fadjlist, neighborhood, induced_subgraph
-
-# Molecular Informatics Framework
-using MolecularGraph: MolGraph, AbstractMolGraph, SMILESBond
-using MolecularGraph: smilestomol, sssr
-using MolecularGraph: implicit_hydrogens, explicit_hydrogens, valence
-using MolecularGraph: atom_number, exact_mass, monoiso_mass, atom_charge
-using MolecularGraph: is_in_ring, is_aromatic, edge_rank, remove_all_hydrogens!
-using MolecularGraph: sssr, is_aromatic, subgraph, remove_all_hydrogens!, subset
-
+using MolecularGraph: smiles
 """
     MHFP
 
@@ -239,7 +224,7 @@ function smiles_from_rings(mol::MolGraph)
 
 
     # Go through all rings in the sssr
-    for ring in MolecularGraph.sssr(mol)
+    for ring in sssr(mol)
         # For each ring in the sssr, create smiles string of the submolecule corresponding
         # to the ring and add to the shingling.
         push!(shingling_snippet, smiles(induced_subgraph(mol, ring)[1]))
