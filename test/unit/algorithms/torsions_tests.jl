@@ -93,7 +93,7 @@
         mol = MolecularGraph.smilestomol(data)
         fp = fingerprint(mol, torsion_calc) # sparsevec([16809984], Int32[1], 68719476736) # rdkit: # entry: {4320149536: 1}
 # length: 68719476735
-        @info fp
+        #@info fp
         end
 
 end

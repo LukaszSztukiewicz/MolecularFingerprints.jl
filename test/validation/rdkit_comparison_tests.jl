@@ -33,9 +33,15 @@ function get_rdkit_scores(query::String, db::Vector{String}, r, n)
     q_mol = Chem.MolFromSmiles(query)
     db_mols = [Chem.MolFromSmiles(s) for s in db]
     
-    q_fp = AllChem.GetMorganFingerprintAsBitVect(q_mol, r, nBits=n)
-    db_fps = [AllChem.GetMorganFingerprintAsBitVect(m, r, nBits=n) for m in db_mols]
+    # 1. Initialize the new Morgan Generator
+    # radius=r, fpSize=n
+    gen = AllChem.GetMorganGenerator(radius=r, fpSize=n)
     
+    # 2. Use the generator to create fingerprints
+    q_fp = gen.GetFingerprintAsBitVect(q_mol)
+    db_fps = [gen.GetFingerprintAsBitVect(m) for m in db_mols]
+    
+    # 3. Calculate similarity
     py_scores = DataStructs.BulkTanimotoSimilarity(q_fp, db_fps)
     return pyconvert(Vector{Float64}, py_scores)
 end
@@ -43,7 +49,7 @@ end
 # --- 5. MAIN BENCHMARK & TEST SUITE ---
 function run_all_tests()
     #print current working directory
-    println("Current working directory: ", pwd())
+    #println("Current working directory: ", pwd())
 
     println("=== Chemical Fingerprint Test Suite ===")
     
@@ -59,7 +65,7 @@ function run_all_tests()
         error("bace.csv not found in folder. Please ensure the file is present.")
     end
     database = load_test_data(csv_path)
-    #take firest 100 molecules for performance
+    #take first 10 molecules for performance
     database = database[1:10]
     println("Database loaded with $(length(database)) molecules (BACE + Edge Cases).")
 
@@ -68,7 +74,7 @@ function run_all_tests()
     # Warmup
     fingerprint(database, calc)
     # Benchmark
-    t_julia = @benchmark fingerprint($database[:10], $calc)
+    t_julia = @benchmark fingerprint($database[1:10], $calc)
     display(t_julia)
 
     # 3. Accuracy Check
