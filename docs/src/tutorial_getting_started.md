@@ -69,6 +69,6 @@ batch_vectors = fingerprint(dataset, calc)
 
 ```
 
-If you have never used molecular fingerprints before, see [Explanation](explanation.md) for an introduction to the concept. 
+If you have never used molecular fingerprints before, see [Explanation: What are Fingerprints?](explanation_fingerprints.md) for a detailed introduction.
 
-For more detailed examples and advanced usage, please refer to the [API Reference](api_reference.md) and tutorials on [Solubility Prediction](tutorial_solubility_prediction.md) and [Similarity Search](tutorial_similarity_search.md).
+For more detailed examples and advanced usage, please refer to the [API Reference: Public API](public_api_reference.md) and tutorials on [Solubility Prediction](tutorial_solubility_prediction.md) and [Similarity Search](tutorial_similarity_search.md).
