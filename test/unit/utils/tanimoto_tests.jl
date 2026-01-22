@@ -42,7 +42,7 @@ using Test
     # different lengths should throw an error
     a = BitVector([1, 0, 1])
     b = BitVector([1, 0])
-    @test_throws AssertionError tanimoto(a, b)
+    @test_throws ArgumentError tanimoto(a, b)
 
     # larger fingerprints
     a = BitVector(rand(Bool, 1024))

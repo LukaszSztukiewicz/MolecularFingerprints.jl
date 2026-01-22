@@ -107,11 +107,11 @@ bitset_to_string(bitset) = join(Int.(bitset), "")
         @test ecfp0.radius == 0
 
          # Test invalid radius
-        @test_throws ArgumentError ECFP{1024}(-1)
+        @test_throws DomainError ECFP{1024}(-1)
 
         # Test invalid size
-        @test_throws ArgumentError ECFP{0}(2)
-        @test_throws ArgumentError ECFP{-1}(2)
+        @test_throws DomainError ECFP{0}(2)
+        @test_throws DomainError ECFP{-1}(2)
     end
 
     @testset "Basic Properties" begin

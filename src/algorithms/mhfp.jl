@@ -1,7 +1,13 @@
 using RDKitMinimalLib: smiles
 using MolecularGraph: smiles
 """
-    MHFP
+    MHFP(;
+        radius::Int = 3,
+        min_radius::Int = 1,
+        rings::Bool = true,
+        n_permutations::Int = 2048,
+        seed::Int = 42
+    )
 
 Type for MHFP fingerprint calculators. Contains settings and parameters for 
 MHFP fingerprint generation.
@@ -141,12 +147,12 @@ Calculates the MHFP fingerprint of the given molecule and returns it as a vector
 """
 function fingerprint(mol::MolGraph, calc::MHFP)
     return mhfp_hash_from_molecular_shingling(  # calculate hash
-        mhfp_shingling_from_mol(mol, calc),     # given the shingling of the molecule
+        mhfp_shingling_from_mol!(mol, calc),     # given the shingling of the molecule
         calc)                                   # using the parameters stored in calc
 end
 
 """
-    mhfp_shingling_from_mol(
+    mhfp_shingling_from_mol!(
         mol::MolGraph,
         calc::MHFP)
 
@@ -162,7 +168,7 @@ around each heavy (=non-hydrogen) atom of the molecule.
     fingerprint calculation, e.g., the radii of the circular substructures to be considered
     and whether to include ring information explicitly in the fingerprints
 """
-function mhfp_shingling_from_mol(
+function mhfp_shingling_from_mol!(
     mol::MolGraph,
     calc::MHFP
 )   

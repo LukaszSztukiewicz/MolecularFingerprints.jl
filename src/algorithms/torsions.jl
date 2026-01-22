@@ -45,7 +45,7 @@ molecular structure using paths of length pathLength.
    must be at least 2
 """
 function fingerprint(mol::MolGraph, calc::TopologicalTorsion) 
-	calc.pathLength > 1 || throw(ArgumentError("pathLength must be larger than 1."))
+	calc.pathLength > 1 || throw(DomainError("pathLength must be larger than 1."))
 	nv(mol) ≥ calc.pathLength || @warn "Number of atoms smaller than path length. This will result in an all zero fingerprint."
     FP = getTopologicalTorsionFP(mol, calc.pathLength)
     return FP
@@ -159,7 +159,6 @@ as described in https://depth-first.com/articles/2021/10/06/molecular-graph-cano
 Since every ring is found pathLength times, we have to abandon all but one ring.  
 We only keep the ring which starts at the lowest numbered vertex.
 """
-
 function canonicalize(path::Vector) 
 	# if we have a ring with n vertices, this will be found n times by getPathsOfLengthN.
 	# e.g.:  [5,1,3,4,5], [1,3,4,5,1], [3,4,5,1,3], [4,5,1,3,4]. We only want unique paths.
