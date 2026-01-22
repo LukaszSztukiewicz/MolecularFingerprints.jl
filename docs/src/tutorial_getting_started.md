@@ -43,6 +43,13 @@ using MolecularFingerprints
 # 1. Input: SMILES string (Benzene)
 smiles = "C1=CC=CC=C1"
 
+# 2. This package implements 4 types of fingerprints. Let's use all of them.
+
+ecfp_calc = ECFP{1024}(2)        # Extended Connectivity Fingerprint (ECFP4)
+mhfp_calc = MHFP()
+torsion_calc = TopologicalTorsion()
+maccs_calc = MACCS()
+
 # 2. Configuration: ECFP (Extended Connectivity Fingerprints)
 # Parameters: <Bit-length>(Radius)
 calc = ECFP{1024}(2) 

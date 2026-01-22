@@ -5,7 +5,7 @@
     MACCS(count::Bool=false, sparse::Bool=false)
 MACCS (Molecular ACCess System) fingerprint calculator.
 # Arguments
-- `count`: If `false`, produces a bit vector (presence/absence). If `true`, produces a count-based fingerprint.
+- `count`: If `false`, produces a boolean vector (presence/absence). If `true`, produces a count-based fingerprint.
 - `sparse`: If `false`, produces a dense representation. If `true`, produces a sparse representation.
 # References
 - [Durant et al., 2002](https://doi.org/10.1021/ci010132r)
@@ -13,6 +13,10 @@ MACCS (Molecular ACCess System) fingerprint calculator.
 struct MACCS <: AbstractFingerprint
     count::Bool        # false = bit, true = count-based
     sparse::Bool       # false = dense, true = sparse
+
+    function MACCS(count::Bool=false, sparse::Bool=true)
+        return new(count, sparse)
+    end
 end
 
 
@@ -1007,32 +1011,35 @@ const MACCS_RULES = Dict{Int, Function}(
 )
 
 
-function compute_maccs(mol::MolGraph, fp::MACCS; rdkit_fp::Union{Nothing,Vector{Int}} = nothing, bypass_rdkit::Bool = true)
-    # [0, 0, 0, 0, 0, ..., 0]  (166 elemetns)
-    # vec = zeros(Int, 166)
-    vec = fill(-1, 166)
+function compute_maccs(mol::MolGraph, fp::MACCS)
+    
+    # Handle Sparse case specifically to avoid intermediate dense array
+    if fp.sparse
+        I = Int32[] # Row indices
+        V = Int32[] # Values
+        
+        # Pre-allocate if possible, though 166 is small enough that it's fast
+        sizehint!(I, 166); sizehint!(V, 166)
+
+        for (idx, rule) in MACCS_RULES
+            val = rule(mol)
+            if val > 0
+                push!(I, Int32(idx))
+                push!(V, Int32(fp.count ? val : 1))
+            end
+        end
+
+        return SparseVector(166, I, V)
+    end
+
+    vec = fill(0, 166)
 
     for (idx, rule) in MACCS_RULES
         val = rule(mol)
-
-        if val == -1
-            if bypass_rdkit #FIXME RDKIT
-                val = 0
-            else
-                rdkit_fp === nothing &&
-                error("RDKit fingerprint required for MACCS bit $idx")
-                val = rdkit_fp[idx]
-            end
-        else
-            vec[idx] = fp.count ? val : (val > 0 ? 1 : 0)
-        end
+        vec[idx] = fp.count ? val : Int(val > 0)
     end
 
-    if fp.sparse
-        return sparse(vec)
-    else
-        return vec
-    end
+    return vec
 end
 
 function fingerprint(mol::MolGraph, calc::MACCS)
