@@ -2,15 +2,16 @@ using Test
 using MolecularGraph
 using MolecularGraph: smilestomol, MolGraph
 using MolecularFingerprints
-using Random
+using Random: seed!, randstring
 using SHA
 using SparseArrays
 using Graphs: nv, all_simple_paths, degree
 using Graphs: vertices, induced_subgraph, neighborhood
 using PythonCall: Py, pyimport, pyconvert, pybuiltins
+using MolecularGraph: MolGraph, smiles, sssr, is_aromatic, subgraph, remove_all_hydrogens!
 
 # Set seed for reproducibility across all tests
-Random.seed!(42)
+seed!(42)
 
 @testset "MolecularFingerprints.jl" begin
 

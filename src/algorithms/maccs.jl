@@ -1,3 +1,6 @@
+# Python Integration
+using PythonCall: Py, pyimport, pyconvert
+
 # ==============================================================================
 # Python / RDKit setup
 # ==============================================================================
@@ -10,9 +13,18 @@ function __init__()
 end
 
 # ----------------------------------------------------------------
-# MACCSFingerprint struct
+# MACCS struct
 # ----------------------------------------------------------------
-struct MACCSFingerprint <: AbstractFingerprint
+"""
+    MACCS(count::Bool=false, sparse::Bool=false)
+MACCS (Molecular ACCess System) fingerprint calculator.
+# Arguments
+- `count`: If `false`, produces a bit vector (presence/absence). If `true`, produces a count-based fingerprint.
+- `sparse`: If `false`, produces a dense representation. If `true`, produces a sparse representation.
+# References
+- [Durant et al., 2002](https://doi.org/10.1021/ci010132r)
+"""
+struct MACCS <: AbstractFingerprint
     count::Bool        # false = bit, true = count-based
     sparse::Bool       # false = dense, true = sparse
 end
@@ -202,7 +214,7 @@ function has_OH(mol)
         # check if atom is O
         safe_atom_symbol(mol.vprops[v]) == :O || continue
         # count how amny invisible H atoms does this O have
-        implicit_hydrogens(mol, v) ≥ 1 && return true
+        internal_implicit_hydrogens(mol, v) ≥ 1 && return true
     end
     return false
 end
@@ -218,7 +230,7 @@ function has_NH(mol)
         # check if atom is N
         safe_atom_symbol(mol.vprops[v]) == :N || continue
         # count how amny invisible H atoms does this N have
-        implicit_hydrogens(mol, v) ≥ 1 && return true
+        internal_implicit_hydrogens(mol, v) ≥ 1 && return true
     end
     return false
 end
@@ -239,11 +251,11 @@ end
 
 
 """
-    implicit_hydrogens(mol, v) -> Int
+    internal_implicit_hydrogens(mol, v) -> Int
 
 Count how many implicit (invisible) hydrogens atom v has in molecule (mol)
 """
-function implicit_hydrogens(mol, v)
+function internal_implicit_hydrogens(mol, v)
     sym = safe_atom_symbol(mol.vprops[v])
     # maximum number of bonds atom can have
     maxv = max_valence(sym)
@@ -296,7 +308,7 @@ Check wheter atom v is in group CH3 in molecule (mol)
 """
 function is_CH3(mol, v)
     safe_atom_symbol(mol.vprops[v]) != :C && return false
-    implicit_hydrogens(mol, v) == 3
+    internal_implicit_hydrogens(mol, v) == 3
 end
 
 
@@ -307,7 +319,7 @@ Check wheter atom v is in group CH2 in molecule (mol)
 """
 function is_CH2(mol, v)
     safe_atom_symbol(mol.vprops[v]) != :C && return false
-    implicit_hydrogens(mol, v) == 2
+    internal_implicit_hydrogens(mol, v) == 2
 end
 
 
@@ -1009,7 +1021,7 @@ const MACCS_RULES = Dict{Int, Function}(
 )
 
 
-function compute_maccs(mol::MolGraph, fp::MACCSFingerprint; rdkit_fp::Union{Nothing,Vector{Int}} = nothing, bypass_rdkit::Bool = true)
+function compute_maccs(mol::MolGraph, fp::MACCS; rdkit_fp::Union{Nothing,Vector{Int}} = nothing, bypass_rdkit::Bool = true)
     # [0, 0, 0, 0, 0, ..., 0]  (166 elemetns)
     # vec = zeros(Int, 166)
     vec = fill(-1, 166)
@@ -1037,7 +1049,13 @@ function compute_maccs(mol::MolGraph, fp::MACCSFingerprint; rdkit_fp::Union{Noth
     end
 end
 
-function fingerprint(mol::MolGraph, calc::MACCSFingerprint)
+# function fingerprint(smiles::AbstractString, calc::MACCS)
+#     mol = MolecularGraph.smilestomol(smiles)
+#     rdkit_fp = fingerprint_rdkit(smiles)
+#     return compute_maccs(mol, calc; rdkit_fp=rdkit_fp)
+# end
+
+function fingerprint(mol::MolGraph, calc::MACCS)
     return compute_maccs(mol, calc)
 end
 

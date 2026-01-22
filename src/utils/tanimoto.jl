@@ -1,10 +1,10 @@
 """
-    tanimoto(a::BitVector, b::BitVector) -> Float64
+    tanimoto(a::BitVector, b::BitVector)
 
 Calculate the Tanimoto similarity coefficient (Jaccard Index) between two fingerprints.
 Formula: c / (a + b - c) where c is intersection count.
 """
-function tanimoto(a::BitVector, b::BitVector)::Float64
+function tanimoto(a::BitVector, b::BitVector)
     @assert length(a) == length(b) "Fingerprints must be of the same length"
     
     # High-performance bit counting

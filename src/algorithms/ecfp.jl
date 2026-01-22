@@ -74,7 +74,7 @@ function ecfp_atom_invariant(mol::AbstractMolGraph, atom_index)
     atom = mol.vprops[atom_index]
 
     # Get number of implicit and explicit hydrogens
-    implicit_hs = implicit_hydrogens(mol, atom_index)
+    implicit_hs = implicit_hydrogens(mol)[atom_index]
     explicit_hs = explicit_hydrogens(mol)[atom_index]
     total_hs = implicit_hs + explicit_hs
 
@@ -205,21 +205,7 @@ struct AccumTuple
     AccumTuple(bits::BitVector, invariant::UInt32, atom_index::Int) = new(bits, invariant, atom_index)
 end
 
-"""
-    Base.isless(a::AccumTuple, b::AccumTuple)
 
-Define ordering for AccumTuple objects to match RDKit's sorting behavior.
-
-Compares AccumTuples by first checking the bit vectors in reverse order (matching
-boost::dynamic_bitset comparison), then by invariant value, then by atom index.
-
-# Arguments
-- `a::AccumTuple`: First tuple to compare
-- `b::AccumTuple`: Second tuple to compare
-
-# Returns
-- `Bool`: true if a < b according to the defined ordering
-"""
 function Base.isless(a::AccumTuple, b::AccumTuple)
     # Compare ra and rb in reverse order, because this is how boost::dynamic_bitset does it
     for (abit, bbit) in zip(Iterators.reverse(a.bits), Iterators.reverse(b.bits))

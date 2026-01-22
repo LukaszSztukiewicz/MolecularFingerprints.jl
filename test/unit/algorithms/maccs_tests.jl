@@ -13,13 +13,12 @@
         # !!! Bit 157: julia[157] = 1 i rdkit[157] = 0  
 
         #smiles = "OS(=O)O"
-        mol = MolecularGraph.smilestomol(smiles)
-
-        fp_julia = MACCSFingerprint(false, false)
+        # mol = smilestomol(smiles)
+        fp_julia = MACCS(false, false)
         julia_fp = fingerprint(smiles, fp_julia)
         # julia_fp = fingerprint(mol, fp_julia)
 
-        rdkit_fp = fingerprint_rdkit(smiles)
+        rdkit_fp = MolecularFingerprints.fingerprint_rdkit(smiles)
 
         @test length(julia_fp) == 166
         @test length(rdkit_fp) == 166
@@ -55,9 +54,10 @@
         smiles = "ON(O)C" 
         # smiles = "ON(O)CO" 
 
-        fp_julia = MACCSFingerprint(false, false)
+        # mol = smilestomol(smiles)
+        fp_julia = MACCS(false, false)
         julia_fp = fingerprint(smiles, fp_julia)
-        rdkit_fp = fingerprint_rdkit(smiles)
+        rdkit_fp = MolecularFingerprints.fingerprint_rdkit(smiles)
 
         @test length(julia_fp) == 166
         @test length(rdkit_fp) == 166
@@ -80,9 +80,10 @@
         smiles = "CC(C)" 
         # smiles = "CCC" 
 
-        fp_julia = MACCSFingerprint(false, false)
+        # mol = smilestomol(smiles)
+        fp_julia = MACCS(false, false)
         julia_fp = fingerprint(smiles, fp_julia)
-        rdkit_fp = fingerprint_rdkit(smiles)
+        rdkit_fp = MolecularFingerprints.fingerprint_rdkit(smiles)
 
         @test length(julia_fp) == 166
         @test length(rdkit_fp) == 166
@@ -105,9 +106,9 @@
         smiles = "NCCN" 
         # smiles = "NCN" 
 
-        fp_julia = MACCSFingerprint(false, false)
+        fp_julia = MACCS(false, false)
         julia_fp = fingerprint(smiles, fp_julia)
-        rdkit_fp = fingerprint_rdkit(smiles)
+        rdkit_fp = MolecularFingerprints.fingerprint_rdkit(smiles)
 
         @test length(julia_fp) == 166
         @test length(rdkit_fp) == 166
@@ -130,9 +131,9 @@
         smiles = "NCCCN" 
         # smiles = "NCCN" 
 
-        fp_julia = MACCSFingerprint(false, false)
+        fp_julia = MACCS(false, false)
         julia_fp = fingerprint(smiles, fp_julia)
-        rdkit_fp = fingerprint_rdkit(smiles)
+        rdkit_fp = MolecularFingerprints.fingerprint_rdkit(smiles)
 
         @test length(julia_fp) == 166
         @test length(rdkit_fp) == 166

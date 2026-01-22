@@ -1,3 +1,5 @@
+using RDKitMinimalLib: smiles
+using MolecularGraph: smiles
 """
     MHFP
 
@@ -96,7 +98,7 @@ struct MHFP <: AbstractFingerprint
         _permutations_b = Vector{UInt32}()
 
         # set seed
-        Random.seed!(seed)
+        seed!(seed)
 
         # fill vectors entry by entry, to ensure pairwise unique entries within the vectors
         for i in 1:n_permutations
@@ -222,7 +224,7 @@ function smiles_from_rings(mol::MolGraph)
 
 
     # Go through all rings in the sssr
-    for ring in MolecularGraph.sssr(mol)
+    for ring in sssr(mol)
         # For each ring in the sssr, create smiles string of the submolecule corresponding
         # to the ring and add to the shingling.
         push!(shingling_snippet, smiles(induced_subgraph(mol, ring)[1]))
@@ -302,7 +304,7 @@ function smiles_from_circular_substructures(mol::MolGraph, radius::Int, min_radi
 
             submol, atom_map = induced_subgraph(mol, atoms_in_substructure_of_radius_i)
 
-            # TODO: This test is copied from the original authors.
+            # NOTE: This test is copied from the original authors.
             # I don't know what this test is for, as I don't see why it could be that 
             # atom_index is not contained in the atom map.
             # I guess this is just to make sure that we don't get an error but simply

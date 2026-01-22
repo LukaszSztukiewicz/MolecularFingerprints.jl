@@ -17,7 +17,13 @@ atomNumberTypes = zeros(UInt32, 1 << numTypeBits)
 atomNumberTypes[1:1 << numTypeBits - 1] = [5, 6, 7, 8, 9, 14, 15, 16, 17, 33, 34, 35, 51, 52, 53]
 codeSize = UInt32(numTypeBits + numPiBits + numBranchBits) 
 
-# struct containing parameters for generating the fingerprint
+"""
+	TopologicalTorsion(pathLength::Int=4)
+Topological Torsion fingerprint calculator.
+# Arguments
+- `pathLength`: Length of the paths in the molecular graph to consider (default is
+ 4).
+"""
 struct TopologicalTorsion <: AbstractFingerprint
 	pathLength::Int
 

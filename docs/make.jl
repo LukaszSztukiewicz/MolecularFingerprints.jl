@@ -14,9 +14,16 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
-        "Getting Started" => "getting_started.md",
-        "Documentation" => "documentation.md",
-        "Testing" => "testing.md",
+        "Explanation" => "explanation.md",
+        "Tutorial: Getting Started" => "tutorial_getting_started.md",
+        "Tutorial: Similarity Search" => "tutorial_similarity_search.md",
+        "Tutorial: Solubility Prediction" => "tutorial_solubility_prediction.md",
+        "Fingerprint Types" => "fingerprint_types.md",
+        "API Reference" => "api_reference.md",
+        "Developer Guide" => "developer_guide.md",
+        "Validation & Testing" => "validation.md",
+        "Best Practices" => "best_practices.md",
+        "FAQ" => "faq.md",
         
     ],
 )

@@ -14,7 +14,7 @@ using MolecularFingerprints
 using MolecularGraph
 
 # For reproducibility
-Random.seed!(42)
+seed!(42)
 
 # Small subset of the Delaney Solubility Dataset (SMILES, Measured LogS)
 data = [
@@ -41,7 +41,7 @@ mols = [smilestomol(s) for s in smiles_list]
 
 # Define the featurizer
 featurizer_ecfp = ECFP{2}(2) # 2048-bit ECFP with radius 2
-featurizer_maccs = MACCSFingerprint(true, false) # MACCS keys
+featurizer_maccs = MACCS(true, false) # MACCS keys
 
 # Generate BitVectors
 # Note: DecisionTree.jl expects a standard Matrix{Float64} or Matrix{Int}
