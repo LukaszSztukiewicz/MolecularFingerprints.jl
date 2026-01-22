@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Tutorial: Solubility Prediction · MolecularFingerprints.jl</title><meta name="title" content="Tutorial: Solubility Prediction · MolecularFingerprints.jl"/><meta property="og:title" content="Tutorial: Solubility Prediction · MolecularFingerprints.jl"/><meta property="twitter:title" content="Tutorial: Solubility Prediction · MolecularFingerprints.jl"/><meta name="description" content="Documentation for MolecularFingerprints.jl."/><meta property="og:description" content="Documentation for MolecularFingerprints.jl."/><meta property="twitter:description" content="Documentation for MolecularFingerprints.jl."/><meta property="og:url" content="https://LukaszSztukiewicz.github.io/MolecularFingerprints.jl/tutorial_solubility_prediction/"/><meta property="twitter:url" content="https://LukaszSztukiewicz.github.io/MolecularFingerprints.jl/tutorial_solubility_prediction/"/><link rel="canonical" href="https://LukaszSztukiewicz.github.io/MolecularFingerprints.jl/tutorial_solubility_prediction/"/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">MolecularFingerprints.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../explanation/">Explanation</a></li><li><a class="tocitem" href="../tutorial_getting_started/">Tutorial: Getting Started</a></li><li><a class="tocitem" href="../tutorial_similarity_search/">Tutorial: Similarity Search</a></li><li class="is-active"><a class="tocitem" href>Tutorial: Solubility Prediction</a><ul class="internal"><li><a class="tocitem" href="#1.-Setup-and-Data-Loading"><span>1. Setup and Data Loading</span></a></li><li><a class="tocitem" href="#2.-Feature-Generation-(Fingerprinting)"><span>2. Feature Generation (Fingerprinting)</span></a></li><li><a class="tocitem" href="#3.-Model-Training"><span>3. Model Training</span></a></li><li><a class="tocitem" href="#4.-Model-Evaluation"><span>4. Model Evaluation</span></a></li></ul></li><li><a class="tocitem" href="../fingerprint_types/">Fingerprint Types</a></li><li><a class="tocitem" href="../api_reference/">API Reference</a></li><li><a class="tocitem" href="../developer_guide/">Developer Guide</a></li><li><a class="tocitem" href="../validation/">Validation &amp; Testing</a></li><li><a class="tocitem" href="../best_practices/">Best Practices</a></li><li><a class="tocitem" href="../faq/">FAQ</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Tutorial: Solubility Prediction</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Tutorial: Solubility Prediction</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/LukaszSztukiewicz/MolecularFingerprints.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/LukaszSztukiewicz/MolecularFingerprints.jl/blob/main/docs/src/tutorial_solubility_prediction.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="QSAR-Pipeline:-Solubility-Prediction"><a class="docs-heading-anchor" href="#QSAR-Pipeline:-Solubility-Prediction">QSAR Pipeline: Solubility Prediction</a><a id="QSAR-Pipeline:-Solubility-Prediction-1"></a><a class="docs-heading-anchor-permalink" href="#QSAR-Pipeline:-Solubility-Prediction" title="Permalink"></a></h1><p>In this tutorial, we will build a Random Forest model to predict the aqueous solubility of molecules using <code>MolecularFingerprints.jl</code> and <code>DecisionTree.jl</code>.</p><h2 id="1.-Setup-and-Data-Loading"><a class="docs-heading-anchor" href="#1.-Setup-and-Data-Loading">1. Setup and Data Loading</a><a id="1.-Setup-and-Data-Loading-1"></a><a class="docs-heading-anchor-permalink" href="#1.-Setup-and-Data-Loading" title="Permalink"></a></h2><p>We will use a small subset of the <strong>Delaney (ESOL)</strong> dataset. For this demo, we mock the data loading, but you would normally use <code>CSV.read</code>.</p><pre><code class="language-julia hljs">using Random
+using Statistics
+using DecisionTree
+using MolecularFingerprints
+using MolecularGraph
+
+# For reproducibility
+seed!(42)
+
+# Small subset of the Delaney Solubility Dataset (SMILES, Measured LogS)
+data = [
+    (&quot;CCO&quot;, 0.8),               # Ethanol (High solubility)
+    (&quot;CC(=O)Oc1ccccc1C(=O)O&quot;, -2.1), # Aspirin (Moderate)
+    (&quot;c1ccccc1&quot;, -2.0),         # Benzene (Low)
+    (&quot;CCCCCCCC&quot;, -4.5),         # Octane (Very Low)
+    (&quot;O=C(C)Oc1ccccc1C(=O)O&quot;, -2.2), # Aspirin analog
+    (&quot;CN1C=NC2=C1C(=O)N(C(=O)N2C)C&quot;, -0.9) # Caffeine
+]
+
+# Separate X (SMILES) and y (Labels)
+smiles_list = [d[1] for d in data]
+y = [d[2] for d in data]</code></pre><h2 id="2.-Feature-Generation-(Fingerprinting)"><a class="docs-heading-anchor" href="#2.-Feature-Generation-(Fingerprinting)">2. Feature Generation (Fingerprinting)</a><a id="2.-Feature-Generation-(Fingerprinting)-1"></a><a class="docs-heading-anchor-permalink" href="#2.-Feature-Generation-(Fingerprinting)" title="Permalink"></a></h2><p>We convert the raw SMILES strings into fixed-length numeric vectors using ECFP4.</p><pre><code class="language-julia hljs"># Parse SMILES to GraphMol objects
+mols = [smilestomol(s) for s in smiles_list]
+
+# Define the featurizer
+featurizer_ecfp = ECFP{2}(2) # 2048-bit ECFP with radius 2
+featurizer_maccs = MACCS(true, false) # MACCS keys
+
+# Generate BitVectors
+# Note: DecisionTree.jl expects a standard Matrix{Float64} or Matrix{Int}
+fingerprints = [fingerprint(m, featurizer_ecfp) for m in mols]
+# Convert Vector of BitVectors to a Matrix (Samples x Features)
+# We transpose (&#39;) because hcat stacks them as columns
+X = hcat(fingerprints...)&#39;
+X = Matrix(X) # Convert to standard dense matrix for ML</code></pre><h2 id="3.-Model-Training"><a class="docs-heading-anchor" href="#3.-Model-Training">3. Model Training</a><a id="3.-Model-Training-1"></a><a class="docs-heading-anchor-permalink" href="#3.-Model-Training" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Train/Test Split (Simple 80/20 manual split for demo)
+n_samples = length(y)
+train_idx = shuffle(1:n_samples)[1:floor(Int, 0.8*n_samples)]
+test_idx = setdiff(1:n_samples, train_idx)
+
+X_train, y_train = X[train_idx, :], y[train_idx]
+X_test, y_test = X[test_idx, :], y[test_idx]
+
+# Initialize and Train Model
+# n_trees=10, min_samples=2
+model = build_forest(y_train, X_train, 2, 10, 0.7, -1)
+
+println(&quot;Model Trained successfully!&quot;)</code></pre><h2 id="4.-Model-Evaluation"><a class="docs-heading-anchor" href="#4.-Model-Evaluation">4. Model Evaluation</a><a id="4.-Model-Evaluation-1"></a><a class="docs-heading-anchor-permalink" href="#4.-Model-Evaluation" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Predict on Test Set
+preds = apply_forest(model, X_test)
+rmse = sqrt(mean((preds .- y_test).^2))
+
+println(&quot;Test RMSE: $rmse&quot;)
+
+# Inference on New Molecule
+new_mol_smiles = &quot;CC(=O)N&quot; # Acetamide
+new_mol = smilestomol(new_mol_smiles)
+new_fp = fingerprint(new_mol, featurizer_ecfp)
+
+# Reshape to 1xN Matrix for prediction
+new_X = reshape(new_fp, 1, length(new_fp))
+
+predicted_solubility = apply_forest(model, new_X)[1]
+println(&quot;Predicted Solubility for $new_mol_smiles: $predicted_solubility&quot;)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../tutorial_similarity_search/">« Tutorial: Similarity Search</a><a class="docs-footer-nextpage" href="../fingerprint_types/">Fingerprint Types »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Thursday 22 January 2026 19:23">Thursday 22 January 2026</span>. Using Julia version 1.12.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
