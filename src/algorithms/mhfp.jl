@@ -1,7 +1,13 @@
 using RDKitMinimalLib: smiles
 using MolecularGraph: smiles
 """
-    MHFP
+    MHFP(;
+        radius::Int = 3,
+        min_radius::Int = 1,
+        rings::Bool = true,
+        n_permutations::Int = 2048,
+        seed::Int = 42
+    )
 
 Type for MHFP fingerprint calculators. Contains settings and parameters for 
 MHFP fingerprint generation.

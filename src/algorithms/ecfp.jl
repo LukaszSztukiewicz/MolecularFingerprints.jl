@@ -1,5 +1,5 @@
 """
-    ECFP{N} <: AbstractFingerprint
+    ECFP{N}(radius::Int = 2)
 
 Extended-Connectivity Fingerprint (ECFP) calculator.
 
@@ -164,7 +164,11 @@ function ecfp_hash(v::Vector{UInt32})
 end
 
 """
-    MorganAtomEnv
+    MorganAtomEnv(;
+        code::UInt32,
+        atom_id::Int,
+        layer::Int
+    )
 
 Internal structure representing a Morgan atom environment.
 
@@ -185,7 +189,11 @@ struct MorganAtomEnv
 end
 
 """
-    AccumTuple
+    AccumTuple(;
+        bits::BitVector,
+        invariant::UInt32,
+        atom_index::Int
+    )
 
 Internal structure for tracking and comparing atomic neighborhoods during ECFP generation.
 
