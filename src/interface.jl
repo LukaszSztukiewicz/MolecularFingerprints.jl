@@ -79,3 +79,4 @@ function fingerprint(smiles_list::Vector{String}, calc::AbstractCalculator)
     
     return fingerprints
 end
+

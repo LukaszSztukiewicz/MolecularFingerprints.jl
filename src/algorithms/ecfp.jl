@@ -29,10 +29,14 @@ struct ECFP{N} <: AbstractFingerprint
     radius::Int
 
     function ECFP{N}(radius::Int = 2) where N
-        radius >= 0 || throw(DomainError("argument radius must be non-negative"))
-        N > 0 || throw(DomainError("fingerprint size N must be positive"))
-        new{N}(radius)
+        radius >= 0 || throw(DomainError(radius, "radius must be non-negative"))
+        N > 0 || throw(DomainError(N, "fingerprint size N must be positive"))
+        return new{N}(radius)
     end
+end
+
+function ECFP(radius::Int = 2)
+    return ECFP{1024}(radius)
 end
 
 """

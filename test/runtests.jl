@@ -24,7 +24,8 @@ seed!(42)
 
         @testset "Utilities" begin
             @info "Running Utility Function Tests..."
-            include("unit/utils/tanimoto_tests.jl")
+            include("unit/utils/tanimoto_similarity_tests.jl")
+            include("unit/utils/cosine_similarity_tests.jl")
         end
 
         @testset "Algorithms" begin

@@ -22,7 +22,7 @@ function load_test_data(file_path::String)
         "CC(C)(C)C(C)(C)C(C)(C)C",            # Branching
         "[O-]S(=O)(=O)[O-].[Mg+2]",           # Ions
         "c1ccccc1", "C1=CC=CC=C1",            # Aromaticity
-        "CC[Se]CC", "B1OC(C)CC1"               # Heteroatoms
+        "CC[Se]CC", "B1OC(C)CC1"              # Heteroatoms
     ]
     append!(db, edge_cases)
     return db
@@ -43,7 +43,7 @@ end
 # --- 5. MAIN BENCHMARK & TEST SUITE ---
 function run_all_tests()
     #print current working directory
-    println("Current working directory: ", pwd())
+    #println("Current working directory: ", pwd())
 
     println("=== Chemical Fingerprint Test Suite ===")
     
@@ -59,7 +59,7 @@ function run_all_tests()
         error("bace.csv not found in folder. Please ensure the file is present.")
     end
     database = load_test_data(csv_path)
-    #take firest 100 molecules for performance
+    #take first 10 molecules for performance
     database = database[1:10]
     println("Database loaded with $(length(database)) molecules (BACE + Edge Cases).")
 
@@ -68,7 +68,7 @@ function run_all_tests()
     # Warmup
     fingerprint(database, calc)
     # Benchmark
-    t_julia = @benchmark fingerprint($database[:10], $calc)
+    t_julia = @benchmark fingerprint($database[1:10], $calc)
     display(t_julia)
 
     # 3. Accuracy Check
@@ -77,7 +77,7 @@ function run_all_tests()
     # Julia Results
     jl_fps = fingerprint(database, calc)
     q_fp_jl = fingerprint(query_smiles, calc)
-    julia_scores = [tanimoto(q_fp_jl, fp) for fp in jl_fps]
+    julia_scores = [tanimoto_similarity(q_fp_jl, fp) for fp in jl_fps]
 
     # RDKit Results
     rdkit_scores = get_rdkit_scores(query_smiles, database, radius, nbits)
