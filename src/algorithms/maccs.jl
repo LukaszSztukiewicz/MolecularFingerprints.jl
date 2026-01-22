@@ -17,8 +17,6 @@ struct MACCSFingerprint <: AbstractFingerprint
     sparse::Bool       # false = dense, true = sparse
 end
 
-# 166 bits
-nbits(::MACCSFingerprint) = 166
 
 # ------------------------------------------------------------------------------
 # helper functions for MACCS rules 
@@ -1012,7 +1010,9 @@ const MACCS_RULES = Dict{Int, Function}(
 
 
 function compute_maccs(mol::MolGraph, fp::MACCSFingerprint; rdkit_fp::Union{Nothing,Vector{Int}} = nothing, bypass_rdkit::Bool = true)
-    vec = BitVector(zeros(Bool, nbits(fp))) # [0, 0, 0, 0, 0, ..., 0]  (166 elemetns)
+    # [0, 0, 0, 0, 0, ..., 0]  (166 elemetns)
+    # vec = zeros(Int, 166)
+    vec = fill(-1, 166)
 
     for (idx, rule) in MACCS_RULES
         val = rule(mol)
