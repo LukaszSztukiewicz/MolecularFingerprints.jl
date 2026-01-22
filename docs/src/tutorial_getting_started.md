@@ -37,7 +37,7 @@ Molecular fingerprints are essentially feature extraction steps in a pipeline. T
 
 ### Basic Pipeline
 
-```julia
+```@example main
 using MolecularFingerprints
 
 # 1. Input: SMILES string (Benzene)
@@ -60,12 +60,21 @@ println("Active bit indices: ", active_bits)
 
 For large datasets, the package provides a vectorized implementation that leverages multithreading.
 
-```julia
+```@example hightroughput
+
+using MolecularFingerprints
+
+calc = ECFP{1024}(2) 
+
 # A list of SMILES (e.g., from a CSV)
 dataset = ["CCO", "C1=CC=CC=C1", "CC(=O)O"]
 
 # The vectorized call automatically parallelizes over available threads
 batch_vectors = fingerprint(dataset, calc)
+
+println("Active bit indices in 1st: ", findall(batch_vectors[1]))
+println("Active bit indices in 2nd: ", findall(batch_vectors[2]))
+println("Active bit indices in 3rd: ", findall(batch_vectors[3]))
 
 ```
 
