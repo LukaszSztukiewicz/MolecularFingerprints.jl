@@ -1,35 +1,44 @@
 module MolecularFingerprints
 
-using MolecularGraph
-using Random
-using Graphs
-using RDKitMinimalLib
-using SHA
-using MolecularGraph
-using SparseArrays
+using Graphs:
+    all_simple_paths,
+    cycle_basis,
+    degree,
+    dst,
+    edges,
+    fadjlist,
+    induced_subgraph,
+    ne,
+    neighborhood,
+    neighbors,
+    nv,
+    src,
+    vertices
+using MolecularGraph:
+    AbstractMolGraph,
+    MolGraph,
+    SMILESBond,
+    atom_charge,
+    atom_number,
+    atom_symbol,
+    edge_rank,
+    exact_mass,
+    explicit_hydrogens,
+    implicit_hydrogens,
+    is_aromatic,
+    is_in_ring,
+    monoiso_mass,
+    pi_electron,
+    remove_all_hydrogens!,
+    smilestomol,
+    sssr,
+    subset,
+    valence
+using Random: rand, randstring, seed!
+using SHA: sha1
+using SparseArrays: sparse, spzeros
 
-using PythonCall: Py, pyimport, pyconvert
-using MolecularGraph: SMILESMolGraph, smilestomol, AbstractMolGraph, edge_rank
-using Graphs: vertices, edges, neighbors, src, dst, degree, cycle_basis
-using Graphs: induced_subgraph, nv, vertices, all_simple_paths
-using SparseArrays: sparse
-
-"""
-    MolecularFingerprints
-
-    A Julia package for computing various molecular fingerprints used in cheminformatics.
-
-    # Modules Included
-    - Abstract Interfaces
-    - Utility Functions
-    - Fingerprint Algorithms
-
-    # Exported Functions
-    - `tanimoto`
-"""
-
-# In julia inclusion of files make the further iclusions to see previously defined symbols,
-# so the order of includes matters.
+# NOTE: In Julia, order of includes matters for dependencies
 
 # Abstract Interfaces
 include("interface.jl")

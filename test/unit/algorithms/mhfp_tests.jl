@@ -5,7 +5,7 @@
     # Larger molecule, taken from mhfp python implementation, 
     # written by the original authors
     # https://github.com/reymond-group/mhfp/blob/master/test/test_encoder.py
-    mol = MolecularGraph.smilestomol(
+    mol = smilestomol(
         "CCCC1=NN(C2=C1NC(=NC2=O)C3=C(C=CC(=C3)S(=O)(=O)N4CCN(CC4)C)OCC)C")
 
     # Simpler molecule (Benzoic acid), taken from 
@@ -15,7 +15,7 @@
     
     @testset "MHFP Molecular shingling tests" begin
         ##### Note on how the testing is done #############################################
-        # TODO move this text into the documentation
+        # MIGHTDO: move this text into the documentation
         
         # In general, our implmentation cannot be expected to yield identical shinglings
         # as the fct written by the original authors in python, due to several reasons:
@@ -356,7 +356,7 @@
                     original_tanimoto_values = []
                     minhash_tanimoto_values = []
                     for j in 1:500  # repeat 500 times to avoid random factors
-                        # Random.seed!(j)
+                        # seed!(j)
                         
                         # random set of strings of size 100
                         test_set = [randstring(25) for k in 1:100]

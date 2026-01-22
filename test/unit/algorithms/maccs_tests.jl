@@ -12,7 +12,7 @@
     # !!! Bit 157: julia[157] = 1 i rdkit[157] = 0  
 
     #smiles = "OS(=O)O"
-    mol = MolecularGraph.smilestomol(smiles)
+    mol = smilestomol(smiles)
 
     fp_julia = MACCS(false, false)
     julia_fp = fingerprint(smiles, fp_julia)
