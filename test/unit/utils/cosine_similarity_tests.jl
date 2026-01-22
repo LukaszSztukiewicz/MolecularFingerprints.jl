@@ -30,4 +30,19 @@ using Test
     b = Vector{Int}([1, 2])
     @test_throws ArgumentError cosine_similarity(a, b)
 
+    # Test case 6: BitVector fingerprints
+    a = BitVector([1, 0, 1, 1])
+    b = BitVector([1, 1, 0, 1])
+    # cosine similarity = (1*1 + 0*1 + 1*0
+    expected_sim = 2 / (sqrt(3) * sqrt(3))
+    @test isapprox(cosine_similarity(a, b), expected_sim)
+    
+    # Test case 7: SparseVector fingerprints
+    a = sparsevec([1, 3, 5], [1, 2, 3], 5)
+    b = sparsevec([2, 3, 4], [4, 5, 6], 5)
+    # cosine similarity = (0*4 + 2*5 + 0*6) / (sqrt(1^2 + 2^2 + 3^2) * sqrt(4^2 + 5^2 + 6^2)) = 10 / (sqrt(14) * sqrt(77))
+    expected_sim = 10 / (sqrt(14) * sqrt(77))
+    @test isapprox(cosine_similarity(a, b), expected_sim)
+
+
 end

@@ -14,7 +14,7 @@ struct MACCS <: AbstractFingerprint
     count::Bool        # false = bit, true = count-based
     sparse::Bool       # false = dense, true = sparse
 
-    function MACCS(count::Bool=false, sparse::Bool=true)
+    function MACCS(count::Bool=false, sparse::Bool=false)
         return new(count, sparse)
     end
 end
