@@ -1032,14 +1032,23 @@ function compute_maccs(mol::MolGraph, fp::MACCS)
         return SparseVector(166, I, V)
     end
 
-    vec = fill(0, 166)
-
-    for (idx, rule) in MACCS_RULES
-        val = rule(mol)
-        vec[idx] = fp.count ? val : Int(val > 0)
+    # handle Count Case
+    if fp.count
+        vec = zeros(Int32, 166)
+        for (idx, rule) in MACCS_RULES
+            vec[idx] = Int32(rule(mol))
+        end
+        return vec
     end
 
-    return vec
+    # default: BitVector case
+    bv = falses(166)
+    for (idx, rule) in MACCS_RULES
+        if rule(mol) > 0
+            @inbounds bv[idx] = true
+        end
+    end
+    return bv
 end
 
 function fingerprint(mol::MolGraph, calc::MACCS)
