@@ -214,7 +214,7 @@ bitset_to_string(bitset) = join(Int.(bitset), "")
         fp3 = fingerprint(mol3, ecfp)
 
         # Ethanol and propanol should have more overlap than ethanol and benzene
-        @test tanimoto(fp1, fp2) > tanimoto(fp1, fp3)
+        @test tanimoto_similarity(fp1, fp2) > tanimoto_similarity(fp1, fp3)
     end
 
     @testset "Fingerprint: Comparison to RDKit" begin

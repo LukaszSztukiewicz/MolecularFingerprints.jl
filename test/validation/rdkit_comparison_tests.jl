@@ -36,7 +36,7 @@ function get_rdkit_scores(query::String, db::Vector{String}, r, n)
     q_fp = AllChem.GetMorganFingerprintAsBitVect(q_mol, r, nBits=n)
     db_fps = [AllChem.GetMorganFingerprintAsBitVect(m, r, nBits=n) for m in db_mols]
     
-    py_scores = DataStructs.BulkTanimotoSimilarity(q_fp, db_fps)
+    py_scores = DataStructs.Bulktanimoto_similaritySimilarity(q_fp, db_fps)
     return pyconvert(Vector{Float64}, py_scores)
 end
 
@@ -77,7 +77,7 @@ function run_all_tests()
     # Julia Results
     jl_fps = fingerprint(database, calc)
     q_fp_jl = fingerprint(query_smiles, calc)
-    julia_scores = [tanimoto(q_fp_jl, fp) for fp in jl_fps]
+    julia_scores = [tanimoto_similarity(q_fp_jl, fp) for fp in jl_fps]
 
     # RDKit Results
     rdkit_scores = get_rdkit_scores(query_smiles, database, radius, nbits)

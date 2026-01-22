@@ -36,7 +36,7 @@ using MolecularGraph:
     valence
 using Random: rand, randstring, seed!
 using SHA: sha1
-using SparseArrays: sparse, spzeros
+using SparseArrays: sparse, spzeros, SparseVector
 
 # NOTE: In Julia, order of includes matters for dependencies
 
@@ -44,7 +44,8 @@ using SparseArrays: sparse, spzeros
 include("interface.jl")
 
 # Utility Functions
-include("utils/tanimoto.jl")
+include("utils/tanimoto_similarity.jl")
+include("utils/cosine_similarity.jl")
 
 # Fingerprint Algorithms
 include("algorithms/mhfp.jl")
@@ -54,7 +55,7 @@ include("algorithms/torsions.jl")
 
 export AbstractCalculator, AbstractFingerprint, AbstractDescriptor
 export MACCS, TopologicalTorsion, MHFP, ECFP
-export tanimoto
+export tanimoto_similarity, cosine_similarity
 export fingerprint
 
 end

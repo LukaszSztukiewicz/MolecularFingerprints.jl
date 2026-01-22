@@ -1,10 +1,10 @@
 """
-    tanimoto(a::BitVector, b::BitVector)
+    tanimoto_similarity(a::BitVector, b::BitVector)
 
-Calculate the Tanimoto similarity coefficient (Jaccard Index) between two fingerprints.
+Calculate the tanimoto_similarity similarity coefficient (Jaccard Index) between two fingerprints.
 Formula: c / (a + b - c) where c is intersection count.
 """
-function tanimoto(a::BitVector, b::BitVector)
+function tanimoto_similarity(a::BitVector, b::BitVector)
     if length(a) != length(b)
         throw(ArgumentError("Fingerprints must be of the same length"))
     end
@@ -18,4 +18,8 @@ function tanimoto(a::BitVector, b::BitVector)
     end
     
     return intersection / (union_sum - intersection)
+end
+
+function tanimoto_similarity(a::Vector{Int}, b::Vector{Int})
+    throw(DomainError("You seem to be using integer vector fingerprints. Please use cosine_similarity function for integer vectors."))
 end

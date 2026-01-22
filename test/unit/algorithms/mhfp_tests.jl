@@ -320,9 +320,9 @@
                 ## original vectors #######################################################
                 
                 # The original authors claim that the MinHash can be used to estimate the 
-                # tanimoto similarity of two sets.
+                # tanimoto_similarity similarity of two sets.
                 # However, testing the claim with their own implementation yields that the 
-                # tanimoto similarity of the hashed vectors indeed relates to the similarity
+                # tanimoto_similarity similarity of the hashed vectors indeed relates to the similarity
                 # of the sets that were hashed, but it's not a 1:1 relation.
                 # Instead, for sets with low similarity, the corresponding hashed vectors 
                 # have a similarity which is only around half as large.
@@ -332,8 +332,8 @@
                 
                 # To verify that our hashing implementation behaves similarly, we generate 
                 # pairs of sets that share a certain amount of entries, respectively, which 
-                # implies a certain tanimoto similarity of the pair of sets.
-                # Then their MinHash vectors are generated, and then the tanimoto similarity
+                # implies a certain tanimoto_similarity similarity of the pair of sets.
+                # Then their MinHash vectors are generated, and then the tanimoto_similarity similarity
                 # is calculated for these vectors.
                 # This is repeated 1000 times and the average calculated, to avoid random 
                 # effects.
@@ -350,11 +350,11 @@
                 overlap_radii = [1, 6, 15, 25, 40]  # = [2, 12, 30, 50, 80] / 2
                 
                 # reference values calculated with the original python implementation
-                ref_minhash_tanimoto_values = [0.010, 0.064, 0.177, 0.333, 0.667]
+                ref_minhash_tanimoto_similarity_values = [0.010, 0.064, 0.177, 0.333, 0.667]
                 
                 for (i, overlap_radius) in enumerate(overlap_radii)
-                    original_tanimoto_values = []
-                    minhash_tanimoto_values = []
+                    original_tanimoto_similarity_values = []
+                    minhash_tanimoto_similarity_values = []
                     for j in 1:500  # repeat 500 times to avoid random factors
                         # seed!(j)
                         
@@ -367,18 +367,18 @@
                         test_set_2 = test_set[50 + 1 - overlap_radius:end]
 
                         # As probably almost all non-overlapping strings are pairwise 
-                        # different, we should get a tanimoto (jaccard) similarity of 
+                        # different, we should get a tanimoto_similarity (jaccard) similarity of 
                         # approximately:
                         # 2 / 100 = 0.02,
                         # 12 / 100 = 0.12,
                         # 30 / 100 = 0.3,
                         # 50 / 100 = 0.5 and
                         # 80 / 100 = 0.8, respectively.
-                        original_tanimoto_similarity = length(
+                        original_tanimoto_similarity_similarity = length(
                             intersect(test_set_1, test_set_2)) / length(
                                 union(test_set_1, test_set_2))
 
-                        push!(original_tanimoto_values, original_tanimoto_similarity)
+                        push!(original_tanimoto_similarity_values, original_tanimoto_similarity_similarity)
                         
                         # Calculate hash vectors from the given test sets
                         minhash_1 = MolecularFingerprints.mhfp_hash_from_molecular_shingling(
@@ -386,25 +386,25 @@
                         minhash_2 = MolecularFingerprints.mhfp_hash_from_molecular_shingling(
                             test_set_2, mhfp_calc)
 
-                        # Calculating tanimoto (jaccard) similarity of the hash vectors.
-                        tanimoto_of_minhash =  length(
+                        # Calculating tanimoto_similarity (jaccard) similarity of the hash vectors.
+                        tanimoto_similarity_of_minhash =  length(
                             intersect(minhash_1, minhash_2)) / length(
                                 union(minhash_1, minhash_2))
                         
-                            push!(minhash_tanimoto_values, tanimoto_of_minhash)
+                            push!(minhash_tanimoto_similarity_values, tanimoto_similarity_of_minhash)
             
                     end
 
-                    # Calculate average tanimoto similarity for original sets
-                    avg_original_tanimoto_value = sum(original_tanimoto_values) / length(
-                        original_tanimoto_values)
-                    # Calculate average tanimoto similarity for the hashed vectors
-                    avg_minhash_tanimoto_value = sum(minhash_tanimoto_values) / length(
-                        minhash_tanimoto_values)
+                    # Calculate average tanimoto_similarity similarity for original sets
+                    avg_original_tanimoto_similarity_value = sum(original_tanimoto_similarity_values) / length(
+                        original_tanimoto_similarity_values)
+                    # Calculate average tanimoto_similarity similarity for the hashed vectors
+                    avg_minhash_tanimoto_similarity_value = sum(minhash_tanimoto_similarity_values) / length(
+                        minhash_tanimoto_similarity_values)
 
-                    # test whether the average tanimoto similarity is off less than 5 % 
+                    # test whether the average tanimoto_similarity similarity is off less than 5 % 
                     # compared to the reference values
-                    @test avg_minhash_tanimoto_value ≈ ref_minhash_tanimoto_values[i] rtol=0.05
+                    @test avg_minhash_tanimoto_similarity_value ≈ ref_minhash_tanimoto_similarity_values[i] rtol=0.05
                     
                 end
             end

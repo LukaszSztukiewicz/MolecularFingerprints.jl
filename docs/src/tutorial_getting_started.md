@@ -43,23 +43,24 @@ using MolecularFingerprints
 # 1. Input: SMILES string (Benzene)
 smiles = "C1=CC=CC=C1"
 
-# 2. This package implements 4 types of fingerprints. Let's use all of them.
+# 2. This package implements 4 types of fingerprints. 
+# All of them could be customized with parameters, but here we use default settings.
+ecfp_calc = ECFP() # Extended Connectivity Fingerprints
+mhfp_calc = MHFP() # MinHash Fingerprints
+torsion_calc = TopologicalTorsion() # Topological Torsion Fingerprints
+maccs_calc = MACCS() # MACCS Keys
 
-ecfp_calc = ECFP{1024}(2)        # Extended Connectivity Fingerprint (ECFP4)
-mhfp_calc = MHFP()
-torsion_calc = TopologicalTorsion()
-maccs_calc = MACCS()
-
-# 2. Configuration: ECFP (Extended Connectivity Fingerprints)
-# Parameters: <Bit-length>(Radius)
-calc = ECFP{1024}(2) 
-
-# 3. Execution: Compute the fingerprint
-vector = fingerprint(smiles, calc)
+# 3. Execution: Compute the fingerprint for each type
+ecfp_vector = fingerprint(smiles, ecfp_calc)
+mhfp_vector = fingerprint(smiles, mhfp_calc)
+torsion_vector = fingerprint(smiles, torsion_calc)
+maccs_vector = fingerprint(smiles, maccs_calc)
 
 # 4. Analysis: Find indices of active features
-active_bits = findall(vector)
-println("Active bit indices: ", active_bits)
+println("ECFP active bits: ", ecfp_vector)
+println("MHFP active bits: ", mhfp_vector)
+println("Topological Torsion active bits: ", torsion_vector)
+println("MACCS active bits: ", maccs_vector)
 
 ```
 

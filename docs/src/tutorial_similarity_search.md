@@ -52,13 +52,13 @@ query_fp = fingerprint(query_mol, featurizer)
 
 ## 3. Calculating Tanimoto Similarity
 
-In cheminformatics, the **Tanimoto Coefficient** (or Jaccard Index) is the industry standard for comparing bit-vector fingerprints. It measures the intersection of features divided by the union.
+In cheminformatics, the **tanimoto_similarity Coefficient** (or Jaccard Index) is the industry standard for comparing bit-vector fingerprints. It measures the intersection of features divided by the union.
 
 A score of **1.0** means the fingerprints are identical; **0.0** means they share no common features.
 
 ```julia
-# Function to calculate Tanimoto between two BitVectors
-function tanimoto_similarity(fp1, fp2)
+# Function to calculate tanimoto_similarity between two BitVectors
+function tanimoto_similarity_similarity(fp1, fp2)
     intersection = sum(fp1 .& fp2)
     union = sum(fp1 .| fp2)
     return intersection / union
