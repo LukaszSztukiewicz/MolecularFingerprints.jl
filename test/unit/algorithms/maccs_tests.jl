@@ -68,7 +68,6 @@
             #println("Bit $i: Julia=$(julia_fp[i]) RDKit=$(rdkit_fp[i])")
 
             if julia_fp[i] != rdkit_fp[i]
-                println("Bit $i: Julia=$(julia_fp[i]) RDKit=$(rdkit_fp[i])")
                 @debug "Bit $i" julia=julia_fp[i] rdkit=rdkit_fp[i]
             end
         end
