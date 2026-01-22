@@ -2,17 +2,18 @@
 using Random: seed!, rand
 using SHA: sha1
 using Base: htol, IOBuffer
+using RDKitMinimalLib: smiles
 
 # Graph Theory Framework
 using Graphs: nv, ne, vertices, fadjlist, neighborhood, induced_subgraph
 
 # Molecular Informatics Framework
 using MolecularGraph: MolGraph, AbstractMolGraph, SMILESBond
-using MolecularGraph: smilestomol, smiles, sssr
+using MolecularGraph: smilestomol, sssr
 using MolecularGraph: implicit_hydrogens, explicit_hydrogens, valence
 using MolecularGraph: atom_number, exact_mass, monoiso_mass, atom_charge
 using MolecularGraph: is_in_ring, is_aromatic, edge_rank, remove_all_hydrogens!
-using MolecularGraph: MolGraph, smiles, sssr, is_aromatic, subgraph, remove_all_hydrogens!, subset
+using MolecularGraph: sssr, is_aromatic, subgraph, remove_all_hydrogens!, subset
 
 """
     MHFP
