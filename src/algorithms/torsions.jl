@@ -159,7 +159,6 @@ as described in https://depth-first.com/articles/2021/10/06/molecular-graph-cano
 Since every ring is found pathLength times, we have to abandon all but one ring.  
 We only keep the ring which starts at the lowest numbered vertex.
 """
-
 function canonicalize(path::Vector) 
 	# if we have a ring with n vertices, this will be found n times by getPathsOfLengthN.
 	# e.g.:  [5,1,3,4,5], [1,3,4,5,1], [3,4,5,1,3], [4,5,1,3,4]. We only want unique paths.
