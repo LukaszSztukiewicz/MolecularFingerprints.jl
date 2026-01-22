@@ -11,19 +11,27 @@ Pkg.add(url=&quot;https://github.com/LukaszSztukiewicz/MolecularFingerprints.jl&
 # 1. Input: SMILES string (Benzene)
 smiles = &quot;C1=CC=CC=C1&quot;
 
-# 2. Configuration: ECFP (Extended Connectivity Fingerprints)
-# Parameters: &lt;Bit-length&gt;(Radius)
-calc = ECFP{1024}(2) 
+# 2. This package implements 4 types of fingerprints. 
+# All of them could be customized with parameters, but here we use default settings.
+ecfp_calc = ECFP() # Extended Connectivity Fingerprints
+mhfp_calc = MHFP() # MinHash Fingerprints
+torsion_calc = TopologicalTorsion() # Topological Torsion Fingerprints
+maccs_calc = MACCS() # MACCS Keys
 
-# 3. Execution: Compute the fingerprint
-vector = fingerprint(smiles, calc)
+# 3. Execution: Compute the fingerprint for each type
+ecfp_vector = fingerprint(smiles, ecfp_calc)
+mhfp_vector = fingerprint(smiles, mhfp_calc)
+torsion_vector = fingerprint(smiles, torsion_calc)
+maccs_vector = fingerprint(smiles, maccs_calc)
 
 # 4. Analysis: Find indices of active features
-active_bits = findall(vector)
-println(&quot;Active bit indices: &quot;, active_bits)
+println(&quot;ECFP active bits: &quot;, ecfp_vector)
+println(&quot;MHFP active bits: &quot;, mhfp_vector)
+println(&quot;Topological Torsion active bits: &quot;, torsion_vector)
+println(&quot;MACCS active bits: &quot;, maccs_vector)
 </code></pre><h3 id="High-Throughput-Processing"><a class="docs-heading-anchor" href="#High-Throughput-Processing">High-Throughput Processing</a><a id="High-Throughput-Processing-1"></a><a class="docs-heading-anchor-permalink" href="#High-Throughput-Processing" title="Permalink"></a></h3><p>For large datasets, the package provides a vectorized implementation that leverages multithreading.</p><pre><code class="language-julia hljs"># A list of SMILES (e.g., from a CSV)
 dataset = [&quot;CCO&quot;, &quot;C1=CC=CC=C1&quot;, &quot;CC(=O)O&quot;]
 
 # The vectorized call automatically parallelizes over available threads
 batch_vectors = fingerprint(dataset, calc)
-</code></pre><p>If you have never used molecular fingerprints before, see <a href="../explanation/">Explanation</a> for an introduction to the concept. </p><p>For more detailed examples and advanced usage, please refer to the <a href="../api_reference/">API Reference</a> and tutorials on <a href="../tutorial_solubility_prediction/">Solubility Prediction</a> and <a href="../tutorial_similarity_search/">Similarity Search</a>.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../explanation/">« Explanation</a><a class="docs-footer-nextpage" href="../tutorial_similarity_search/">Tutorial: Similarity Search »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Thursday 22 January 2026 17:13">Thursday 22 January 2026</span>. Using Julia version 1.12.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</code></pre><p>If you have never used molecular fingerprints before, see <a href="../explanation/">Explanation</a> for an introduction to the concept. </p><p>For more detailed examples and advanced usage, please refer to the <a href="../api_reference/">API Reference</a> and tutorials on <a href="../tutorial_solubility_prediction/">Solubility Prediction</a> and <a href="../tutorial_similarity_search/">Similarity Search</a>.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../explanation/">« Explanation</a><a class="docs-footer-nextpage" href="../tutorial_similarity_search/">Tutorial: Similarity Search »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Thursday 22 January 2026 19:21">Thursday 22 January 2026</span>. Using Julia version 1.12.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
