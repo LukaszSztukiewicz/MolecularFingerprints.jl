@@ -1,17 +1,3 @@
-# Python Integration
-using PythonCall: Py, pyimport, pyconvert
-
-# ==============================================================================
-# Python / RDKit setup
-# ==============================================================================
-const _Chem  = Ref{Py}()
-const _MACCS = Ref{Py}()
-
-function __init__()
-    _Chem[]  = pyimport("rdkit.Chem")
-    _MACCS[] = pyimport("rdkit.Chem.MACCSkeys")
-end
-
 # ----------------------------------------------------------------
 # MACCS struct
 # ----------------------------------------------------------------
@@ -1049,29 +1035,6 @@ function compute_maccs(mol::MolGraph, fp::MACCS; rdkit_fp::Union{Nothing,Vector{
     end
 end
 
-# function fingerprint(smiles::AbstractString, calc::MACCS)
-#     mol = MolecularGraph.smilestomol(smiles)
-#     rdkit_fp = fingerprint_rdkit(smiles)
-#     return compute_maccs(mol, calc; rdkit_fp=rdkit_fp)
-# end
-
 function fingerprint(mol::MolGraph, calc::MACCS)
     return compute_maccs(mol, calc)
 end
-
-function fingerprint_rdkit(smiles::AbstractString)
-    mol = _Chem[].MolFromSmiles(smiles)
-
-    fp = _MACCS[].GenMACCSKeys(mol)
-
-    nbits = pyconvert(Int, fp.GetNumBits())
-
-    fp_array = Vector{Int}(undef, nbits - 1) # 166 bits
-
-    for i in 1:nbits-1
-        fp_array[i] = pyconvert(Bool, fp.GetBit(i)) ? 1 : 0
-    end
-
-    return fp_array
-end
-
