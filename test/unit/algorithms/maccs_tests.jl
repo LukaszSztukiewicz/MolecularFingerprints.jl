@@ -1,5 +1,31 @@
 @testset "MACCS - Julia vs RDKit consistency" begin
 
+    _Chem  = Ref{Py}()
+    _MACCS = Ref{Py}()
+
+    function __init__()
+        _Chem[]  = pyimport("rdkit.Chem")
+        _MACCS[] = pyimport("rdkit.Chem.MACCSkeys")
+    end
+
+    function fingerprint_rdkit(smiles::AbstractString)
+        mol = _Chem[].MolFromSmiles(smiles)
+
+        fp = _MACCS[].GenMACCSKeys(mol)
+
+        nbits = pyconvert(Int, fp.GetNumBits())
+
+        fp_array = Vector{Int}(undef, nbits - 1) # 166 bits
+
+        for i in 1:nbits-1
+            fp_array[i] = pyconvert(Bool, fp.GetBit(i)) ? 1 : 0
+        end
+
+        return fp_array
+    end
+
+    __init__()
+
     @testset "test 1" begin 
         # smiles = "C=C(C)C"    
         # smiles = "COCC" 
@@ -18,7 +44,7 @@
         julia_fp = fingerprint(smiles, fp_julia)
         # julia_fp = fingerprint(mol, fp_julia)
 
-        rdkit_fp = MolecularFingerprints.fingerprint_rdkit(smiles)
+        rdkit_fp = fingerprint_rdkit(smiles)
 
         @test length(julia_fp) == 166
         @test length(rdkit_fp) == 166
@@ -42,14 +68,13 @@
             #println("Bit $i: Julia=$(julia_fp[i]) RDKit=$(rdkit_fp[i])")
 
             if julia_fp[i] != rdkit_fp[i]
-                println("Bit $i: Julia=$(julia_fp[i]) RDKit=$(rdkit_fp[i])")
                 @debug "Bit $i" julia=julia_fp[i] rdkit=rdkit_fp[i]
             end
         end
         @debug "=============================================="
     end
 
-    @testset "rule_56 – exact N neighbors (2O + 1C)" begin
+    @testset "rule_56 - exact N neighbors (2O + 1C)" begin
 
         smiles = "ON(O)C" 
         # smiles = "ON(O)CO" 
@@ -57,7 +82,7 @@
         # mol = smilestomol(smiles)
         fp_julia = MACCS(false, false)
         julia_fp = fingerprint(smiles, fp_julia)
-        rdkit_fp = MolecularFingerprints.fingerprint_rdkit(smiles)
+        rdkit_fp = fingerprint_rdkit(smiles)
 
         @test length(julia_fp) == 166
         @test length(rdkit_fp) == 166
@@ -75,7 +100,7 @@
 
     end
 
-    @testset "rule_74 – CH3–X–CH3 path" begin
+    @testset "rule_74 - CH3-X-CH3 path" begin
 
         smiles = "CC(C)" 
         # smiles = "CCC" 
@@ -83,7 +108,7 @@
         # mol = smilestomol(smiles)
         fp_julia = MACCS(false, false)
         julia_fp = fingerprint(smiles, fp_julia)
-        rdkit_fp = MolecularFingerprints.fingerprint_rdkit(smiles)
+        rdkit_fp = fingerprint_rdkit(smiles)
 
         @test length(julia_fp) == 166
         @test length(rdkit_fp) == 166
@@ -101,14 +126,14 @@
 
     end
 
-    @testset "rule_79 – N–X–X–N path" begin
+    @testset "rule_79 - N-X-X-N path" begin
 
         smiles = "NCCN" 
         # smiles = "NCN" 
 
         fp_julia = MACCS(false, false)
         julia_fp = fingerprint(smiles, fp_julia)
-        rdkit_fp = MolecularFingerprints.fingerprint_rdkit(smiles)
+        rdkit_fp = fingerprint_rdkit(smiles)
 
         @test length(julia_fp) == 166
         @test length(rdkit_fp) == 166
@@ -126,14 +151,14 @@
 
     end
 
-    @testset "rule_80 – N–X–X–X–N path" begin
+    @testset "rule_80 - N-X-X-X-N path" begin
 
         smiles = "NCCCN" 
         # smiles = "NCCN" 
 
         fp_julia = MACCS(false, false)
         julia_fp = fingerprint(smiles, fp_julia)
-        rdkit_fp = MolecularFingerprints.fingerprint_rdkit(smiles)
+        rdkit_fp = fingerprint_rdkit(smiles)
 
         @test length(julia_fp) == 166
         @test length(rdkit_fp) == 166
