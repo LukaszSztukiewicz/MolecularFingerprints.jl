@@ -60,12 +60,12 @@
         #       atoms of the molecule. The strings from the circular substructures of
         #       the molecule differ already for this smaller molecule.
         # - Lastly, we verify for the large atom that the shingling returned by 
-        #   MolecularFingerprints.mhfp_shingling_from_mol is the union of the strings returned by
+        #   MolecularFingerprints.mhfp_shingling_from_mol! is the union of the strings returned by
         #   MolecularFingerprints.smiles_from_rings, MolecularFingerprints.smiles_from_atoms and MolecularFingerprints.smiles_from_circular_substructures.
         
         # A last note: As the function implemented by the original authors returns the
         # entire shingling at once, the reference strings that we test against were 
-        # generated manually by running parts of their function MolecularFingerprints.mhfp_shingling_from_mol
+        # generated manually by running parts of their function MolecularFingerprints.mhfp_shingling_from_mol!
         # separately.
 
         @testset "Shingling snippet from rings test" begin
@@ -255,20 +255,20 @@
         end
 
         @testset "Complete shingling tests" begin
-            ##### Testing MolecularFingerprints.mhfp_shingling_from_mol #########################################
+            ##### Testing MolecularFingerprints.mhfp_shingling_from_mol! #########################################
             
             # set up calculator with parameters
             calculator = MHFP(3, 0, true)  # radius, min_radius, rings
 
             # calculate shingling
-            calculated_shingling = MolecularFingerprints.mhfp_shingling_from_mol(mol, calculator)
+            calculated_shingling = MolecularFingerprints.mhfp_shingling_from_mol!(mol, calculator)
 
-            # Test that the shingling returned from MolecularFingerprints.mhfp_shingling_from_mol is the union
+            # Test that the shingling returned from MolecularFingerprints.mhfp_shingling_from_mol! is the union
             # of MolecularFingerprints.smiles_from_rings, MolecularFingerprints.smiles_from_atoms & MolecularFingerprints.smiles_from_circular_substructures
             @test symdiff(calculated_shingling, union(MolecularFingerprints.smiles_from_rings(mol), 
                 MolecularFingerprints.smiles_from_atoms(mol), 
                 # Note: min_radius is now 1, even though we set it to 0 in the calculator 
-                # above. This is because the MolecularFingerprints.mhfp_shingling_from_mol function increases the
+                # above. This is because the MolecularFingerprints.mhfp_shingling_from_mol! function increases the
                 # min_radius to at least 1 before calling
                 # MolecularFingerprints.smiles_from_circular_substructures, as the special case of radius 0 is 
                 # already taken care of by the function MolecularFingerprints.smiles_from_atoms
@@ -285,7 +285,7 @@
             calc_with_atoms = MHFP(3, 0)  # radius, min_radius
 
             # test that "[H]" is not in the shingling
-            @test "[H]" ∉ MolecularFingerprints.mhfp_shingling_from_mol(simple_mol_with_hydrogen, MHFP(3, 0))
+            @test "[H]" ∉ MolecularFingerprints.mhfp_shingling_from_mol!(simple_mol_with_hydrogen, MHFP(3, 0))
 
         end
     end
