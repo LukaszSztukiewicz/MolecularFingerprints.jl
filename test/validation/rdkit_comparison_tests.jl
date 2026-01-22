@@ -29,18 +29,12 @@ function load_test_data(file_path::String)
 end
 
 # --- 4. RDKIT REFERENCE FUNCTION ---
-const rdFPGen = pyimport("rdkit.Chem.rdFingerprintGenerator")
 function get_rdkit_scores(query::String, db::Vector{String}, r, n)
     q_mol = Chem.MolFromSmiles(query)
-    # Filter out invalid SMILES (which return None in Python) to prevent crashes
-    db_mols = [m for m in (Chem.MolFromSmiles(s) for s in db) if !pyisnone(m)]
+    db_mols = [Chem.MolFromSmiles(s) for s in db]
     
-    # Use the explicit rdFingerprintGenerator module
-    gen = rdFPGen.GetMorganGenerator(radius=r, fpSize=n)
-    
-    # CHANGE: GetFingerprintAsBitVect -> GetFingerprint
-    q_fp = gen.GetFingerprint(q_mol)
-    db_fps = [gen.GetFingerprint(m) for m in db_mols]
+    q_fp = AllChem.GetMorganFingerprintAsBitVect(q_mol, r, nBits=n)
+    db_fps = [AllChem.GetMorganFingerprintAsBitVect(m, r, nBits=n) for m in db_mols]
     
     py_scores = DataStructs.BulkTanimotoSimilarity(q_fp, db_fps)
     return pyconvert(Vector{Float64}, py_scores)
