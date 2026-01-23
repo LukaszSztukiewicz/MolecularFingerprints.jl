@@ -13,8 +13,9 @@ const maxNumBranches = UInt32((1 << numBranchBits) - 1)
 const numPiBits = UInt32(2)
 const maxNumPi = UInt32((1 << numPiBits) - 1)
 const numTypeBits = UInt32(4)
-const atomNumberTypes = zeros(UInt32, 1 << numTypeBits)
-const atomNumberTypes[1:1 << numTypeBits - 1] = [5, 6, 7, 8, 9, 14, 15, 16, 17, 33, 34, 35, 51, 52, 53]  # length 15
+atomNumberTypesHelper = zeros(UInt32, 1 << numTypeBits)
+atomNumberTypesHelper[1:1 << numTypeBits - 1] = [5, 6, 7, 8, 9, 14, 15, 16, 17, 33, 34, 35, 51, 52, 53]  # length 15
+const atomNumberTypes = atomNumberTypesHelper
 const codeSize = UInt32(numTypeBits + numPiBits + numBranchBits) 
 const nTypes = UInt32(1 << numTypeBits) 
 
