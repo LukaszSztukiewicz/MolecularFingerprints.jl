@@ -24,12 +24,14 @@ using MolecularGraph:
     edge_rank,
     exact_mass,
     explicit_hydrogens,
+    get_prop,
     implicit_hydrogens,
     is_aromatic,
     is_in_ring,
     monoiso_mass,
     pi_electron,
     remove_all_hydrogens!,
+    set_prop!,
     smilestomol,
     sssr,
     subset,
@@ -52,6 +54,8 @@ include("algorithms/mhfp.jl")
 include("algorithms/ecfp.jl")
 include("algorithms/maccs.jl")
 include("algorithms/torsions.jl")
+
+export safe_smilestomol, smiles_to_neutralized_mol
 
 export AbstractCalculator, AbstractFingerprint, AbstractDescriptor
 export MACCS, TopologicalTorsion, MHFP, ECFP

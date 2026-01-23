@@ -11,21 +11,43 @@ const AllChem = pyimport("rdkit.Chem.AllChem")
 const DataStructs = pyimport("rdkit.DataStructs")
 
 # --- 3. DATA LOADING & EDGE CASES ---
-function load_test_data(file_path::String)
-    # Load BACE from local CSV
-    df = CSV.read(file_path, DataFrame)
-    db = Vector{String}(df.mol)
+const DATASET_CONFIG = Dict(
+    "bace" => :mol,
+    "BBBP" => :smiles,
+    "qm8"  => :smiles,
+    "esol" => :smiles
+)
 
-    edge_cases = [
-        "C[C@H](F)Cl", "C[C@@H](F)Cl",        # Chirality
-        "C1CCCCCCCCCCCCCCCCCCCC1",            # Macrocycle
-        "CC(C)(C)C(C)(C)C(C)(C)C",            # Branching
-        "[O-]S(=O)(=O)[O-].[Mg+2]",           # Ions
-        "c1ccccc1", "C1=CC=CC=C1",            # Aromaticity
-        "CC[Se]CC", "B1OC(C)CC1"              # Heteroatoms
-    ]
-    append!(db, edge_cases)
-    return db
+const SMILES_EDGE_CASES = [
+    "C[C@H](F)Cl", "C[C@@H](F)Cl",        # Chirality
+    "C1CCCCCCCCCCCCCCCCCCCC1",            # Macrocycle
+    "CC(C)(C)C(C)(C)C(C)(C)C",            # Branching
+    "[O-]S(=O)(=O)[O-].[Mg+2]",           # Ions
+    "c1ccccc1", "C1=CC=CC=C1",            # Aromaticity
+    "CC[Se]CC", "B1OC(C)CC1"              # Heteroatoms
+]
+
+"""
+    load_test_data(dataset::AbstractString; folder_path="./validation")
+
+Loads SMILES data from a CSV and appends standard edge cases.
+"""
+function load_test_data(dataset::AbstractString; folder_path::AbstractString="./validation")
+    # 1. Validation using the Dict keys
+    if !haskey(DATASET_CONFIG, dataset)
+        throw(ArgumentError("Dataset '$dataset' not supported. Use: $(keys(DATASET_CONFIG))"))
+    end
+
+    # 2. Use joinpath for OS-agnostic path handling
+    file_path = joinpath(folder_path, "$dataset.csv")
+
+    # 3. Read and extract column
+    df = CSV.read(file_path, DataFrame)
+    smiles_col = DATASET_CONFIG[dataset]
+    
+    # 4. Convert and combine
+    # Using [a; b] is a concise way to call vcat()
+    return [Vector{String}(df[!, smiles_col]); SMILES_EDGE_CASES]
 end
 
 # --- 4. RDKIT REFERENCE FUNCTION ---
@@ -58,7 +80,7 @@ function run_all_tests()
     if !isfile(csv_path)
         error("bace.csv not found in folder. Please ensure the file is present.")
     end
-    database = load_test_data(csv_path)
+    database = load_test_data("bace")
     #take first 10 molecules for performance
     database = database[1:10]
     println("Database loaded with $(length(database)) molecules (BACE + Edge Cases).")

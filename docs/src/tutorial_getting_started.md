@@ -57,10 +57,20 @@ torsion_vector = fingerprint(smiles, torsion_calc)
 maccs_vector = fingerprint(smiles, maccs_calc)
 
 # 4. Analysis: Find indices of active features
-println("ECFP active bits: ", ecfp_vector)
-println("MHFP active bits: ", mhfp_vector)
-println("Topological Torsion active bits: ", torsion_vector)
-println("MACCS active bits: ", maccs_vector)
+
+# ECFP returns BitVector to see active bits, we can use findall
+println("ECFP active bits: ", findall(ecfp_vector))
+
+# MACCS returns BitVector to see active bits, we can use findall
+println("MACCS active bits: ", findall(maccs_vector))
+
+# MHFP returns Vector{Int64} with each non-zero entry, so all bits are active
+# You will see that are of the 2048 bits are being listed
+println("MHFP active bits: ", findall(mhfp_vector .!= 0))
+
+# TopologicalTorsion returns SparseArrays.SparseVector{Int32, Int64} so it is easy to find non-zero entries
+using SparseArrays
+println("Topological Torsion active bits: ", SparseArrays.findnz(torsion_vector)[1])
 
 ```
 
