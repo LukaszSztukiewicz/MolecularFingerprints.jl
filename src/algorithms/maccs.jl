@@ -24,16 +24,27 @@ end
 # helper functions for MACCS rules 
 # ------------------------------------------------------------------------------
 
+
+#     safe_atom_symbol(atom)
+
+# Returns the atom symbol as a Symbol type (:C) not string ("C")
+# atom_symbol(atom) from MolecularGraph.jl can return either Symbol or String type - we need to ensure its always Symbol (:C)
+
+# function safe_atom_symbol(atom)
+#     sym = atom_symbol(atom)
+#     # ensure the symbol is a Symbol type, if yes -> return, if not -> convert to symbol -> return
+
+#     return sym isa Symbol ? sym : Symbol(sym)
+# end
+
 """
     safe_atom_symbol(atom)
 
-Returns the atom symbol as a Symbol type (:C) not string ("C")
+Returns the atom symbol always as a Symbol (:C).
 """
-function safe_atom_symbol(atom)
-    sym = atom_symbol(atom)
-    # ensure the symbol is a Symbol type, if yes -> return, if not -> convert to symbol -> return
-    return sym isa Symbol ? sym : Symbol(sym)
-end
+safe_atom_symbol(atom) = safe_atom_symbol(atom_symbol(atom))
+safe_atom_symbol(sym::Symbol) = sym
+safe_atom_symbol(sym::String) = Symbol(sym)
 
 
 """
@@ -117,7 +128,8 @@ end
 
 A~B~C - check whether there is a path of length 3 between atoms (s1::Symbol, s2::Symbol, s3::Symbol) in molecule (mol)
 """
-function has_path3(mol, s1::Union{Symbol}, s2::Union{Symbol}, s3::Union{Symbol})
+# function has_path3(mol, s1::Union{Symbol}, s2::Union{Symbol}, s3::Union{Symbol})
+function has_path3(mol, s1::Symbol, s2::Symbol, s3::Symbol)
     for v2 in vertices(mol.graph) # iteration over atoms of a molecule
         a2 = safe_atom_symbol(mol.vprops[v2])
         a2 != s2 && continue
