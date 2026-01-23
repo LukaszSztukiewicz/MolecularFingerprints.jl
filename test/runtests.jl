@@ -2,15 +2,16 @@ using Test
 using MolecularGraph
 using MolecularGraph: smilestomol, MolGraph
 using MolecularFingerprints
-using Random
+using Random: seed!, randstring
 using SHA
 using SparseArrays
 using Graphs: nv, all_simple_paths, degree
 using Graphs: vertices, induced_subgraph, neighborhood
-using PythonCall: Py, pyimport, pyconvert, pybuiltins
+using PythonCall: Py, pyimport, pyconvert
+using MolecularGraph: smiles, sssr, is_aromatic, subgraph, remove_all_hydrogens!
 
 # Set seed for reproducibility across all tests
-Random.seed!(42)
+seed!(42)
 
 @testset "MolecularFingerprints.jl" begin
 
@@ -23,7 +24,8 @@ Random.seed!(42)
 
         @testset "Utilities" begin
             @info "Running Utility Function Tests..."
-            include("unit/utils/tanimoto_tests.jl")
+            include("unit/utils/tanimoto_similarity_tests.jl")
+            include("unit/utils/cosine_similarity_tests.jl")
         end
 
         @testset "Algorithms" begin

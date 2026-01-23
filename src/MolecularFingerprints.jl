@@ -1,47 +1,51 @@
 module MolecularFingerprints
 
-using MolecularGraph
-using Random
-using Graphs
-using RDKitMinimalLib
-using SHA
+using Graphs:
+    all_simple_paths,
+    cycle_basis,
+    degree,
+    dst,
+    edges,
+    fadjlist,
+    induced_subgraph,
+    ne,
+    neighborhood,
+    neighbors,
+    nv,
+    src,
+    vertices
+using MolecularGraph:
+    AbstractMolGraph,
+    MolGraph,
+    SMILESBond,
+    atom_charge,
+    atom_number,
+    atom_symbol,
+    edge_rank,
+    exact_mass,
+    explicit_hydrogens,
+    implicit_hydrogens,
+    is_aromatic,
+    is_in_ring,
+    monoiso_mass,
+    pi_electron,
+    remove_all_hydrogens!,
+    smilestomol,
+    sssr,
+    subset,
+    valence
+using Random: rand, randstring, seed!
+using SHA: sha1
+using SparseArrays: sparse, spzeros, SparseVector
 
-
-using MolecularGraph: AbstractMolGraph, edge_rank
-
-using PythonCall: Py, pyimport, pyconvert
-using MolecularGraph: SMILESMolGraph, smilestomol
-using Graphs: vertices, edges, neighbors, src, dst, degree, cycle_basis
-using SparseArrays: sparse
-
-
-using MolecularGraph
-using SHA
-using Graphs: induced_subgraph, nv, vertices, all_simple_paths
-using SparseArrays
-
-"""
-    MolecularFingerprints
-
-    A Julia package for computing various molecular fingerprints used in cheminformatics.
-
-    # Modules Included
-    - Abstract Interfaces
-    - Utility Functions
-    - Fingerprint Algorithms
-
-    # Exported Functions
-    - `tanimoto`
-"""
-
-# In julia inclusion of files make the further iclusions to see previously defined symbols,
-# so the order of includes matters.
+# NOTE: In Julia, order of includes matters for dependencies
 
 # Abstract Interfaces
 include("interface.jl")
 
 # Utility Functions
-include("utils/tanimoto.jl")
+include("utils/tanimoto_similarity.jl")
+include("utils/cosine_similarity.jl")
 
 # Fingerprint Algorithms
 include("algorithms/mhfp.jl")
@@ -50,12 +54,8 @@ include("algorithms/maccs.jl")
 include("algorithms/torsions.jl")
 
 export AbstractCalculator, AbstractFingerprint, AbstractDescriptor
-export tanimoto
-# FIXME remove mhfp_hash_from_molecular_shingling and mhfp_shingling_from_mol from export
-# later (it is useful right now for (manual))
-export MHFP, mhfp_shingling_from_mol, fingerprint, mhfp_hash_from_molecular_shingling 
-export ecfp_atom_invariant, ecfp_hash, ECFP, fingerprint
-export MACCSFingerprint, fingerprint, fingerprint_rdkit
-export TopologicalTorsion, fingerprint, getAtomCode, get4paths, getTopologicalTorsionFP, getPathsOfLengthN # FIXME remove unnecessary exports
+export MACCS, TopologicalTorsion, MHFP, ECFP
+export tanimoto_similarity, cosine_similarity
 export fingerprint
+
 end

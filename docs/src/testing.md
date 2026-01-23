@@ -1,3 +1,0 @@
-Since our native Julia implementation uses Julia's hash() function, the specific bits set will differ from RDKit's C++ implementation (which uses specific random seeds). Therefore, strict bitwise equality (==) is impossible to test.
-
-Instead, we validate by Ranking Correlation: We verify that MolecularFingerprints.jl identifies the same molecules as "similar" that RDKit does. If the chemical logic is correct, the Tanimoto similarity scores for a set of molecules should be highly correlated between the two libraries.

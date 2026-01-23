@@ -1,5 +1,5 @@
 """
-    ECFP{N} <: AbstractFingerprint
+    ECFP{N}(radius::Int = 2)
 
 Extended-Connectivity Fingerprint (ECFP) calculator.
 
@@ -29,10 +29,14 @@ struct ECFP{N} <: AbstractFingerprint
     radius::Int
 
     function ECFP{N}(radius::Int = 2) where N
-        radius >= 0 || throw(ArgumentError("radius must be non-negative"))
-        N > 0 || throw(ArgumentError("fingerprint size must be positive"))
-        new{N}(radius)
+        radius >= 0 || throw(DomainError(radius, "radius must be non-negative"))
+        N > 0 || throw(DomainError(N, "fingerprint size N must be positive"))
+        return new{N}(radius)
     end
+end
+
+function ECFP(radius::Int = 2)
+    return ECFP{1024}(radius)
 end
 
 """
@@ -74,7 +78,7 @@ function ecfp_atom_invariant(mol::AbstractMolGraph, atom_index)
     atom = mol.vprops[atom_index]
 
     # Get number of implicit and explicit hydrogens
-    implicit_hs = implicit_hydrogens(mol, atom_index)
+    implicit_hs = implicit_hydrogens(mol)[atom_index]
     explicit_hs = explicit_hydrogens(mol)[atom_index]
     total_hs = implicit_hs + explicit_hs
 
@@ -164,7 +168,11 @@ function ecfp_hash(v::Vector{UInt32})
 end
 
 """
-    MorganAtomEnv
+    MorganAtomEnv(;
+        code::UInt32,
+        atom_id::Int,
+        layer::Int
+    )
 
 Internal structure representing a Morgan atom environment.
 
@@ -185,7 +193,11 @@ struct MorganAtomEnv
 end
 
 """
-    AccumTuple
+    AccumTuple(;
+        bits::BitVector,
+        invariant::UInt32,
+        atom_index::Int
+    )
 
 Internal structure for tracking and comparing atomic neighborhoods during ECFP generation.
 
@@ -205,21 +217,7 @@ struct AccumTuple
     AccumTuple(bits::BitVector, invariant::UInt32, atom_index::Int) = new(bits, invariant, atom_index)
 end
 
-"""
-    Base.isless(a::AccumTuple, b::AccumTuple)
 
-Define ordering for AccumTuple objects to match RDKit's sorting behavior.
-
-Compares AccumTuples by first checking the bit vectors in reverse order (matching
-boost::dynamic_bitset comparison), then by invariant value, then by atom index.
-
-# Arguments
-- `a::AccumTuple`: First tuple to compare
-- `b::AccumTuple`: Second tuple to compare
-
-# Returns
-- `Bool`: true if a < b according to the defined ordering
-"""
 function Base.isless(a::AccumTuple, b::AccumTuple)
     # Compare ra and rb in reverse order, because this is how boost::dynamic_bitset does it
     for (abit, bbit) in zip(Iterators.reverse(a.bits), Iterators.reverse(b.bits))

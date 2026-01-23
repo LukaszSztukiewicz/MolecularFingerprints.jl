@@ -69,7 +69,7 @@ bitset_to_string(bitset) = join(Int.(bitset), "")
         for tc in test_cases
             expected_invariants = rdkit_atom_invariants(tc)
             expected_hashes = rdkit_hashed_atom_invariants(tc)
-            actual_invariants = ecfp_atom_invariant(tc)
+            actual_invariants = MolecularFingerprints.ecfp_atom_invariant(tc)
 
             @testset "Molecule $tc, atom index $i" for (i, (actual, expected, expected_hash)) in enumerate(zip(actual_invariants, expected_invariants, expected_hashes))
                 # Check length of returned invariant
@@ -88,7 +88,7 @@ bitset_to_string(bitset) = join(Int.(bitset), "")
                 end
 
                 # Check hash result
-                actual_hash = ecfp_hash(actual)
+                actual_hash = MolecularFingerprints.ecfp_hash(actual)
                 @test actual_hash == expected_hash
             end
         end
@@ -107,11 +107,11 @@ bitset_to_string(bitset) = join(Int.(bitset), "")
         @test ecfp0.radius == 0
 
          # Test invalid radius
-        @test_throws ArgumentError ECFP{1024}(-1)
+        @test_throws DomainError ECFP{1024}(-1)
 
         # Test invalid size
-        @test_throws ArgumentError ECFP{0}(2)
-        @test_throws ArgumentError ECFP{-1}(2)
+        @test_throws DomainError ECFP{0}(2)
+        @test_throws DomainError ECFP{-1}(2)
     end
 
     @testset "Basic Properties" begin
@@ -214,7 +214,7 @@ bitset_to_string(bitset) = join(Int.(bitset), "")
         fp3 = fingerprint(mol3, ecfp)
 
         # Ethanol and propanol should have more overlap than ethanol and benzene
-        @test tanimoto(fp1, fp2) > tanimoto(fp1, fp3)
+        @test tanimoto_similarity(fp1, fp2) > tanimoto_similarity(fp1, fp3)
     end
 
     @testset "Fingerprint: Comparison to RDKit" begin
