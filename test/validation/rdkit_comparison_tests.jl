@@ -103,17 +103,6 @@ function fingerprint_rdkit(smiles::String, calc::AbstractCalculator)
     return BitVector(c == '1' for c in bit_str)
 end
 
-# --- 4. RDKIT REFERENCE FUNCTION ---
-# function get_rdkit_scores(query::String, db::Vector{String}, r, n)
-#     q_mol = Chem.MolFromSmiles(query)
-#     db_mols = [Chem.MolFromSmiles(s) for s in db]
-    
-#     q_fp = AllChem.GetMorganFingerprintAsBitVect(q_mol, r, nBits=n)
-#     db_fps = [AllChem.GetMorganFingerprintAsBitVect(m, r, nBits=n) for m in db_mols]
-    
-#     py_scores = DataStructs.BulkTanimotoSimilarity(q_fp, db_fps)
-#     return pyconvert(Vector{Float64}, py_scores)
-# end
 
 function run_similarity_comparison(smiles_list::Vector{String}, calc::AbstractCalculator)
     tanimoto_scores = Float64[]
@@ -226,6 +215,54 @@ function run_all_tests()
         end
         println("Similarity search results match between Julia and RDKit for calculator $calc_name.")
     end
+
+    #calculate average recall at 10 for 100 queries for tanimoto similarity and cosine similarity
+    println("=== Average Recall@10 over 100 Queries ===")
+    for (calc_name, calc) in CALCULATORS
+        println("---- Calculator: $calc_name ----")
+        total_recall_tanimoto = 0.0
+        total_recall_cosine = 0.0
+        num_queries = 100
+        query_smiles = all_datasets[1:num_queries]
+        db_smiles = all_datasets[num_queries+100:num_queries+200]  # 100 database molecules
+        for q_smi in query_smiles
+            jl_scores_tanimoto = Float64[]
+            rd_scores_tanimoto = Float64[]
+            jl_scores_cosine = Float64[]
+            rd_scores_cosine = Float64[]
+
+            q_fp_jl = fingerprint(q_smi, calc)
+            q_fp_rd = fingerprint_rdkit(q_smi, calc)
+
+            for db_smi in db_smiles
+                db_fp_jl = fingerprint(db_smi, calc)
+                db_fp_rd = fingerprint_rdkit(db_smi, calc)
+
+                push!(jl_scores_tanimoto, tanimoto_similarity(q_fp_jl, db_fp_jl))
+                push!(rd_scores_tanimoto, tanimoto_similarity(q_fp_rd, db_fp_rd))
+                push!(jl_scores_cosine, cosine_similarity(q_fp_jl, db_fp_jl))
+                push!(rd_scores_cosine, cosine_similarity(q_fp_rd, db_fp_rd))
+            end
+
+            # Compare top 10 results for Tanimoto
+            jl_top10_tanimoto = sortperm(jl_scores_tanimoto, rev=true)[1:10]
+            rd_top10_tanimoto = sortperm(rd_scores_tanimoto, rev=true)[1:10]
+            recall_tanimoto = length(intersect(jl_top10_tanimoto, rd_top10_tanimoto)) / 10
+            total_recall_tanimoto += recall_tanimoto
+
+            # Compare top 10 results for Cosine
+            jl_top10_cosine = sortperm(jl_scores_cosine, rev=true)[1:10]
+            rd_top10_cosine = sortperm(rd_scores_cosine, rev=true)[1:10]
+            recall_cosine = length(intersect(jl_top10_cosine, rd_top10_cosine)) / 10
+            total_recall_cosine += recall_cosine
+        end
+        avg_recall_tanimoto = total_recall_tanimoto / num_queries
+        avg_recall_cosine = total_recall_cosine / num_queries
+        println("Average Recall@10 (Tanimoto): $avg_recall_tanimoto")
+        println("Average Recall@10 (Cosine): $avg_recall_cosine")
+    
+    end
+        
 end
 
 # EXECUTE
