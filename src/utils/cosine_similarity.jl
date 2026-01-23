@@ -37,7 +37,6 @@ function cosine_similarity(fp1::BitVector, fp2::BitVector)
 end
 
 function cosine_similarity(fp1::SparseVector, fp2::SparseVector)
-    # Get indices where either vector has a non-zero value
     common_indices = union(fp1.nzind, fp2.nzind)
     
     numerator = 0.0
