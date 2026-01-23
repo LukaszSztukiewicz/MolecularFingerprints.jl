@@ -91,12 +91,12 @@ end
 #FIXME should be implemented in each calculator
 """
     fingerprint(mol::nothing, calc::AbstractCalculator)
-Calculate the fingerprint for a single `MolGraph` instance using the provided `calc`.
+Handle cases where the molecule is invalid or could not be parsed.
 # Arguments
-- `mol`: A `MolGraph` instance representing the molecule.
+- `mol`: A `nothing` value indicating an invalid molecule.
 - `calc`: A subtype of `AbstractCalculator` defining the fingerprint type.
 # Returns
-- A fingerprint representation (the specific type depends on `calc`).
+- A default empty fingerprint based on the calculator type.
 """
 function fingerprint(mol::Nothing, calc::AbstractCalculator)
     @warn "Molecule is invalid or could not be parsed. Returning default empty fingerprint."
@@ -119,8 +119,8 @@ end
 
 Calculate fingerprints for a collection of SMILES strings.
 
-This method uses multithreading to process the list. Ensure that `JULIA_NUM_THREADS` 
-is set appropriately in your environment to see performance gains.
+This method uses multithreading to process the list. Ensure that `JULIA_NUM_THREADS`
+is set appropriately before running the code.
 
 # Arguments
 - `smiles_list`: A vector of SMILES strings.
