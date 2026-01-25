@@ -2,38 +2,7 @@ const rdkitChem = pyimport("rdkit.Chem")
 const rdkitMolDescriptors = pyimport("rdkit.Chem.rdMolDescriptors")
 const skfpFingerprints = pyimport("skfp.fingerprints")
 
-function rdkit_single_atom_invariant(mol::Py, i; include_ring_membership=true)
-    # Reference: https://github.com/rdkit/rdkit/blob/master/Code/GraphMol/Fingerprints/FingerprintUtil.cpp#L244
-
-    atom = mol.GetAtoms()[i - 1] # note: Python is 0-indexed
-
-    atomic_num = pyconvert(Int, atom.GetAtomicNum())
-
-    components = UInt32[
-        atomic_num % UInt32,
-        pyconvert(Int, atom.GetTotalDegree()) % UInt32,
-        pyconvert(Int, atom.GetTotalNumHs(true)) % UInt32,
-        pyconvert(Int, atom.GetFormalCharge()) % UInt32,
-        trunc(Int,
-            pyconvert(Float64, atom.GetMass()) -
-            pyconvert(Float64, rdkitChem.GetPeriodicTable().GetAtomicWeight(atomic_num))
-        ) % UInt32,
-    ]
-
-    if include_ring_membership && pyconvert(Int, mol.GetRingInfo().NumAtomRings(i - 1)) != 0
-        push!(components, UInt32(1))
-    end
-
-    return components
-end
-
-function rdkit_atom_invariants(smiles::AbstractString)
-    mol::Py = rdkitChem.MolFromSmiles(smiles)
-    n = pyconvert(UInt, mol.GetNumAtoms())
-    return [rdkit_single_atom_invariant(mol, i) for i in 1:n]
-end
-
-function rdkit_hashed_atom_invariants(smiles::AbstractString)
+function rdkit_get_atom_invariants(smiles::AbstractString)
     mol::Py = rdkitChem.MolFromSmiles(smiles)
     result = rdkitMolDescriptors.GetConnectivityInvariants(mol; includeRingMembership = true)
     return pyconvert(Vector{UInt32}, result)
@@ -49,7 +18,7 @@ bitset_to_string(bitset) = join(Int.(bitset), "")
 
 
 @testset "ECFP Algorithm Tests" begin
-    @testset "Atom invariant and hashes: Comparison to RDKit" begin
+    @testset "Atom invariant hashes: Comparison to RDKit" begin
         test_cases = [
             "C",
             "CC",
@@ -67,29 +36,12 @@ bitset_to_string(bitset) = join(Int.(bitset), "")
         ]
 
         for tc in test_cases
-            expected_invariants = rdkit_atom_invariants(tc)
-            expected_hashes = rdkit_hashed_atom_invariants(tc)
-            actual_invariants = MolecularFingerprints.ecfp_atom_invariant(tc)
+            actual_hashes = MolecularFingerprints.get_atom_invariants(tc)
+            expected_hashes = rdkit_get_atom_invariants(tc)
 
-            @testset "Molecule $tc, atom index $i" for (i, (actual, expected, expected_hash)) in enumerate(zip(actual_invariants, expected_invariants, expected_hashes))
-                # Check length of returned invariant
-                @test length(actual) == length(expected)
-                @test length(actual) == 5 || length(actual) == 6
-
-                # Check individual components
-                @test actual[1] == expected[1] # atomic number
-                @test actual[2] == expected[2] # number of neighbors
-                @test actual[3] == expected[3] # number of hydrogens
-                @test actual[4] == expected[4] # atomic charge
-                @test actual[5] == expected[5] # atomic mass difference
-
-                if length(actual) == 6
-                    @test actual[6] == expected[6] # is part of a ring
-                end
-
+            @testset "Molecule $tc, atom index $i" for (i, (actual, expected)) in enumerate(zip(actual_hashes, expected_hashes))
                 # Check hash result
-                actual_hash = MolecularFingerprints.ecfp_hash(actual)
-                @test actual_hash == expected_hash
+                @test actual == expected
             end
         end
     end
