@@ -327,7 +327,7 @@ function smiles_from_circular_substructures(mol::MolGraph, radius::Int, min_radi
             
             smiles_of_substructure = smiles(
                 submol,
-                Dict{String,Any}("rootedAtAtom" => pos_of_atom_index_in_submol),  # TODO check if this is correct, and not off-by one! In pluto, it looks like for a one-atom molecule, 0 is valid while 1 is not!
+                Dict{String,Any}("rootedAtAtom" => pos_of_atom_index_in_submol),
             )
 
             # TODO somehow deactivate kekulization on update, since it doesn't work on my subgraphs. HOWEVER: do it once in the beginning, since we probably want the info at the start, just not for the submols
