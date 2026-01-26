@@ -309,7 +309,7 @@ function smiles_from_circular_substructures(mol::MolGraph, radius::Int, min_radi
             atoms_in_substructure_of_radius_i = neighborhood(mol, atom_index, i)
 
             submol, atom_map = induced_subgraph(mol, atoms_in_substructure_of_radius_i)
-
+            
             # NOTE: This test is copied from the original authors.
             # I don't know what this test is for, as I don't see why it could be that 
             # atom_index is not contained in the atom map.
@@ -322,14 +322,18 @@ function smiles_from_circular_substructures(mol::MolGraph, radius::Int, min_radi
             end
             
             # Find index of current atom (atom_index) in the submolecule
-            pos_of_atom_index_in_submol = findfirst(atom_map .== atom_index)
-
+            # need to subtract one, as the rootedAtAtom keyword is passed directly to C++ code, which uses 0-based indexing
+            pos_of_atom_index_in_submol = findfirst(atom_map .== atom_index) - 1  
+            
             smiles_of_substructure = smiles(
                 submol,
-                Dict{String,Any}("rootedAtAtom" => pos_of_atom_index_in_submol),
+                Dict{String,Any}("rootedAtAtom" => pos_of_atom_index_in_submol),  # TODO check if this is correct, and not off-by one! In pluto, it looks like for a one-atom molecule, 0 is valid while 1 is not!
             )
 
-            if smiles_of_substructure != ""
+            # TODO somehow deactivate kekulization on update, since it doesn't work on my subgraphs. HOWEVER: do it once in the beginning, since we probably want the info at the start, just not for the submols
+            # Document it somehow, so I can talk about it in the presentation.
+
+            if !isnothing(smiles_of_substructure) && smiles_of_substructure != ""
                 # Add smiles of substructure to shingling.
                 push!(shingling_snippet, smiles_of_substructure)
             end
