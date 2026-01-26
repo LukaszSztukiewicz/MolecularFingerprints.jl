@@ -70,7 +70,7 @@ function getTopologicalTorsionFP(mol::MolGraph, pathLength::Int)
 	# get list of indices of all simple paths of length N and N-1-cycles in the molecular graph 
 	paths = getPathsOfLengthN(mol, pathLength)
 	# get chemical properties to generate an Atom Code for each atom in the path
-	piBonds = pi_electron(mol) 
+	piBonds = numPiBonds(mol) 
 	atomicNumber = atom_number(mol)
 	deg = degree(mol)
 	atomCodes = zeros(UInt32, nv(mol))
@@ -252,20 +252,28 @@ function getAtomCode(degree::Int, piBond::Int, atomicNumber::Int)
 	return code
 end
 
-function numPiAtoms(mol::MolGraph)
-	val = valence(mol)
+"""
+	numPiBonds(mol::MolGraph)
+Returns the number of pi bonds of every atom in the molecular graph
+
+# Arguments
+- `mol::MolGraph`: the molecule for which to calculate the number of pi bonds
+"""
+function numPiBonds(mol::MolGraph)
+	# MolecularGraph has the function pi_electron(), which returns the number of pi bonds, 
+	# but unfortunately rdkit does not always calculate the number of pi bonds but has some specifications
 	hyb = hybridization(mol)
-	conn = connectivity(mol)
-	#res = zeros(UInt32, nv(mol))
-	res = zeros(Int32, nv(mol))
-	res[is_aromatic(mol)] .= 1
 	ind = findall(hyb .!= :sp3)
-	if !isempty(ind)
-		res[ind] = val[ind] - conn[ind] 
+	val = zeros(Int32, nv(mol))
+	for (edge, bond) in mol.eprops
+		val[edge.src] += bond.order
+		val[edge.dst] += bond.order
 	end
+	res = zeros(Int64, nv(mol))
+	if !isempty(ind)
+		res[ind] = val[ind] - degree(mol)[ind]
+	end
+	res[is_aromatic(mol)] .= 1
 	return res
 end
-
-
-
 
