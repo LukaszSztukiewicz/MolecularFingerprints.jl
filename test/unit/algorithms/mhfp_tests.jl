@@ -1,5 +1,7 @@
 @testset "MHFP Fingerprint Tests" begin
-
+    # TODO check if I can now test actual shinglings for circular substructures, up to cases
+    # maybe even for the larger molecule?
+    
     ##### Definition of the molecules used for testing ################################
         
     # Larger molecule, taken from mhfp python implementation, 
