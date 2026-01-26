@@ -84,7 +84,7 @@ function getTopologicalTorsionFP(mol::MolGraph, pathLength::Int)
 		keepIt = true
 		pathCodes = UInt32[]
 		if path[1] == path[end]
-		# every cycle will appear pathLength times, 
+		# a cycle could be found several times, 
 		# so we only keep cycles which start at the smallest index 
 			keepIt = handleRings(path)
 		end
