@@ -14,7 +14,7 @@ const numPiBits = UInt32(2)
 const maxNumPi = UInt32((1 << numPiBits) - 1)
 const numTypeBits = UInt32(4)
 atomNumberTypesHelper = zeros(UInt32, 1 << numTypeBits)
-atomNumberTypesHelper[1:1 << numTypeBits - 1] = [5, 6, 7, 8, 9, 14, 15, 16, 17, 33, 34, 35, 51, 52, 53]  # length 15
+atomNumberTypesHelper[1:1 << numTypeBits - 1] = [5, 6, 7, 8, 9, 14, 15, 16, 17, 33, 34, 35, 51, 52, 53]  
 const atomNumberTypes = atomNumberTypesHelper
 const codeSize = UInt32(numTypeBits + numPiBits + numBranchBits) 
 const nTypes = UInt32(1 << numTypeBits) 
@@ -78,21 +78,22 @@ function getTopologicalTorsionFP(mol::MolGraph, pathLength::Int)
 		atomCodes[vertex] = getAtomCode(deg[vertex], piBonds[vertex], atomicNumber[vertex])
 	end
 	sz  = UInt64(one(UInt64) <<  (UInt32(pathLength) * codeSize))
-	res = spzeros(Int32, sz)
+	sz = UInt64(sz - 1)
+	res = spzeros(Int64, sz)
 	for path in paths
 		keepIt = true
 		pathCodes = UInt32[]
 		if path[1] == path[end]
 		# every cycle will appear pathLength times, 
 		# so we only keep cycles which start at the smallest index 
-			keepIt = canonicalize(path)
+			keepIt = handleRings(path)
 		end
 		if !keepIt
 			continue
 		end
 		for (ipT, pIt) in enumerate(path) 
 			code = atomCodes[pIt] - 1
-			# deduct one at beginning and end of path
+			# deduct one in middle of path
 			if ipT != 1 && ipT != pathLength
 				code -= 1
 			end
@@ -151,17 +152,15 @@ end
 
 
 """
-	canonicalize(path::Vector{Int})
+	handleRings(path::Vector{Int})
 
 # Arguments
 - `path::Vector`: Vertex indices of a cycle from the molecular graph
 
-Canonicalization is done to obtain unique fingerprints for different smiles strings
-as described in https://depth-first.com/articles/2021/10/06/molecular-graph-canonicalization/.  
-Since every ring is found pathLength times, we have to abandon all but one ring.  
+Since every ring is found pathLength - 1 times, we have to abandon all but one ring.  
 We only keep the ring which starts at the lowest numbered vertex.
 """
-function canonicalize(path::Vector) 
+function handleRings(path::Vector) 
 	# if we have a ring with n vertices, this will be found n times by getPathsOfLengthN.
 	# e.g.:  [5,1,3,4,5], [1,3,4,5,1], [3,4,5,1,3], [4,5,1,3,4]. We only want unique paths.
 	# Thus we only keep the ring which starts at the lowest numbered vertex ([1,3,4,5,1])
@@ -170,16 +169,16 @@ function canonicalize(path::Vector)
 	return keepIt
 end
 
-
-""" 
-	getTTFPCode(pathCodes::Vector)
-Calculates an integer from a number calculated from the atom codes of a path which will serve 
-as an index for which the fingerprint will be increased by 1.
-# Arguments
-- `pathCodes::Vector`: contains a code generated from the atom codes of molecules of a path
 """
-function getTTFPCode(pathCodes::Vector)
-	# canonicalization
+	canonicalize(pathCodes::Vector)
+
+# Arguments
+- `pathCodes::Vector`: Vertex indices of a n-path from the molecular graph
+
+Canonicalization is done to obtain unique fingerprints for different smiles strings
+as described in https://depth-first.com/articles/2021/10/06/molecular-graph-canonicalization/.  
+"""
+function canonicalize(pathCodes::Vector)
 	reverseIt = false
   	i = 1
   	j = length(pathCodes)
@@ -193,16 +192,26 @@ function getTTFPCode(pathCodes::Vector)
 		i += 1
 		j -= 1
 	end
-
+	return reverseIt
+end
+""" 
+	getTTFPCode(pathCodes::Vector)
+Calculates an integer from a number calculated from the atom codes of a path which will serve 
+as an index for which the fingerprint will be increased by 1.
+# Arguments
+- `pathCodes::Vector`: contains a code generated from the atom codes of molecules of a path
+"""
+function getTTFPCode(pathCodes::Vector)
+	reverseIt = canonicalize(pathCodes)
   	shiftSize = codeSize
   	res = zero(UInt64)
   	if reverseIt 
 		for i = 1:length(pathCodes) 
-	  		res |= pathCodes[length(pathCodes) - i + 1] << (shiftSize * (i - 1))
+	  		res |= UInt64(pathCodes[length(pathCodes) - i + 1]) << (shiftSize * (i - 1))
 		end
     else 
 		for i = 1:length(pathCodes) 
-		  res |= pathCodes[i] << (shiftSize * (i - 1))
+		  res |= UInt64(pathCodes[i]) << (shiftSize * (i - 1))
 		end
 	end
   	return res

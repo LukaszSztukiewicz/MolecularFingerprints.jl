@@ -81,19 +81,70 @@
 
         @test fp1 == fp2
 
-        # test canonicalization of rings
+        # rings are found multiple times, we only keep the one starting at the lowest numbered vertex
+        # test if we keep the correct ring
         paths = [[5,1,3,4,5], [1,3,4,5,1], [3,4,5,1,3], [4,5,1,3,4]]
         keepRing = [false, true, false, false]
 
         for i = 1:length(paths)
-            @test MolecularFingerprints.canonicalize(paths[i]) == keepRing[i]
+            @test MolecularFingerprints.handleRings(paths[i]) == keepRing[i]
         end
-
+    end
+    
+    @testset "testAtomCodes" begin
+        # check if atom code is the same as in the rdkit implementation
         data = "CCOC"
         mol = MolecularGraph.smilestomol(data)
-        fp = fingerprint(mol, torsion_calc) # sparsevec([16809984], Int32[1], 68719476736) # rdkit: # entry: {4320149536: 1}
-# length: 68719476735
-        #@info fp
+
+        piBonds = pi_electron(mol) 
+	    atomicNumber = atom_number(mol)
+	    deg = degree(mol)
+
+        rdkitAtomCode = [33, 34, 98, 33]
+        atomCode = Int[]
+
+        for v in vertices(mol)
+            push!(atomCode, MolecularFingerprints.getAtomCode(deg[v], piBonds[v], atomicNumber[v]))
         end
 
+        @assert atomCode == rdkitAtomCode
+    end
+
+    @testset "testFingerprintResult" begin
+        # check if fingerprint is the same as in the rdkit implementation
+        torsion_calc = TopologicalTorsion()
+        data = "CCOC"
+        mol = MolecularGraph.smilestomol(data)
+        fp = fingerprint(mol, torsion_calc)
+        rdkit_ind = 4320149536
+        rdkit_entry = 1
+        rdkit_length = 68719476735
+
+        @assert length(fp) == rdkit_length
+        @assert findnz(fp)[1][1] == rdkit_ind + 1 # account for zero-based indexing in C++
+        @assert findnz(fp)[2][1] == rdkit_entry 
+
+        data = "CCCCC"
+        mol = MolecularGraph.smilestomol(data)
+        fp = fingerprint(mol, torsion_calc)
+        rdkit_ind = 4437590048
+        rdkit_entry = 2
+        rdkit_length = 68719476735
+
+        @assert length(fp) == rdkit_length
+        @assert findnz(fp)[1][1] == rdkit_ind + 1 # account for zero-based indexing in C++
+        @assert findnz(fp)[2][1] == rdkit_entry 
+
+        data = "c1ccccc1"
+        mol = MolecularGraph.smilestomol(data)
+        fp = fingerprint(mol, torsion_calc)
+        rdkit_ind = 5513433129
+        rdkit_entry = 6
+        rdkit_length = 68719476735
+
+        @assert length(fp) == rdkit_length
+        @assert findnz(fp)[1][1] == rdkit_ind + 1 # account for zero-based indexing in C++
+        @assert findnz(fp)[2][1] == rdkit_entry 
+    end
+    
 end
