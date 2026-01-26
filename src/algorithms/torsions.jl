@@ -157,13 +157,17 @@ end
 # Arguments
 - `path::Vector`: Vertex indices of a cycle from the molecular graph
 
-Since every ring is found pathLength - 1 times, we have to abandon all but one ring.  
+Since every ring can be found several times, we have to abandon all but one ring.  
 We only keep the ring which starts at the lowest numbered vertex.
 """
 function handleRings(path::Vector) 
-	# if we have a ring with n vertices, this will be found n times by getPathsOfLengthN.
-	# e.g.:  [5,1,3,4,5], [1,3,4,5,1], [3,4,5,1,3], [4,5,1,3,4]. We only want unique paths.
-	# Thus we only keep the ring which starts at the lowest numbered vertex ([1,3,4,5,1])
+	# A ring could be found multiple times by getPathsOfLengthN, e.g.:  [1,3,2,1] and [2,1,3,2].
+	# [3,2,1,3] would not be found because we only look for paths with start_vertex < end_vertex 
+	# to avoid finding every path twice. To find rings we check if 
+	# all_simple_paths() found an N - 1 - path and a 2-path. If so, there must be a cycle.
+	# So here [3,2,1,3] would not be found because 3 > 1. )
+	# We only want unique paths.
+	# Thus we only keep the ring which starts at the lowest numbered vertex ([1,3,2,1])
 	sorting = sortperm(path)
 	keepIt = isone(first(sorting))
 	return keepIt
@@ -248,7 +252,7 @@ function getAtomCode(degree::Int, piBond::Int, atomicNumber::Int)
 	return code
 end
 
-#= function numPiAtoms(mol::MolGraph)
+function numPiAtoms(mol::MolGraph)
 	val = valence(mol)
 	hyb = hybridization(mol)
 	conn = connectivity(mol)
@@ -260,7 +264,7 @@ end
 		res[ind] = val[ind] - conn[ind] 
 	end
 	return res
-end =#
+end
 
 
 
