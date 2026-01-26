@@ -23,7 +23,7 @@ maccs_calc = MACCS() # MACCS Keys
 
 const CALCULATORS = Dict(
     "ECFP" => ecfp_calc,
-    # "MHFP" => mhfp_calc,
+    "MHFP" => mhfp_calc,
     # "TopologicalTorsion" => torsion_calc,
     "MACCS" => maccs_calc
 )
