@@ -123,7 +123,7 @@ function getPathsOfLengthN(mol::MolGraph, N::Int)
 	paths = []
 	for v in vertices(mol)
 		# avoid searching for paths from v to w and w to v
-		for w in vertices(mol)[v:end]
+		for w in vertices(mol)[v + 1:end]
 			# get all simple paths of length ≤ N, the cutoff in all_simple_paths is for number of edges so we subtract 1 
 			thesePaths = collect(all_simple_paths(mol, v, w, cutoff = N - 1))
 			if isempty(thesePaths) == false
@@ -252,7 +252,8 @@ end
 	val = valence(mol)
 	hyb = hybridization(mol)
 	conn = connectivity(mol)
-	res = zeros(UInt32, nv(mol))
+	#res = zeros(UInt32, nv(mol))
+	res = zeros(Int32, nv(mol))
 	res[is_aromatic(mol)] .= 1
 	ind = findall(hyb .!= :sp3)
 	if !isempty(ind)
