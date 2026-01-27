@@ -6,7 +6,6 @@ using Graphs:
     degree,
     dst,
     edges,
-    fadjlist,
     induced_subgraph,
     ne,
     neighborhood,
@@ -43,7 +42,6 @@ using MolecularGraph:
     smilestomol,
     sssr,
     sssr!,
-    subset,
     valence,
     valence!
 using Random: rand, randstring, seed!
@@ -58,7 +56,6 @@ include("interface.jl")
 
 # Utility Functions
 include("utils/tanimoto_similarity.jl")
-include("utils/cosine_similarity.jl")
 
 # Fingerprint Algorithms
 include("algorithms/mhfp.jl")
@@ -70,7 +67,7 @@ export safe_smilestomol, smiles_to_neutralized_mol
 
 export AbstractCalculator, AbstractFingerprint, AbstractDescriptor
 export MACCS, TopologicalTorsion, MHFP, ECFP
-export tanimoto_similarity, cosine_similarity
+export tanimoto_similarity
 export fingerprint
 
 end
