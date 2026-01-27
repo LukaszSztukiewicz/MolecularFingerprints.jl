@@ -1,17 +1,26 @@
+""" 
+    cosine_similarity(fp1::Vector{T}, fp2::Vector{T}) where T<:Integer
+Calculate the cosine similarity between two fingerprints represented as integer vectors.
+# Arguments
+- `fp1`: First fingerprint as a vector of integers.
+- `fp2`: Second fingerprint as a vector of integers.
+# Returns
+- Cosine similarity value between 0.0 and 1.0.
 """
-    cosine_similarity(fp1::AbstractVector, fp2::AbstractVector) -> Float64
-Calculate the cosine similarity between two fingerprint vectors. Using Distances.jl for efficient computation.
-"""
-function cosine_similarity(fp1::AbstractVector, fp2::AbstractVector)
-    if length(fp1) != length(fp2)
-        throw(ArgumentError("Fingerprints must be of the same length"))
-    end
+function cosine_similarity(fp1::Vector{T}, fp2::Vector{T}) where T<:Integer
+    length(fp1) != length(fp2) && throw(ArgumentError("Fingerprints must be of the same length"))
     
-    #handle all zero vectors
-    if allzeros(fp1) || allzeros(fp2)
+    if all(iszero, fp1) || all(iszero, fp2)
         return 0.0
     end
 
-    dist = cosine_dist(fp1, fp2)
-    return 1.0 - dist
+    # cast to Float64 to prevent integer overflow during internal squaring/summing
+    # we use cosine_dist from Distances.jl which computes 1 - cosine similarity
+    calculated_dist = cosine_dist(Float64.(fp1), Float64.(fp2))
+    
+    return isnan(calculated_dist) ? 0.0 : 1.0 - calculated_dist
+end
+
+function cosine_similarity(fp1::BitVector, fp2::BitVector)
+    return cosine_similarity(Vector{Int}(fp1), Vector{Int}(fp2))
 end
