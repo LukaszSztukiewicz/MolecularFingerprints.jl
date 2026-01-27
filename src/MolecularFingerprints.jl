@@ -16,10 +16,15 @@ using Graphs:
 using MolecularGraph:
     AbstractMolGraph,
     MolGraph,
+    MolState,
+    SimpleMolGraph,
     SMILESBond,
+    apparent_valence!,
     atom_charge,
     atom_number,
     atom_symbol,
+    default_atom_charge!,
+    default_bond_order!,
     edge_rank,
     exact_mass,
     explicit_hydrogens,
@@ -27,14 +32,20 @@ using MolecularGraph:
     implicit_hydrogens,
     is_aromatic,
     is_in_ring,
+    is_ring_aromatic!,
+    lone_pair!,
     monoiso_mass,
     pi_electron,
     remove_all_hydrogens!,
     set_prop!,
+    smiles,
     smilestomol,
     sssr,
-    valence
+    sssr!,
+    valence,
+    valence!
 using Random: rand, randstring, seed!
+using RDKitMinimalLib: smiles
 using SHA: sha1
 using SparseArrays: sparse, spzeros, SparseVector
 
