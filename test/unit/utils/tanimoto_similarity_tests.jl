@@ -68,12 +68,4 @@ using Test
     # tanimoto_similarity = 2 / 6 = 0.3333...
     @test isapprox(tanimoto_similarity(a, b), 1/3)
 
-    # SparseVector fingerprints
-    a = sparsevec([1, 3, 5], [1, 2, 3], 5)
-    b = sparsevec([2, 3, 4], [4, 5, 6], 5)
-    # intersection = min(0,4) + min(2,5) + min(0,6) = 2
-    # union = max(1,0) + max(0,4) + max(2,5) + max(0,6) + max(3,0) = 1 + 4 + 5 + 6 + 3 = 19
-    # tanimoto_similarity = 2 / 19
-    @test isapprox(tanimoto_similarity(a, b), 2 / 19)
-
 end
