@@ -1,5 +1,3 @@
-using RDKitMinimalLib: smiles
-using MolecularGraph: smiles
 """
     MHFP(;
         radius::Int = 3,
@@ -139,6 +137,109 @@ struct MHFP <: AbstractFingerprint
 
 end
 
+"""
+    helper_custom_on_update!(mol::SimpleMolGraph)
+
+Custom function for which actions are to be performed on a MolGraph when properties change.
+In particular, we skip kekulization, as it will not always be possible on our substructures
+(since they may have invalid molecular properties). Other than that, the function is copied 
+from the default `smiles_on_update!` from 
+https://github.com/mojaie/MolecularGraph.jl/blob/1c4498363381cdfd6162368f33d54d67dd3f1e04/src/smarts/base.jl#L66C1-L77C4.
+Note that this is the function in the 0.21.1 release of MolecularGraph (which is what 
+MolecularFingerprints uses as a dependency).
+"""
+function helper_custom_on_update!(mol::SimpleMolGraph)    
+    # preprocessing
+    default_atom_charge!(mol)
+    default_bond_order!(mol)
+    # kekulize!(mol)  # skip kekulization!
+
+    # recalculate bottleneck descriptors
+    sssr!(mol)
+    apparent_valence!(mol)
+    valence!(mol)
+    lone_pair!(mol)
+    is_ring_aromatic!(mol)
+end
+
+"""
+    helper_custom_on_init!(mol::SimpleMolGraph)
+
+Custom function for which actions are to be performed on a MolGraph on initialization.
+In particular, as we skip kekulization in our custom on_update! function, we add
+kekulization on initialization, so that it has been done once at least.
+Other than that, the function is copied from the default `smiles_on_init!` from
+https://github.com/mojaie/MolecularGraph.jl/blob/1c4498363381cdfd6162368f33d54d67dd3f1e04/src/smarts/base.jl#L61C1-L64C4.
+Note that this is the function in the 0.21.1 release of MolecularGraph (which is what
+MolecularFingerprints is using as a dependency), and newer releases include an additional
+step `check_valence`.
+"""
+function helper_custom_on_init!(mol::SimpleMolGraph)
+    stereocenter_from_smiles!(mol)
+    stereobond_from_smiles!(mol)
+
+    kekulize!(mol)  # add kekulization to init step
+end
+
+"""
+    helper_copy_mol(mol::MolGraph)
+
+Creates a copy of the given molecule, and disables automatic kekulization on update.
+
+This serves two goals:
+- User-given molecules are not modified. This is important, as hydrogens are removed before
+    creating the MHFP fingerprint, which is a side effect the user may not want on their 
+    given molecule. Furthermore, the molecule is equipped with custom on_init and on_update
+    functions (see second point below), which is not something the user should have to 
+    consider.
+- Automatic kekulization of the molecule upon modification (such as creating a subgraph) is
+    disabled. This is important as kekulization is not always successful on the 
+    substructures we generate, as some of their properties are considered invalid.
+    This is done as follows: we give the MolGraph object custom on_init and on_update 
+    functions, where in the latter, the kekulization is not included (which it otherwise is 
+    by default), while in the former, we added kekulization (so that it is at least 
+    performed once, upon initialization)
+
+# Remark
+For some reason, MolecularGraph.jl has defined MolState{T, F1, F2} as a generic type struct, 
+where F1 and F2 are the types of the two functions on_init and on_update, respectively.
+This means that we cannot modify the fields on_init and on_update in-place, since once a 
+molecule is initialized, F1 and F2 have fixed types, namely, the types 
+`typeof(<the current on_init function>)` and analogously for `on_update`. Since the new 
+functions have types like `typeof(<the new on_init function>)`, replacing in-place is not 
+possible.
+Instead, we create a new MolGraph object.
+In MolecularGraph v0.22.0, this has been changed, and F1, F2 are no longer generic types.
+If MolecularFingerprints is ported to use this version in the future, the function below 
+could be simplified into `mol=copy(mol); mol.state.on_init = <new_on_init_function>` etc.
+"""
+function helper_copy_mol(mol::MolGraph)
+    # new molecule will be of this type
+    current_mol_type = typeof(mol)
+
+    # state of newe molecule will be of type MolState{T, F1, F2}, where
+    # F1, F2 are typeof(helper_custom_on_init!), typeof(helper_custom_on_update!) and
+    # T is as determined in the following line:
+    T = typeof(mol.state).parameters[1]
+
+    mol = current_mol_type(
+        mol.graph, # graph, vertex and edge properties all stay the same
+        mol.vprops,
+        mol.eprops,
+        mol.gprops,
+        MolState{  # mol.state is changed
+            T, # first parameter of MolState unchanged
+            typeof(helper_custom_on_init!),  # second and third type parameters changed
+            typeof(helper_custom_on_update!)
+            }(
+            mol.state.initialized,  # MolState stays mostly the same
+            mol.state.has_updates,
+            mol.state.has_new_edges,
+            mol.state.force_calculate,
+            helper_custom_on_init!,  # add custom on_init and on_update functions
+            helper_custom_on_update!)
+    )
+end
 
 """
     fingerprint(mol::MolGraph, calc::MHFP)
@@ -147,12 +248,12 @@ Calculates the MHFP fingerprint of the given molecule and returns it as a vector
 """
 function fingerprint(mol::MolGraph, calc::MHFP)
     return mhfp_hash_from_molecular_shingling(  # calculate hash
-        mhfp_shingling_from_mol!(mol, calc),     # given the shingling of the molecule
+        mhfp_shingling_from_mol(mol, calc),     # given the shingling of the molecule
         calc)                                   # using the parameters stored in calc
 end
 
 """
-    mhfp_shingling_from_mol!(
+    mhfp_shingling_from_mol(
         mol::MolGraph,
         calc::MHFP)
 
@@ -168,10 +269,15 @@ around each heavy (=non-hydrogen) atom of the molecule.
     fingerprint calculation, e.g., the radii of the circular substructures to be considered
     and whether to include ring information explicitly in the fingerprints
 """
-function mhfp_shingling_from_mol!(
+function mhfp_shingling_from_mol(
     mol::MolGraph,
     calc::MHFP
 )   
+
+    # make copy of molecule, so modifications, such as removing Hs or changing the on_update
+    # function of the MolGraph, are not affecting the given molecule
+    mol = helper_copy_mol(mol)
+
     # read parameters from calculator object
     radius = calc.radius
     rings = calc.rings
@@ -233,7 +339,9 @@ function smiles_from_rings(mol::MolGraph)
     for ring in sssr(mol)
         # For each ring in the sssr, create smiles string of the submolecule corresponding
         # to the ring and add to the shingling.
-        push!(shingling_snippet, smiles(induced_subgraph(mol, ring)[1]))
+        smiles_from_ring = smiles(induced_subgraph(mol, ring)[1])
+
+        isnothing(smiles_from_ring) || push!(shingling_snippet, smiles_from_ring)
     end
 
     return shingling_snippet
@@ -309,7 +417,7 @@ function smiles_from_circular_substructures(mol::MolGraph, radius::Int, min_radi
             atoms_in_substructure_of_radius_i = neighborhood(mol, atom_index, i)
 
             submol, atom_map = induced_subgraph(mol, atoms_in_substructure_of_radius_i)
-
+            
             # NOTE: This test is copied from the original authors.
             # I don't know what this test is for, as I don't see why it could be that 
             # atom_index is not contained in the atom map.
@@ -322,14 +430,18 @@ function smiles_from_circular_substructures(mol::MolGraph, radius::Int, min_radi
             end
             
             # Find index of current atom (atom_index) in the submolecule
-            pos_of_atom_index_in_submol = findfirst(atom_map .== atom_index)
-
+            # need to subtract one, as the rootedAtAtom keyword is passed directly to C++ code, which uses 0-based indexing
+            pos_of_atom_index_in_submol = findfirst(atom_map .== atom_index) - 1  
+            
             smiles_of_substructure = smiles(
                 submol,
                 Dict{String,Any}("rootedAtAtom" => pos_of_atom_index_in_submol),
             )
 
-            if smiles_of_substructure != ""
+            # TODO somehow deactivate kekulization on update, since it doesn't work on my subgraphs. HOWEVER: do it once in the beginning, since we probably want the info at the start, just not for the submols
+            # Document it somehow, so I can talk about it in the presentation.
+
+            if !isnothing(smiles_of_substructure) && smiles_of_substructure != ""
                 # Add smiles of substructure to shingling.
                 push!(shingling_snippet, smiles_of_substructure)
             end
