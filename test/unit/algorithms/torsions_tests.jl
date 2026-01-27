@@ -1,6 +1,6 @@
 @testset "Topological Torsion Fingerprint Tests" begin
     @testset "testPathFinder" begin
-            # this molecule is just a ring made from 6 carbon atoms 
+            # this molecule is a ring made from 6 carbon atoms 
             data = "c1ccccc1"
             mol = smilestomol(data)
             # all paths of length 4
@@ -81,19 +81,104 @@
 
         @test fp1 == fp2
 
-        # test canonicalization of rings
+
+        # rings are found multiple times, we only keep the one starting at the lowest numbered vertex
+        # test if we keep the correct ring
         paths = [[5,1,3,4,5], [1,3,4,5,1], [3,4,5,1,3], [4,5,1,3,4]]
         keepRing = [false, true, false, false]
 
         for i = 1:length(paths)
-            @test MolecularFingerprints.canonicalize(paths[i]) == keepRing[i]
+            @test MolecularFingerprints.handleRings(paths[i]) == keepRing[i]
         end
 
+    end
+    
+    @testset "testAtomCodes" begin
+        # check if atom code is the same as in the rdkit implementation
         data = "CCOC"
         mol = MolecularGraph.smilestomol(data)
-        fp = fingerprint(mol, torsion_calc) # sparsevec([16809984], Int32[1], 68719476736) # rdkit: # entry: {4320149536: 1}
-# length: 68719476735
-        #@info fp
+
+        piBonds = pi_electron(mol) 
+	    atomicNumber = atom_number(mol)
+	    deg = degree(mol)
+
+        rdkitAtomCode = [33, 34, 98, 33]
+        atomCode = Int[]
+
+        for v in vertices(mol)
+            push!(atomCode, MolecularFingerprints.getAtomCode(deg[v], piBonds[v], atomicNumber[v]))
         end
 
+        @assert atomCode == rdkitAtomCode
+    end
+
+    @testset "testNumPiBonds" begin
+        # check if number of pi bonds is the same as in the rdkit implementation
+        rdkitNumPi = [ 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0]
+        data = "CN2C(=O)N(C)C(=O)C1=C2N=CN1C"
+        mol = MolecularGraph.smilestomol(data)
+        numPi = MolecularFingerprints.numPiBonds(mol)
+        @assert rdkitNumPi == numPi
+
+        rdkitNumPi = [ 0, 0, 0, 0]
+        data = "CCOC"
+        mol = MolecularGraph.smilestomol(data)
+        numPi = MolecularFingerprints.numPiBonds(mol)
+        @assert rdkitNumPi == numPi
+
+        rdkitNumPi = [1, 1, 1, 1, 1, 1]
+        data = "c1ccccc1"
+        mol = MolecularGraph.smilestomol(data)
+        numPi = MolecularFingerprints.numPiBonds(mol)
+        @assert rdkitNumPi == numPi
+      end
+
+    @testset "testFingerprintResult" begin
+        # check if fingerprint is the same as in the rdkit implementation
+        torsion_calc = TopologicalTorsion()
+        data = "CCOC"
+        mol = MolecularGraph.smilestomol(data)
+        fp = fingerprint(mol, torsion_calc)
+        rdkit_ind = 4320149536
+        rdkit_entry = 1
+        rdkit_length = 68719476735
+
+        @assert length(fp) == rdkit_length
+        @assert findnz(fp)[1][1] == rdkit_ind + 1 # account for zero-based indexing in C++
+        @assert findnz(fp)[2][1] == rdkit_entry 
+
+        data = "CCCCC"
+        mol = MolecularGraph.smilestomol(data)
+        fp = fingerprint(mol, torsion_calc)
+        rdkit_ind = 4437590048
+        rdkit_entry = 2
+        rdkit_length = 68719476735
+
+        @assert length(fp) == rdkit_length
+        @assert findnz(fp)[1][1] == rdkit_ind + 1 # account for zero-based indexing in C++
+        @assert findnz(fp)[2][1] == rdkit_entry 
+
+        data = "c1ccccc1"
+        mol = MolecularGraph.smilestomol(data)
+        fp = fingerprint(mol, torsion_calc)
+        rdkit_ind = 5513433129
+        rdkit_entry = 6
+        rdkit_length = 68719476735
+
+        @assert length(fp) == rdkit_length
+        @assert findnz(fp)[1][1] == rdkit_ind + 1 # account for zero-based indexing in C++
+        @assert findnz(fp)[2][1] == rdkit_entry 
+
+        data = "CN2C(=O)N(C)C(=O)C1=C2N=CN1C"
+        mol = MolecularGraph.smilestomol(data)
+        fp = fingerprint(mol, torsion_calc)
+        rdkit_ind = [5647929385, 5647929888, 5647929897, 5656302122, 9808417312, 9808417322, 9808663082, 9808679456, 9808679466, 9942634538, 9942880810, 9942880841, 9942880842, 9942896681, 9942897184, 9942897194, 13969412650, 13969412682, 13969429024, 13969429034]
+        rdkit_entry = [1, 4, 2, 2, 1, 1, 1, 1, 1, 1, 2, 1, 2, 1, 2, 2, 1, 1, 3, 3]
+        rdkit_length = 68719476735
+
+        @assert length(fp) == rdkit_length
+        @assert findnz(fp)[1] == rdkit_ind .+ 1 # account for zero-based indexing in C++
+        @assert findnz(fp)[2] == rdkit_entry 
+    end
+    
 end
