@@ -6,7 +6,6 @@ using Graphs:
     degree,
     dst,
     edges,
-    fadjlist,
     induced_subgraph,
     ne,
     neighborhood,
@@ -34,7 +33,6 @@ using MolecularGraph:
     set_prop!,
     smilestomol,
     sssr,
-    subset,
     valence
 using Random: rand, randstring, seed!
 using SHA: sha1
