@@ -1,3 +1,4 @@
+# Please note: This docstring was revised for spelling, formatting, and coherence with the implementation using Claude Code
 """
     ECFP{N}(radius)
 
@@ -26,12 +27,6 @@ ECFP{512, Int64}(2)
 julia> ECFP{2048}(Int8(3))
 ECFP{2048, Int8}(3)
 ```
-
-# References
-Rogers, D., & Hahn, M. (2010). Extended-connectivity fingerprints.
-Journal of Chemical Information and Modeling, 50(5), 742-754.
-
-<!-- Please note: This docstring was revised for spelling, formatting, and coherence using Claude Code (https://claude.com/product/claude-code). -->
 """
 struct ECFP{N, R<:Integer} <: AbstractFingerprint
     radius::R
@@ -49,6 +44,7 @@ ECFP(radius::R) where {R<:Integer} = ECFP{1024, R}(radius)
 ECFP{N}() where N = ECFP{N, Int}(2)
 ECFP() = ECFP{1024, Int}(2)
 
+# Please note: This docstring was revised for spelling, formatting, and coherence with the implementation using Claude Code
 """
     ecfp_hash_combine(seed::UInt32, value::UInt32)
 
@@ -68,10 +64,10 @@ which is based on the boost C++ library's hash_combine function.
 ```jldoctest
 julia> using MolecularFingerprints
 
-julia> ecfp_hash_combine(UInt32(0), UInt32(42))
+julia> MolecularFingerprints.ecfp_hash_combine(UInt32(0), UInt32(42))
 0x9e3779e3
 
-julia> result = ecfp_hash_combine(UInt32(100), UInt32(200));
+julia> result = MolecularFingerprints.ecfp_hash_combine(UInt32(100), UInt32(200));
 
 julia> result isa UInt32
 true
@@ -79,13 +75,12 @@ true
 
 # References
 Boost hash implementation, as provided by RDKit: https://github.com/rdkit/rdkit/blob/Release_2025_09_4/Code/RDGeneral/hash/hash.hpp
-
-<!-- Please note: This docstring was revised for spelling, formatting, and coherence using Claude Code (https://claude.com/product/claude-code). -->
 """
 function ecfp_hash_combine(seed::UInt32, value::UInt32)
     return seed ⊻ (value + UInt32(0x9e3779b9) + (seed << 6) + (seed >> 2))
 end
 
+# Please note: This docstring was revised for spelling, formatting, and coherence with the implementation using Claude Code
 """
     ecfp_hash(v::AbstractVector{UInt32})
 
@@ -104,13 +99,13 @@ to produce a single hash value representing the entire vector.
 ```jldoctest
 julia> using MolecularFingerprints
 
-julia> ecfp_hash(UInt32[1, 2, 3])
-0xa8c41606
+julia> MolecularFingerprints.ecfp_hash(UInt32[1, 2, 3])
+0xfb58d153
 
-julia> ecfp_hash(UInt32[])
+julia> MolecularFingerprints.ecfp_hash(UInt32[])
 0x00000000
 
-julia> result = ecfp_hash(UInt32[42, 100, 200]);
+julia> result = MolecularFingerprints.ecfp_hash(UInt32[42, 100, 200]);
 
 julia> result isa UInt32
 true
@@ -118,8 +113,6 @@ true
 
 # References
 Boost hash implementation, as provided by RDKit: https://github.com/rdkit/rdkit/blob/Release_2025_09_4/Code/RDGeneral/hash/hash.hpp
-
-<!-- Please note: This docstring was revised for spelling, formatting, and coherence using Claude Code (https://claude.com/product/claude-code). -->
 """
 function ecfp_hash(v::AbstractVector{UInt32})
     seed = UInt32(0)
@@ -129,6 +122,7 @@ function ecfp_hash(v::AbstractVector{UInt32})
     return seed
 end
 
+# Please note: This docstring was revised for spelling, formatting, and coherence with the implementation using Claude Code
 """
     MorganAtomEnv(;
         code::UInt32,
@@ -145,8 +139,6 @@ encountered during ECFP fingerprint generation.
 - `code::UInt32`: Hash code representing the atomic environment
 - `atom_id::Int`: Identifier of the central atom
 - `layer::Int`: Radius/layer at which this environment was computed
-
-<!-- Please note: This docstring was revised for spelling, formatting, and coherence using Claude Code (https://claude.com/product/claude-code). -->
 """
 struct MorganAtomEnv
     code::UInt32
@@ -156,6 +148,7 @@ struct MorganAtomEnv
     MorganAtomEnv(code::UInt32, atom_id::Int, layer::Int) = new(code, atom_id, layer)
 end
 
+# Please note: This docstring was revised for spelling, formatting, and coherence with the implementation using Claude Code
 """
     AccumTuple(;
         bits::BitVector,
@@ -172,8 +165,6 @@ by storing bond connectivity patterns along with invariant hashes.
 - `bits::BitVector`: Bit representation of the bond neighborhood
 - `invariant::UInt32`: Hash invariant for this neighborhood
 - `atom_index::Int`: Index of the central atom
-
-<!-- Please note: This docstring was revised for spelling, formatting, and coherence using Claude Code (https://claude.com/product/claude-code). -->
 """
 struct AccumTuple
     bits::BitVector
@@ -197,6 +188,7 @@ function Base.isless(a::AccumTuple, b::AccumTuple)
     return a.atom_index < b.atom_index
 end
 
+# Please note: This docstring was revised for spelling, formatting, and coherence with the implementation using Claude Code
 """
     rdkit_bond_type(bond::SMILESBond)
 
@@ -216,8 +208,6 @@ we currently only support the most common bond types (1 to 6).
 
 # References
 RDKit bond types: https://github.com/rdkit/rdkit/blob/Release_2025_09_4/Code/GraphMol/Bond.h#L55
-
-<!-- Please note: This docstring was revised for spelling, formatting, and coherence using Claude Code (https://claude.com/product/claude-code). -->
 """
 function rdkit_bond_type(bond::SMILESBond)
     if !bond.isaromatic && bond.order in 1:6
@@ -238,6 +228,7 @@ function rdkit_bond_type(bond::SMILESBond)
     # end
 end
 
+# Please note: This docstring was revised for spelling, formatting, and coherence with the implementation using Claude Code
 """
     get_bond_invariants(mol::MolGraph)
 
@@ -257,13 +248,12 @@ provided by [MolecularGraph.jl](https://github.com/mojaie/MolecularGraph.jl), a 
 
 # References
 RDKit implementation: https://github.com/rdkit/rdkit/blob/Release_2025_09_4/Code/GraphMol/Fingerprints/MorganGenerator.cpp#L126
-
-<!-- Please note: This docstring was revised for spelling, formatting, and coherence using Claude Code (https://claude.com/product/claude-code). -->
 """
 function get_bond_invariants(mol::AbstractMolGraph)
     return [UInt32(rdkit_bond_type(bond)) for (_, bond) in mol.eprops]
 end
 
+# Please note: This docstring was revised for spelling, formatting, and coherence with the implementation using Claude Code
 """
     get_atom_invariants(smiles::AbstractString)
     get_atom_invariants(mol::AbstractMolGraph)
@@ -293,7 +283,7 @@ The computed invariants include (in order):
 ```jldoctest
 julia> using MolecularFingerprints, MolecularGraph
 
-julia> invariants = get_atom_invariants("CCO");
+julia> invariants = MolecularFingerprints.get_atom_invariants("CCO");
 
 julia> length(invariants)  # 3 atoms: C, C, O
 3
@@ -304,8 +294,6 @@ true
 
 # References
 RDKit implementation: https://github.com/rdkit/rdkit/blob/Release_2025_09_4/Code/GraphMol/Fingerprints/FingerprintUtil.cpp#L244
-
-<!-- Please note: This docstring was revised for spelling, formatting, and coherence using Claude Code (https://claude.com/product/claude-code). -->
 """
 get_atom_invariants(smiles::AbstractString) = get_atom_invariants(smilestomol(smiles))
 
@@ -363,6 +351,7 @@ function get_atom_invariants(mol::AbstractMolGraph)
     return invariants
 end
 
+# Please note: This docstring was revised for spelling, formatting, and coherence with the implementation using Claude Code
 """
     fingerprint(mol::MolGraph, calc::ECFP{N}) where N
 
@@ -408,8 +397,6 @@ true
 # References
 - Rogers, D., & Hahn, M. (2010). Extended-connectivity fingerprints. J. Chem. Inf. Model., 50(5), 742-754.
 - RDKit implementation: https://github.com/rdkit/rdkit/blob/Release_2025_09_4/Code/GraphMol/Fingerprints/MorganGenerator.cpp#L257
-
-<!-- Please note: This docstring was revised for spelling, formatting, and coherence using Claude Code (https://claude.com/product/claude-code). -->
 """
 function fingerprint(mol::MolGraph, calc::ECFP{N}) where N
     num_atoms = nv(mol)
