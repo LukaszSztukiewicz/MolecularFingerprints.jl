@@ -18,7 +18,8 @@ function cosine_similarity(fp1::Vector{T}, fp2::Vector{T}) where T<:Integer
     # we use cosine_dist from Distances.jl which computes 1 - cosine similarity
     calculated_dist = cosine_dist(Float64.(fp1), Float64.(fp2))
     
-    return isnan(calculated_dist) ? 0.0 : 1.0 - calculated_dist
+    sim =  isnan(calculated_dist) ? 0.0 : 1.0 - calculated_dist
+    return clamp(sim, 0.0, 1.0)
 end
 
 function cosine_similarity(fp1::BitVector, fp2::BitVector)
