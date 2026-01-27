@@ -58,6 +58,16 @@ bitset_to_string(bitset) = join(Int.(bitset), "")
         ecfp0 = ECFP{512}(0)
         @test ecfp0.radius == 0
 
+        # Test default size
+        ecfp_default_size = ECFP(3)
+        @test ecfp_default_size isa ECFP{1024}
+        @test ecfp_default_size.radius == 3
+
+        # Test default radius
+        ecfp_default_radius = ECFP{512}()
+        @test ecfp_default_radius isa ECFP{512}
+        @test ecfp_default_radius.radius == 2
+
          # Test invalid radius
         @test_throws DomainError ECFP{1024}(-1)
 
