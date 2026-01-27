@@ -16,6 +16,13 @@ seed!(42)
 
 @testset "MolecularFingerprints.jl" begin
 
+    @testset "Setup Tests & Test utilities for testing" begin
+        @info "Running Setup and Utility Tests..."
+        include("utils/test_utils.jl")
+        include("utils/test_utils_tests.jl")
+    end
+    
+
     @testset "Unit Tests" begin
         
         @testset "Interface" begin
@@ -26,7 +33,6 @@ seed!(42)
         @testset "Utilities" begin
             @info "Running Utility Function Tests..."
             include("unit/utils/tanimoto_similarity_tests.jl")
-            include("unit/utils/cosine_similarity_tests.jl")
         end
 
         @testset "Algorithms" begin
