@@ -25,3 +25,22 @@ end
 function cosine_similarity(fp1::BitVector, fp2::BitVector)
     return cosine_similarity(Vector{Int}(fp1), Vector{Int}(fp2))
 end
+
+function cosine_similarity(fp1::SparseVector, fp2::SparseVector)
+    common_indices = union(fp1.nzind, fp2.nzind)
+    
+    numerator = 0.0
+    sum_sq_fp1 = 0.0
+    sum_sq_fp2 = 0.0
+    
+    for i in common_indices
+        v1 = fp1[i]
+        v2 = fp2[i]
+        numerator += v1 * v2
+        sum_sq_fp1 += v1^2
+        sum_sq_fp2 += v2^2
+    end
+    
+    denominator = sqrt(sum_sq_fp1) * sqrt(sum_sq_fp2)
+    return denominator == 0.0 ? 0.0 : numerator / denominator
+end
