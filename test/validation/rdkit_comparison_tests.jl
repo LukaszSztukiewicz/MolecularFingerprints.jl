@@ -5,6 +5,39 @@ using Random
 using PythonCall
 using LinearAlgebra
 
+
+rdBase = pyimport("rdkit.rdBase")
+rdBase.DisableLog("rdApp.*")
+
+
+"""
+    rdkit_to_julia_sparse(rdkit_sparse_vect::PyObject, vector_length::Union{Nothing, Int}=nothing)
+Convert an RDKit sparse fingerprint (Python object) to a native Julia `SparseVector`.
+# Arguments
+- `rdkit_sparse_vect`: The RDKit sparse fingerprint object.
+- `vector_length`: Optional length of the resulting vector. If not provided,
+    it will be determined from the RDKit object.
+# Returns
+- A `SparseVector` representing the fingerprint in Julia.
+"""
+function rdkit_to_julia_sparse(rdkit_sparse_vect, vector_length=nothing)
+
+    py_dict = rdkit_sparse_vect.GetNonzeroElements()
+    
+    idxs = Int64[]
+    vals = Int64[]
+    
+    for (k, v) in py_dict.items()
+        push!(idxs, pyconvert(Int64, k))
+        push!(vals, pyconvert(Int64, v))
+    end
+
+    len = isnothing(vector_length) ? pyconvert(Int, rdkit_sparse_vect.GetLength()) : vector_length
+
+    return sparsevec(idxs, vals, len)
+end
+
+
 # --- SETUP RDKIT VIA PYTHONCALL ---
 const Chem = pyimport("rdkit.Chem")
 const AllChem = pyimport("rdkit.Chem.AllChem")
@@ -13,7 +46,7 @@ const DataStructs = pyimport("rdkit.DataStructs")
 const MACCSkeys = pyimport("rdkit.Chem.MACCSkeys")
 const rdFingerprintGenerator = pyimport("rdkit.Chem.rdFingerprintGenerator")
 const rdMHFPFingerprint = pyimport("rdkit.Chem.rdMHFPFingerprint")
-
+const rdMolDescriptors = pyimport("rdkit.Chem.rdMolDescriptors")
 
 # --- FINGERPRINTS ---
 ecfp_calc = ECFP() # Extended Connectivity Fingerprints
@@ -24,7 +57,7 @@ maccs_calc = MACCS() # MACCS Keys
 const CALCULATORS = Dict(
     "ECFP" => ecfp_calc,
     "MHFP" => mhfp_calc,
-    # "TopologicalTorsion" => torsion_calc,
+    "TopologicalTorsion" => torsion_calc,
     "MACCS" => maccs_calc
 )
 
@@ -66,6 +99,14 @@ ds_hard = SMILES_EDGE_CASES
 
 all_datasets = unique(vcat(ds_bace, ds_hard)) #26 431 molecules
 
+# Filter out known invalid SMILES that cause RDKit to crash
+invalid_smiles_to_filter = [
+    "O=C(O)[C@@H](\\[NH+]=C\\1/NC(Cc2c/1cccc2)(C)C)Cc1ccccc1",
+    "O=C(NC[C@H]([NH3+])C(=O)N[C@@H](C(C)C)C(=O)N[C@@H](CC(C)C)C(=O)NC[C@](O)(CCc1ccccc1)C(=O)Nc1cc(ccc1)C(=O)O)c1nnn[n-]1"
+]
+all_datasets = filter(smiles -> !(smiles in invalid_smiles_to_filter), all_datasets)
+
+
 morgan_gen = rdFingerprintGenerator.GetMorganGenerator(radius=ecfp_calc.radius, fpSize=1024)
 tt_gen = rdFingerprintGenerator.GetTopologicalTorsionGenerator(fpSize=2048)
 mhfp_encoder = rdMHFPFingerprint.MHFPEncoder()
@@ -92,7 +133,9 @@ function fingerprint_rdkit(smiles::String, calc::AbstractCalculator)
         return fp
     
     elseif calc isa TopologicalTorsion
-        fp = tt_gen.GetFingerprint(mol)
+        fp = rdMolDescriptors.GetTopologicalTorsionFingerprint(mol)
+        fp = rdkit_to_julia_sparse(fp)
+        return fp
     
     else
         error("Unknown calculator type.")
