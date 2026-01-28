@@ -36,7 +36,7 @@ struct TopologicalTorsion <: AbstractFingerprint
 end
 
 """
-	TopologicalTorsion(pathLength::Int=4, nBits::Int = 2048)
+	TopologicalTorsionHashed(pathLength::Int=4, nBits::Int = 2048)
 Topological Torsion fingerprint calculator.
 # Arguments
 - `pathLength`: Length of the paths in the molecular graph to consider, default is
@@ -52,7 +52,7 @@ struct TopologicalTorsionHashed <: AbstractFingerprint
 end
 
 """
-	TopologicalTorsion(pathLength::Int=4, nBits::Int = 2048, nBitsPerEntry::Int = 4)
+	TopologicalTorsionHashedAsBitVec(pathLength::Int=4, nBits::Int = 2048, nBitsPerEntry::Int = 4)
 Topological Torsion fingerprint calculator.
 # Arguments
 - `pathLength`: Length of the paths in the molecular graph to consider, default is
@@ -87,7 +87,7 @@ function fingerprint(mol::MolGraph, calc::TopologicalTorsion)
 end
 
 """
-	fingerprint(mol::MolGraph, calc::TopologicalTorsion)
+	fingerprint(mol::MolGraph, calc::TopologicalTorsionHashed)
 
 Returns a topological torsion fingerprint as an integer vector for the molecule belonging to mol. 
 This function calls function which computes the Topological Torsion fingerprint based on the
@@ -105,7 +105,7 @@ function fingerprint(mol::MolGraph, calc::TopologicalTorsionHashed)
 end
 
 """
-	fingerprint(mol::MolGraph, calc::TopologicalTorsion)
+	fingerprint(mol::MolGraph, calc::TopologicalTorsionHashedAsBitVec)
 
 Returns a topological torsion fingerprint as an integer vector for the molecule belonging to mol. 
 This function calls function which computes the Topological Torsion fingerprint based on the
