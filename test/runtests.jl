@@ -3,12 +3,9 @@ using MolecularGraph
 using MolecularGraph: smilestomol, MolGraph
 using MolecularFingerprints
 using Random: seed!, randstring
-using SHA
 using SparseArrays
 using Graphs: nv, all_simple_paths, degree
-using Graphs: vertices, induced_subgraph, neighborhood
 using PythonCall: Py, pyimport, pyconvert
-using MolecularGraph: smiles, sssr, is_aromatic, remove_all_hydrogens!
 using Distances: cosine_dist
 
 # Set seed for reproducibility across all tests
