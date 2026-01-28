@@ -87,6 +87,26 @@
 
         @test fp1 == fp2
 
+        torsion_calc = TopologicalTorsionHashed()
+        rep1 = "O=Cc1ccc(O)c(OC)c1"
+        rep2 = "COc1cc(C=O)ccc1O"
+        mol1 = MolecularGraph.smilestomol(rep1)
+        fp1 = fingerprint(mol1, torsion_calc)
+        mol2 = MolecularGraph.smilestomol(rep2)
+        fp2 = fingerprint(mol2, torsion_calc)
+
+        @test fp1 == fp2
+
+        torsion_calc = TopologicalTorsionHashedAsBitVec()
+        rep1 = "CN2C(=O)N(C)C(=O)C1=C2N=CN1C"
+        rep2 =  "CN1C=NC2=C1C(=O)N(C)C(=O)N2C"
+        mol1 = MolecularGraph.smilestomol(rep1)
+        fp1 = fingerprint(mol1, torsion_calc)
+        mol2 = MolecularGraph.smilestomol(rep2)
+        fp2 = fingerprint(mol2, torsion_calc)
+
+        @test fp1 == fp2
+
 
         # rings are found multiple times, we only keep the one starting at the lowest numbered vertex
         # test if we keep the correct ring
