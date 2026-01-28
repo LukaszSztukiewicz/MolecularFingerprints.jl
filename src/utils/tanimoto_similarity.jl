@@ -20,7 +20,7 @@ function tanimoto_similarity(a::BitVector, b::BitVector)
     return intersection / (union_sum - intersection)
 end
 
-function tanimoto_similarity(a::Vector{Int}, b::Vector{Int})
+function tanimoto_similarity(a::Vector{<:Integer}, b::Vector{<:Integer})
     if length(a) != length(b)
         throw(ArgumentError("Fingerprints must be of the same length"))
     end
@@ -33,4 +33,21 @@ function tanimoto_similarity(a::Vector{Int}, b::Vector{Int})
         return 0.0
     end
     return intersection_sets / union_sets
+end
+
+function tanimoto_similarity(fp1::SparseVector, fp2::SparseVector)
+    # Get indices where either vector has a non-zero value
+    common_indices = union(fp1.nzind, fp2.nzind)
+    
+    numerator = 0
+    denominator = 0
+    
+    for i in common_indices
+        v1 = fp1[i]
+        v2 = fp2[i]
+        numerator += min(v1, v2)
+        denominator += max(v1, v2)
+    end
+    
+    return denominator == 0 ? 0.0 : numerator / denominator
 end
