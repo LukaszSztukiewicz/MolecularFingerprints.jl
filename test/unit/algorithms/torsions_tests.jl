@@ -29,6 +29,12 @@
             for path in paths
                 @test path in pathList || reverse(path) in pathList
             end
+            
+            # this has no path of length 4
+            data = "CCO"
+            mol = smilestomol(data)
+            paths = MolecularFingerprints.getPathsOfLengthN(mol, 4)
+            @assert isempty(paths)
         end
 
     @testset "testCanonicalization" begin
@@ -81,6 +87,26 @@
 
         @test fp1 == fp2
 
+        torsion_calc = TopologicalTorsionHashed()
+        rep1 = "O=Cc1ccc(O)c(OC)c1"
+        rep2 = "COc1cc(C=O)ccc1O"
+        mol1 = MolecularGraph.smilestomol(rep1)
+        fp1 = fingerprint(mol1, torsion_calc)
+        mol2 = MolecularGraph.smilestomol(rep2)
+        fp2 = fingerprint(mol2, torsion_calc)
+
+        @test fp1 == fp2
+
+        torsion_calc = TopologicalTorsionHashedAsBitVec()
+        rep1 = "CN2C(=O)N(C)C(=O)C1=C2N=CN1C"
+        rep2 =  "CN1C=NC2=C1C(=O)N(C)C(=O)N2C"
+        mol1 = MolecularGraph.smilestomol(rep1)
+        fp1 = fingerprint(mol1, torsion_calc)
+        mol2 = MolecularGraph.smilestomol(rep2)
+        fp2 = fingerprint(mol2, torsion_calc)
+
+        @test fp1 == fp2
+
 
         # rings are found multiple times, we only keep the one starting at the lowest numbered vertex
         # test if we keep the correct ring
@@ -103,13 +129,8 @@
 	    deg = degree(mol)
 
         rdkitAtomCode = [33, 34, 98, 33]
-        atomCode = Int[]
-
-        for v in vertices(mol)
-            push!(atomCode, MolecularFingerprints.getAtomCode(deg[v], piBonds[v], atomicNumber[v]))
-        end
-
-        @assert atomCode == rdkitAtomCode
+        atomCodes = MolecularFingerprints.getAtomCodes(mol)
+        @assert atomCodes == rdkitAtomCode
     end
 
     @testset "testNumPiBonds" begin
@@ -179,6 +200,85 @@
         @assert length(fp) == rdkit_length
         @assert findnz(fp)[1] == rdkit_ind .+ 1 # account for zero-based indexing in C++
         @assert findnz(fp)[2] == rdkit_entry 
+
+        # Number of atoms smaller than path length results in an all zero fingerprint.#
+        data = "CCO"
+        mol = MolecularGraph.smilestomol(data)
+        fp = fingerprint(mol, torsion_calc)
+        @assert isempty(findnz(fp)[1])
+
+        data = "CN2C(=O)N(C)C(=O)C1=C2N=CN1C"
+        mol = MolecularGraph.smilestomol(data)
+        torsion_calc = TopologicalTorsionHashedAsBitVec()
+        rdkit_ind = [304, 328, 329, 330, 392, 393, 396, 432, 448, 449, 452, 456, 457, 460, 608, 684, 704, 736, 737, 876, 1016, 1017, 1536, 1537, 1644, 1648, 1649, 1656, 1660, 1661]
+        fp = fingerprint(mol, torsion_calc)
+
+        @assert findall(fp .== 1) == rdkit_ind .+ 1 # account for zero-based indexing in C++
+        @assert length(fp) .== 2048
+
+        data = "c1ccccc1"
+        mol = MolecularGraph.smilestomol(data)
+        rdkit_ind = [12,13,14]
+        fp = fingerprint(mol, torsion_calc)
+        @assert findall(fp .== 1) == rdkit_ind .+ 1 # account for zero-based indexing in C++
+
+        data = "CCCCC"
+        mol = MolecularGraph.smilestomol(data)
+        rdkit_ind = [0,1]
+        fp = fingerprint(mol, torsion_calc)
+        @assert findall(fp .== 1) == rdkit_ind .+ 1 # account for zero-based indexing in C++
+
+        data = "CCOC"
+        mol = MolecularGraph.smilestomol(data)
+        rdkit_ind = [380]
+        fp = fingerprint(mol, torsion_calc)
+        @assert findall(fp .== 1) == rdkit_ind .+ 1 # account for zero-based indexing in C++
+
+        # Number of atoms smaller than path length results in an all zero fingerprint.
+        data = "CCO"
+        mol = MolecularGraph.smilestomol(data)
+        fp = fingerprint(mol, torsion_calc)
+        @assert isempty(findall(fp .== 1))
+
+        torsion_calc = TopologicalTorsionHashed()
+        data = "CCOC"
+        mol = MolecularGraph.smilestomol(data)
+        rdkit_ind = [95]
+        rdkit_entry = [1]
+        fp = fingerprint(mol, torsion_calc)
+        @assert findnz(fp)[1] == rdkit_ind .+ 1 # account for zero-based indexing in C++
+        @assert findnz(fp)[2] == rdkit_entry 
+        @assert length(fp) .== 2048
+
+        data = "CCCCC"
+        mol = MolecularGraph.smilestomol(data)
+        rdkit_ind = [0]
+        rdkit_entry = [2]
+        fp = fingerprint(mol, torsion_calc)
+        @assert findnz(fp)[1] == rdkit_ind .+ 1 # account for zero-based indexing in C++
+        @assert findnz(fp)[2] == rdkit_entry 
+
+        data = "c1ccccc1"
+        mol = MolecularGraph.smilestomol(data)
+        rdkit_ind = [1539]
+        rdkit_entry = [6]
+        fp = fingerprint(mol, torsion_calc)
+        @assert findnz(fp)[1] == rdkit_ind .+ 1 # account for zero-based indexing in C++
+        @assert findnz(fp)[2] == rdkit_entry 
+
+        data = "CN2C(=O)N(C)C(=O)C1=C2N=CN1C"
+        mol = MolecularGraph.smilestomol(data)
+        rdkit_ind = [112, 113, 171, 184, 414, 594, 626, 627, 688, 923, 924, 1100, 1122, 1123, 1132, 1408, 1439, 1688, 1755, 1790]
+        rdkit_entry = [2, 1, 1, 2, 1, 4, 2, 1, 1, 1, 3, 1, 2, 1, 1, 3, 2, 1, 1, 2]
+        fp = fingerprint(mol, torsion_calc)
+        @assert findnz(fp)[1] == rdkit_ind .+ 1 # account for zero-based indexing in C++
+        @assert findnz(fp)[2] == rdkit_entry 
+
+        # Number of atoms smaller than path length results in an all zero fingerprint.
+        data = "CCO"
+        mol = MolecularGraph.smilestomol(data)
+        fp = fingerprint(mol, torsion_calc)
+        @assert isempty(findnz(fp)[1])
     end
     
 end
