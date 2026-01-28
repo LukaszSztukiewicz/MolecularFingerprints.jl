@@ -23,19 +23,19 @@ using MolecularGraph:
     atom_charge,
     atom_number,
     atom_symbol,
+    bond_order,
     default_atom_charge!,
     default_bond_order!,
     edge_rank,
     exact_mass,
     explicit_hydrogens,
-    get_prop,
+    hybridization,
     implicit_hydrogens,
     is_aromatic,
     is_in_ring,
     is_ring_aromatic!,
     lone_pair!,
     monoiso_mass,
-    pi_electron,
     remove_all_hydrogens!,
     set_prop!,
     smiles,
@@ -62,8 +62,6 @@ include("algorithms/mhfp.jl")
 include("algorithms/ecfp.jl")
 include("algorithms/maccs.jl")
 include("algorithms/torsions.jl")
-
-export safe_smilestomol, smiles_to_neutralized_mol
 
 export AbstractCalculator, AbstractFingerprint, AbstractDescriptor
 export MACCS, TopologicalTorsion, MHFP, ECFP

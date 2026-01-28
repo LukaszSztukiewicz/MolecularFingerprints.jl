@@ -68,4 +68,12 @@ using Test
     # tanimoto_similarity = 2 / 6 = 0.3333...
     @test isapprox(tanimoto_similarity(a, b), 1/3)
 
+    # sparse integer vector fingerprints
+    a = [1, 3, 5, 7, 9]
+    b = [2, 3, 5, 8, 10]
+    # intersection = {3,5} -> 2
+    # union = {1,2,3,5,7,8,9,10} -> 8
+    # tanimoto_similarity = 2 / 8 = 0.25
+    @test isapprox(tanimoto_similarity(a, b), 0.25)
+
 end

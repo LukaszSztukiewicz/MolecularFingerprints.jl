@@ -5,7 +5,11 @@ using Random
 using PythonCall
 using LinearAlgebra
 
-# --- SETUP RDKIT VIA PYTHONCALL ---
+# -- RDKIT LOGGING SETUP --
+const rdBase = pyimport("rdkit.rdBase")
+rdBase.DisableLog("rdApp.*")
+
+# --- SETUP RDKIT UTILS VIA PYTHONCALL ---
 const Chem = pyimport("rdkit.Chem")
 const AllChem = pyimport("rdkit.Chem.AllChem")
 const DataStructs = pyimport("rdkit.DataStructs")
@@ -13,7 +17,7 @@ const DataStructs = pyimport("rdkit.DataStructs")
 const MACCSkeys = pyimport("rdkit.Chem.MACCSkeys")
 const rdFingerprintGenerator = pyimport("rdkit.Chem.rdFingerprintGenerator")
 const rdMHFPFingerprint = pyimport("rdkit.Chem.rdMHFPFingerprint")
-
+const rdMolDescriptors = pyimport("rdkit.Chem.rdMolDescriptors")
 
 # --- FINGERPRINTS ---
 ecfp_calc = ECFP() # Extended Connectivity Fingerprints
@@ -24,7 +28,7 @@ maccs_calc = MACCS() # MACCS Keys
 const CALCULATORS = Dict(
     "ECFP" => ecfp_calc,
     "MHFP" => mhfp_calc,
-    # "TopologicalTorsion" => torsion_calc,
+    "TopologicalTorsion" => torsion_calc,
     "MACCS" => maccs_calc
 )
 
@@ -53,21 +57,21 @@ function load_test_data(dataset::AbstractString; folder_path::AbstractString="./
     file_path = joinpath(folder_path, "$dataset.csv")
     df = CSV.read(file_path, DataFrame)
     smiles_col = DATASET_CONFIG[dataset]
-    return Vector{String}(df[!, smiles_col])
+    ds = Vector{String}(df[!, smiles_col])
+
+    if dataset == "bace"
+        ds = ds[Not([116, 177])] # remove known invalid SMILES that cause RDKit to crash
+    end
+
+    return ds
 end
 
 folder_path = "./validation"
-
-# ds_bbbp = load_test_data("BBBP"; folder_path=folder_path)
-# ds_qm8 = load_test_data("qm8"; folder_path=folder_path)
-ds_bace = load_test_data("bace"; folder_path=folder_path)
-# ds_esol = load_test_data("esol"; folder_path=folder_path)
+ds_bace = load_test_data("bace"; folder_path=folder_path) # could be also esol qm8 BBBP
 ds_hard = SMILES_EDGE_CASES
-
 all_datasets = unique(vcat(ds_bace, ds_hard)) #26 431 molecules
 
 morgan_gen = rdFingerprintGenerator.GetMorganGenerator(radius=ecfp_calc.radius, fpSize=1024)
-tt_gen = rdFingerprintGenerator.GetTopologicalTorsionGenerator(fpSize=2048)
 mhfp_encoder = rdMHFPFingerprint.MHFPEncoder()
 
 function fingerprint_rdkit(smiles::String, calc::AbstractCalculator)
@@ -92,7 +96,9 @@ function fingerprint_rdkit(smiles::String, calc::AbstractCalculator)
         return fp
     
     elseif calc isa TopologicalTorsion
-        fp = tt_gen.GetFingerprint(mol)
+        fp = rdMolDescriptors.GetTopologicalTorsionFingerprint(mol)
+        fp = rdkit_to_julia_sparse(fp)
+        return fp
     
     else
         error("Unknown calculator type.")
