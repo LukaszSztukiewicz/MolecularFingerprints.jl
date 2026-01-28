@@ -61,8 +61,8 @@ struct MHFP <: AbstractFingerprint
     rings::Bool
     n_permutations::Int
     seed::Int
-    _mersenne_prime::Int
-    _max_hash::Int
+    _mersenne_prime::UInt64
+    _max_hash::UInt32
     _permutations_a::Vector{UInt32}
     _permutations_b::Vector{UInt32}
 
@@ -93,8 +93,8 @@ struct MHFP <: AbstractFingerprint
             n_permutations=$n_permutations.""")
 
         ### set fixed values
-        _mersenne_prime = (1 << 61) -1
-        _max_hash = (1 << 32) - 1
+        _mersenne_prime = UInt64((1 << 61) -1)
+        _max_hash = UInt32((1 << 32) - 1)
 
         ### generate vectors a, b
         # initialize vectors
@@ -474,7 +474,7 @@ function mhfp_hash_from_molecular_shingling(shingling::Vector{String}, calc::MHF
         # let 
         buf = IOBuffer(sha_from_string)  # make the sha bytes a buffer
         # @info buf
-        s_h = Int(  # read bytes from sha hash into integer
+        s_h = UInt32(  # read bytes from sha hash into integer
             htol(  # ensure little-endian format of the integer
                 read(buf, UInt32))
                 )  # read the buffer bytes as unsigned integer
@@ -487,12 +487,12 @@ function mhfp_hash_from_molecular_shingling(shingling::Vector{String}, calc::MHF
         #     num +=1
         # end
         # apply equation 2 from the original authors paper
-        hashes = mod.(
+        hashes = Vector{UInt32}(mod.(
             mod.(
                 calc._permutations_a * s_h + calc._permutations_b,
                 calc._mersenne_prime
             ), calc._max_hash
-        )
+        ))
         
         hash_values = min.(hash_values, hashes)
         # @info hash_values[1:10]

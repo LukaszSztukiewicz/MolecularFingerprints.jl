@@ -7,7 +7,7 @@ Calculate the cosine similarity between two fingerprints represented as integer 
 # Returns
 - Cosine similarity value between 0.0 and 1.0.
 """
-function cosine_similarity(fp1::Vector{T}, fp2::Vector{T}) where T<:Integer
+function cosine_similarity(fp1::Vector{<:Integer}, fp2::Vector{<:Integer})
     length(fp1) != length(fp2) && throw(ArgumentError("Fingerprints must be of the same length"))
     
     if all(iszero, fp1) || all(iszero, fp2)
