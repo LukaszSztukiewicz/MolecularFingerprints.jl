@@ -9,11 +9,19 @@ using Graphs: nv, all_simple_paths, degree
 using Graphs: vertices, induced_subgraph, neighborhood
 using PythonCall: Py, pyimport, pyconvert
 using MolecularGraph: smiles, sssr, is_aromatic, remove_all_hydrogens!
+using Distances: cosine_dist
 
 # Set seed for reproducibility across all tests
 seed!(42)
 
 @testset "MolecularFingerprints.jl" begin
+
+    @testset "Setup Tests & Test utilities for testing" begin
+        @info "Running Setup and Utility Tests..."
+        include("utils/test_utils.jl")
+        include("utils/test_utils_tests.jl")
+    end
+    
 
     @testset "Unit Tests" begin
         
@@ -25,7 +33,6 @@ seed!(42)
         @testset "Utilities" begin
             @info "Running Utility Function Tests..."
             include("unit/utils/tanimoto_similarity_tests.jl")
-            include("unit/utils/cosine_similarity_tests.jl")
         end
 
         @testset "Algorithms" begin
