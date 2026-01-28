@@ -47,7 +47,7 @@ using MolecularGraph:
 using Random: rand, randstring, seed!
 using RDKitMinimalLib: smiles
 using SHA: sha1
-using SparseArrays: sparse, spzeros, SparseVector
+using SparseArrays: sparse, spzeros, SparseVector, findnz
 
 # NOTE: In Julia, order of includes matters for dependencies
 
@@ -64,7 +64,7 @@ include("algorithms/maccs.jl")
 include("algorithms/torsions.jl")
 
 export AbstractCalculator, AbstractFingerprint, AbstractDescriptor
-export MACCS, TopologicalTorsion, MHFP, ECFP
+export MACCS, TopologicalTorsion, TopologicalTorsionHashed, TopologicalTorsionHashedAsBitVec, MHFP, ECFP
 export tanimoto_similarity
 export fingerprint
 
