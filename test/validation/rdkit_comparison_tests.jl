@@ -5,40 +5,11 @@ using Random
 using PythonCall
 using LinearAlgebra
 
-
-rdBase = pyimport("rdkit.rdBase")
+# -- RDKIT LOGGING SETUP --
+const rdBase = pyimport("rdkit.rdBase")
 rdBase.DisableLog("rdApp.*")
 
-
-"""
-    rdkit_to_julia_sparse(rdkit_sparse_vect::PyObject, vector_length::Union{Nothing, Int}=nothing)
-Convert an RDKit sparse fingerprint (Python object) to a native Julia `SparseVector`.
-# Arguments
-- `rdkit_sparse_vect`: The RDKit sparse fingerprint object.
-- `vector_length`: Optional length of the resulting vector. If not provided,
-    it will be determined from the RDKit object.
-# Returns
-- A `SparseVector` representing the fingerprint in Julia.
-"""
-function rdkit_to_julia_sparse(rdkit_sparse_vect, vector_length=nothing)
-
-    py_dict = rdkit_sparse_vect.GetNonzeroElements()
-    
-    idxs = Int64[]
-    vals = Int64[]
-    
-    for (k, v) in py_dict.items()
-        push!(idxs, pyconvert(Int64, k))
-        push!(vals, pyconvert(Int64, v))
-    end
-
-    len = isnothing(vector_length) ? pyconvert(Int, rdkit_sparse_vect.GetLength()) : vector_length
-
-    return sparsevec(idxs, vals, len)
-end
-
-
-# --- SETUP RDKIT VIA PYTHONCALL ---
+# --- SETUP RDKIT UTILS VIA PYTHONCALL ---
 const Chem = pyimport("rdkit.Chem")
 const AllChem = pyimport("rdkit.Chem.AllChem")
 const DataStructs = pyimport("rdkit.DataStructs")
@@ -86,29 +57,21 @@ function load_test_data(dataset::AbstractString; folder_path::AbstractString="./
     file_path = joinpath(folder_path, "$dataset.csv")
     df = CSV.read(file_path, DataFrame)
     smiles_col = DATASET_CONFIG[dataset]
-    return Vector{String}(df[!, smiles_col])
+    ds = Vector{String}(df[!, smiles_col])
+
+    if dataset == "bace"
+        ds = ds[Not([116, 177])] # remove known invalid SMILES that cause RDKit to crash
+    end
+
+    return ds
 end
 
 folder_path = "./validation"
-
-# ds_bbbp = load_test_data("BBBP"; folder_path=folder_path)
-# ds_qm8 = load_test_data("qm8"; folder_path=folder_path)
-ds_bace = load_test_data("bace"; folder_path=folder_path)
-# ds_esol = load_test_data("esol"; folder_path=folder_path)
+ds_bace = load_test_data("bace"; folder_path=folder_path) # could be also esol qm8 BBBP
 ds_hard = SMILES_EDGE_CASES
-
 all_datasets = unique(vcat(ds_bace, ds_hard)) #26 431 molecules
 
-# Filter out known invalid SMILES that cause RDKit to crash
-invalid_smiles_to_filter = [
-    "O=C(O)[C@@H](\\[NH+]=C\\1/NC(Cc2c/1cccc2)(C)C)Cc1ccccc1",
-    "O=C(NC[C@H]([NH3+])C(=O)N[C@@H](C(C)C)C(=O)N[C@@H](CC(C)C)C(=O)NC[C@](O)(CCc1ccccc1)C(=O)Nc1cc(ccc1)C(=O)O)c1nnn[n-]1"
-]
-all_datasets = filter(smiles -> !(smiles in invalid_smiles_to_filter), all_datasets)
-
-
 morgan_gen = rdFingerprintGenerator.GetMorganGenerator(radius=ecfp_calc.radius, fpSize=1024)
-tt_gen = rdFingerprintGenerator.GetTopologicalTorsionGenerator(fpSize=2048)
 mhfp_encoder = rdMHFPFingerprint.MHFPEncoder()
 
 function fingerprint_rdkit(smiles::String, calc::AbstractCalculator)

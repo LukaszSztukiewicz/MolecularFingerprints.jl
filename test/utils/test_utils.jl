@@ -44,3 +44,30 @@ function cosine_similarity(fp1::SparseVector, fp2::SparseVector)
     denominator = sqrt(sum_sq_fp1) * sqrt(sum_sq_fp2)
     return denominator == 0.0 ? 0.0 : numerator / denominator
 end
+
+"""
+    rdkit_to_julia_sparse(rdkit_sparse_vect::PyObject, vector_length::Union{Nothing, Int}=nothing)
+Convert an RDKit sparse fingerprint (Python object) to a native Julia `SparseVector`.
+# Arguments
+- `rdkit_sparse_vect`: The RDKit sparse fingerprint object.
+- `vector_length`: Optional length of the resulting vector. If not provided,
+    it will be determined from the RDKit object.
+# Returns
+- A `SparseVector` representing the fingerprint in Julia.
+"""
+function rdkit_to_julia_sparse(rdkit_sparse_vect, vector_length=nothing)
+
+    py_dict = rdkit_sparse_vect.GetNonzeroElements()
+    
+    idxs = Int64[]
+    vals = Int64[]
+    
+    for (k, v) in py_dict.items()
+        push!(idxs, pyconvert(Int64, k))
+        push!(vals, pyconvert(Int64, v))
+    end
+
+    len = isnothing(vector_length) ? pyconvert(Int, rdkit_sparse_vect.GetLength()) : vector_length
+
+    return sparsevec(idxs, vals, len)
+end
