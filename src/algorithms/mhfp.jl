@@ -103,32 +103,10 @@ struct MHFP <: AbstractFingerprint
         _mersenne_prime = (1 << 61) -1
         _max_hash = (1 << 32) - 1
 
-        ### generate vectors a, b
-        # initialize vectors
-        _a = Vector{UInt32}()
-        _b = Vector{UInt32}()
-
-        # set seed
-        seed!(seed)
-
-        # fill vectors entry by entry, to ensure pairwise unique entries within the vectors
-        for i in 1:fp_size
-            a = rand(UInt32(1):UInt32(_max_hash))
-            b = rand(UInt32(0):UInt32(_max_hash))
-
-            # redraw values if already present in _a
-            while a in _a
-                a = rand(UInt32(1):UInt32(_max_hash))
-            end
-
-            # redraw values if already present in _b
-            while b in _b
-                b = rand(UInt32(0):UInt32(_max_hash))
-            end
-
-            push!(_a, a)
-            push!(_b, b)
-        end
+        ### generate random vectors a, b
+        rng = MersenneTwister(seed)  # create rng
+        _a = sample(rng, UInt32(1):UInt32(_max_hash), fp_size, replace=false)
+        _b = sample(rng, UInt32(0):UInt32(_max_hash), fp_size, replace=false)
         
         return new(
             radius, 
