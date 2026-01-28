@@ -93,8 +93,8 @@ struct MHFP <: AbstractFingerprint
             n_permutations=$n_permutations.""")
 
         ### set fixed values
-        _mersenne_prime = UInt64((1 << 61) -1)
-        _max_hash = UInt32((1 << 32) - 1)
+        _mersenne_prime = (1 << 61) -1
+        _max_hash = (1 << 32) - 1
 
         ### generate vectors a, b
         # initialize vectors
@@ -438,9 +438,6 @@ function smiles_from_circular_substructures(mol::MolGraph, radius::Int, min_radi
                 Dict{String,Any}("rootedAtAtom" => pos_of_atom_index_in_submol),
             )
 
-            # TODO somehow deactivate kekulization on update, since it doesn't work on my subgraphs. HOWEVER: do it once in the beginning, since we probably want the info at the start, just not for the submols
-            # Document it somehow, so I can talk about it in the presentation.
-
             if !isnothing(smiles_of_substructure) && smiles_of_substructure != ""
                 # Add smiles of substructure to shingling.
                 push!(shingling_snippet, smiles_of_substructure)
@@ -464,28 +461,20 @@ The algorithm is described in more detail in the original authors paper.
 function mhfp_hash_from_molecular_shingling(shingling::Vector{String}, calc::MHFP)
     hash_values = zeros(UInt32, (calc.n_permutations))
     fill!(hash_values, calc._max_hash)
-    num = 0
+    
     for s in shingling
         # create sha1 hash from the string
         sha_from_string = sha1(s)[begin:4]
         
         # Note: we are only using the first 4 sha1 bytes, as we want a 32-bit hash
 
-        # let 
         buf = IOBuffer(sha_from_string)  # make the sha bytes a buffer
-        # @info buf
+        
         s_h = UInt32(  # read bytes from sha hash into integer
             htol(  # ensure little-endian format of the integer
                 read(buf, UInt32))
                 )  # read the buffer bytes as unsigned integer
-        # end
-
-        # if num == 0
-        #     @info s
-        #     @info s_h
-        #     @info sha_from_string
-        #     num +=1
-        # end
+        
         # apply equation 2 from the original authors paper
         hashes = Vector{UInt32}(mod.(
             mod.(
@@ -495,9 +484,7 @@ function mhfp_hash_from_molecular_shingling(shingling::Vector{String}, calc::MHF
         ))
         
         hash_values = min.(hash_values, hashes)
-        # @info hash_values[1:10]
-
-        
+                
     end
 
     return hash_values
