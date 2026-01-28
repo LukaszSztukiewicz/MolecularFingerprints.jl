@@ -6,7 +6,6 @@ using Graphs:
     degree,
     dst,
     edges,
-    fadjlist,
     induced_subgraph,
     ne,
     neighborhood,
@@ -17,11 +16,16 @@ using Graphs:
 using MolecularGraph:
     AbstractMolGraph,
     MolGraph,
+    MolState,
+    SimpleMolGraph,
     SMILESBond,
+    apparent_valence!,
     atom_charge,
     atom_number,
     atom_symbol,
     bond_order,
+    default_atom_charge!,
+    default_bond_order!,
     edge_rank,
     exact_mass,
     explicit_hydrogens,
@@ -29,13 +33,19 @@ using MolecularGraph:
     implicit_hydrogens,
     is_aromatic,
     is_in_ring,
+    is_ring_aromatic!,
+    lone_pair!,
     monoiso_mass,
     remove_all_hydrogens!,
+    set_prop!,
+    smiles,
     smilestomol,
     sssr,
-    subset,
-    valence
+    sssr!,
+    valence,
+    valence!
 using Random: rand, randstring, seed!
+using RDKitMinimalLib: smiles
 using SHA: sha1
 using SparseArrays: sparse, spzeros, SparseVector
 
@@ -46,7 +56,6 @@ include("interface.jl")
 
 # Utility Functions
 include("utils/tanimoto_similarity.jl")
-include("utils/cosine_similarity.jl")
 
 # Fingerprint Algorithms
 include("algorithms/mhfp.jl")
@@ -56,7 +65,7 @@ include("algorithms/torsions.jl")
 
 export AbstractCalculator, AbstractFingerprint, AbstractDescriptor
 export MACCS, TopologicalTorsion, MHFP, ECFP
-export tanimoto_similarity, cosine_similarity
+export tanimoto_similarity
 export fingerprint
 
 end

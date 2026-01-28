@@ -23,7 +23,7 @@ maccs_calc = MACCS() # MACCS Keys
 
 const CALCULATORS = Dict(
     "ECFP" => ecfp_calc,
-    # "MHFP" => mhfp_calc,
+    "MHFP" => mhfp_calc,
     # "TopologicalTorsion" => torsion_calc,
     "MACCS" => maccs_calc
 )
@@ -222,9 +222,13 @@ function run_all_tests()
         println("---- Calculator: $calc_name ----")
         total_recall_tanimoto = 0.0
         total_recall_cosine = 0.0
-        num_queries = 100
+        if calc isa MHFP
+            num_queries = 10 # MHFP is slow, limit to 10 queries
+        else
+            num_queries = 100
+        end
         query_smiles = all_datasets[1:num_queries]
-        db_smiles = all_datasets[num_queries+100:num_queries+200]  # 100 database molecules
+        db_smiles = all_datasets[num_queries+1:num_queries+100]
         for q_smi in query_smiles
             jl_scores_tanimoto = Float64[]
             rd_scores_tanimoto = Float64[]
