@@ -272,7 +272,7 @@ function mhfp_shingling_from_mol(
     # following steps
     remove_all_hydrogens!(mol)
 
-    shingling::Vector{String} = []
+    shingling = String[]
 
     # Consider rings of the molecule, if corresponding parameter is set
     if rings
@@ -317,7 +317,7 @@ In most cases, this will not have any effect, but for some molecules, such as cu
 will.
 """
 function smiles_from_rings(mol::MolGraph)
-    shingling_snippet::Vector{String} = []
+    shingling_snippet = String[]
 
 
     # Go through all rings in the sssr
@@ -338,7 +338,7 @@ end
 Return vector containing SMILES strings of all atoms of the given molecule.
 """
 function smiles_from_atoms(mol::MolGraph)
-    shingling_snippet::Vector{String} = []
+    shingling_snippet = String[]
 
     aromatic_atoms = is_aromatic(mol)
 
@@ -380,7 +380,7 @@ For each atom of the given molecule, extract the substructures of radii min_radi
 radius, and generate their corresponding SMILES strings.
 """
 function smiles_from_circular_substructures(mol::MolGraph, radius::Int, min_radius::Int)
-    shingling_snippet::Vector{String} = []
+    shingling_snippet = String[]
 
     # Ensure radius >= 1
     radius >=   0 || error("""radius must be strictly positive in this function.\nGot
@@ -390,10 +390,6 @@ function smiles_from_circular_substructures(mol::MolGraph, radius::Int, min_radi
     min_radius > 0 || error("""min_radius must be strictly positive in this function.\nGot
         min_radius=$min_radius.\nTo generate the SMILES strings for individual atoms, call 
         the function smiles_from_atoms instead.""")
-
-    # # Ensure radius >= min_radius
-    # min_radius ≤ radius || error("""radius must be larger or equal to min_radius.\nGot 
-    # radius=$radius but min_radius=$min_radius.""")
 
     for atom_index in vertices(mol)  # go through all atoms
         
@@ -444,7 +440,7 @@ are used in the hashing scheme, as well as the seed used when generating them.
 The algorithm is described in more detail in the original authors paper.
 """
 function mhfp_hash_from_molecular_shingling(shingling::Vector{String}, calc::MHFP)
-    hash_values = zeros(UInt32, (calc.fp_size))
+    hash_values = Vector{UInt32}(undef, calc.fp_size)
     fill!(hash_values, calc._max_hash)
     
     for s in shingling
@@ -455,10 +451,9 @@ function mhfp_hash_from_molecular_shingling(shingling::Vector{String}, calc::MHF
 
         buf = IOBuffer(sha_from_string)  # make the sha bytes a buffer
         
-        s_h = UInt32(  # read bytes from sha hash into integer
-            htol(  # ensure little-endian format of the integer
-                read(buf, UInt32))
-                )  # read the buffer bytes as unsigned integer
+        s_h = htol(  # ensure little-endian format of the integer
+                read(buf, UInt32)  # read the buffer bytes as unsigned integer
+                )  
         
         # apply equation 2 from the original authors paper
         hashes = Vector{UInt32}(mod.(
