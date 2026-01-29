@@ -7,8 +7,10 @@
         seed::Int = 42
     )
 
-Type for MHFP fingerprint calculators. Contains settings and parameters for 
-MHFP fingerprint generation.
+MHFP (MinHash fingerprint) calculator. Contains settings and parameters for MHFP fingerprint
+generation.
+
+# Algorithm description
 
 The MHFP fingerprint is a vector of UInt32's, calculated for a given molecule by:
 
@@ -17,8 +19,8 @@ The MHFP fingerprint is a vector of UInt32's, calculated for a given molecule by
     1. The SMILES strings of all rings in the smallest set of smallest rings (sssr) 
         of the molecule (optional, corresponds to setting `rings=true` in the MHFP 
         calculator object),
-    2. The SMILES strings of the circular substructures of radii `min_radius:radius` around
-        each heavy atom of the molecule. Note: if `min_radius=0`, the corresponding 
+    2. The SMILES strings of the circular substructures of radii `min_radius` to`radius` 
+        around each heavy atom of the molecule. Note: if `min_radius=0`, the corresponding 
         substructures are just the atoms themselves. 
 2. Hashing the molecular shingling, which consists of:
     1. Converting each string to a 32-bit integer using SHA1 (and only using the first 32
@@ -28,13 +30,12 @@ The MHFP fingerprint is a vector of UInt32's, calculated for a given molecule by
         we note here that it takes a vector of 32-bit integers as input, and is furthermore
         dependent on two vectors a and b, each of a given length k, which is also the length
         of the resulting fingerprint vector. The two vectors are sampled at random, but
-        must be the same for comparable fingerprints. Note: in the fields of MHFP objects,
-        the vectors a, b and their length k are named `_a`, `_b` 
-        and `fp_size`, respectively.
+        must be the same for comparable fingerprints. Note: the vectors a, b and their 
+        length k are stored in the fields of MHFP calculators, where they are named `_a`,
+        `_b` and `fp_size`, respectively.
 
 
-The avaliable parameters of the calculator object are:
-# Given as arguments to the constructor:
+# Parameters:
 - `radius::Int`: The *maximum* radius of circular substructures around each heavy atom 
     of a molecule that are to be included in the fingerprint. Recommended values are 2 or 3
     according to the original authors, with 3 (default) giving best results.
@@ -47,17 +48,33 @@ The avaliable parameters of the calculator object are:
     the fingerprints explicitly. This matches the original authors description of the 
     fingerprint in their paper.
 
-# Given as keyword arguments to the constructor:
+# Keyword arguments
 - `fp_size::Int`: length of the fingerprint. Also means that this is the length of the 
     random vectors a and b which are used in the hashing process. Default is 2048, as 
     recommended by the original authors in their paper.
 - `seed::Int`: seed for the generation of the random vectors `a` and `b` which are used
      in the hashing process. Must be the same for comparable fingerprints. Default is 42.
 
+# Internal fields of the calculator
 Also contains the fields `_mersenne_prime`, `_max_hash`, `_a` and 
 `_b`, which are internal and cannot be set explicitly.
 The first two are constants, and the second two are random vectors which are generated 
 automatically based on the given `seed`.
+
+# Example
+```jldoctest
+julia> smiles_benzene = "C1=CC=CC=C1"
+"C1=CC=CC=C1"
+
+julia> calc = MHFP(3, 0, true, fp_size=2048, seed=42)  # radius, min_radius, rings, ...
+MHFP(3, 0, true, 2048, 48, ...)
+
+julia> fingerprint(smiles_benzene, calc)
+2048-element Vector{UInt32}:
+ 0x48039e21
+          ⋮
+ 0x6f0c88d1
+```
 
 # References
 - [Probst D., Reymond, JL. 2018](https://doi.org/10.1186/s13321-018-0321-8)
@@ -186,15 +203,16 @@ This serves two goals:
     performed once, upon initialization)
 
 # Remark
-For some reason, MolecularGraph.jl has defined MolState{T, F1, F2} as a generic type struct, 
-where F1 and F2 are the types of the two functions on_init and on_update, respectively.
+MolecularGraph.jl has defined MolState{T, F1, F2} as a generic type struct, where F1 and F2 
+are the types of the two functions on_init and on_update, respectively.
 This means that we cannot modify the fields on_init and on_update in-place, since once a 
 molecule is initialized, F1 and F2 have fixed types, namely, the types 
 `typeof(<the current on_init function>)` and analogously for `on_update`. Since the new 
 functions have types like `typeof(<the new on_init function>)`, replacing in-place is not 
 possible.
 Instead, we create a new MolGraph object.
-In MolecularGraph v0.22.0, this has been changed, and F1, F2 are no longer generic types.
+In MolecularGraph v0.22.0, this has been changed (our current dependency is v0.21.1), and 
+F1, F2 are no longer generic types.
 If MolecularFingerprints is ported to use this version in the future, the function below 
 could be simplified into `mol=copy(mol); mol.state.on_init = <new_on_init_function>` etc.
 """
@@ -230,6 +248,30 @@ end
     fingerprint(mol::MolGraph, calc::MHFP)
 
 Calculates the MHFP fingerprint of the given molecule and returns it as a vector of UInt32's
+
+For more information on the MHFP (MinHash fingerprint) and its algorithm, see the 
+documentation of the MHFP calculator type `MHFP`.
+
+# Arguments
+- `mol::MolGraph`: Molecular graph, for which the fingerprint is to be calculated
+- `calc::MHFP`: MHFP calculator object, contains settings and parameters for the calculation
+
+# Example
+```jldoctest
+julia> using MolecularGraph  # required to define MolGraph objects
+
+julia> benzene = smilestomol("C1=CC=CC=C1")
+{6, 6} simple molecular graph SMILESMolGraph
+
+julia> calc = MHFP(3, 0, true, fp_size=2048, seed=42)  # radius, min_radius, rings, ...
+MHFP(3, 0, true, 2048, 42, ...)
+
+julia> fingerprint(benzene, calc)
+2048-element Vector{UInt32}:
+ 0x48039e21
+          ⋮
+ 0x6f0c88d1
+```
 """
 function fingerprint(mol::MolGraph, calc::MHFP)
     return mhfp_hash_from_molecular_shingling(  # calculate hash
