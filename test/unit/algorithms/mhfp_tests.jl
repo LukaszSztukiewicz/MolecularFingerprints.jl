@@ -1,6 +1,4 @@
 @testset "MHFP Fingerprint Tests" begin
-    # TODO check if I can now test actual shinglings for circular substructures, up to cases
-    # maybe even for the larger molecule?
     
     ##### Definition of the molecules used for testing ################################
         
@@ -17,10 +15,9 @@
     
     @testset "MHFP Molecular shingling tests" begin
         ##### Note on how the testing is done #############################################
-        # MIGHTDO: move this text into the documentation
         
-        # In general, our implmentation cannot be expected to yield identical shinglings
-        # as the fct written by the original authors in python, due to several reasons:
+        # In general, our implementation cannot be expected to yield identical shinglings
+        # as the implementation of the original authors in python.
         
         # When writing smiles strings using MolecularGraph.jl, we can only pass a molecule
         # object to the corresponding function. To generate the smiles string of a
@@ -35,15 +32,8 @@
         # atom with an additional hydrogen; while our implementation simply returns "n".
         # This as well could be due information lost due to our approach.
         # The rdkit implementation used by the original authors seems to allow to write 
-        # smiels strings of substructures without losing this kind of information. Thus,
+        # smiles strings of substructures without losing this kind of information. Thus,
         # our shinglings don't necessary match.
-
-        # Furthermore, there can exist different smiles strings that are both a valid 
-        # description of the same molecule or substructure. It seems like the functions in
-        # MolecularGraph.jl do not necessary return the same variant as rdkit in python.
-        # (although it is hard to rule out that this may also be due to how we create
-        # the substructure as an induced subgraph)
-
         
         # In conclusion, it is not always possible to test our shingling generating 
         # functions by comparing their results to the results from the original authors
@@ -58,16 +48,19 @@
         #       those of the original authors, so we may also have a different number
         #       of strings that overlap, and thus a different number of unique strings
         # - We verify for a small, simple molecule that the actual strings also match
-        #   - This is only possible for the strings generated from rings and individual
-        #       atoms of the molecule. The strings from the circular substructures of
-        #       the molecule differ already for this smaller molecule.
-        # - Lastly, we verify for the large atom that the shingling returned by 
-        #   MolecularFingerprints.mhfp_shingling_from_mol is the union of the strings returned by
-        #   MolecularFingerprints.smiles_from_rings, MolecularFingerprints.smiles_from_atoms and MolecularFingerprints.smiles_from_circular_substructures.
+        #   - This is only truly possible for the strings generated from rings and 
+        #       individual atoms of the molecule. The strings from the circular 
+        #       substructures of the molecule differ already for this smaller molecule.
+        #       However, we up to upper-/lowercase letters, the strings do match, for the 
+        #       simpler molecule. So we test that the strings match after transforming all 
+        #       strings to lowercase.
+        # - Lastly, we verify for the large molecule that the shingling returned by 
+        #   mhfp_shingling_from_mol is the union of the strings returned by
+        #   smiles_from_rings, smiles_from_atoms and smiles_from_circular_substructures.
         
         # A last note: As the function implemented by the original authors returns the
         # entire shingling at once, the reference strings that we test against were 
-        # generated manually by running parts of their function MolecularFingerprints.mhfp_shingling_from_mol
+        # generated manually by running parts of their `function from_molecular_shingling`
         # separately.
 
         @testset "Shingling snippet from rings test" begin
@@ -103,26 +96,28 @@
             ##### Testing if the number of strings is correct, on the larger molecule #####
             
             # this was manually calculated using the original author's code applied to the
-            # above molecule
+            # above molecule "mol"
             ref_shingling_snippet_atoms = ["C", "C", "C", "c", "n", "n", "c", "c", "[nH]", 
             "c", "n", "c", "O", "c", "c", "c", "c", "c", "c", "S", "O", "O", "N", "C", "C",
             "N", "C", "C", "C", "O", "C","C", "C"]
 
-            @test length(ref_shingling_snippet_atoms) == length(MolecularFingerprints.smiles_from_atoms(mol))
+            @test length(ref_shingling_snippet_atoms) == length(
+                MolecularFingerprints.smiles_from_atoms(mol))
 
             ##### Testing if the actual strings are correct, on the smaller molecule ######
 
             ref_shingling_snippet_atoms_simplemol = [
                 "c", "c", "c", "C", "O", "O", "c", "c", "c"]
 
-            @test ref_shingling_snippet_atoms_simplemol == MolecularFingerprints.smiles_from_atoms(simpler_mol)
+            @test ref_shingling_snippet_atoms_simplemol == MolecularFingerprints.smiles_from_atoms(
+                simpler_mol)
         end
 
         @testset "Shingling snippet from circular substructures tests" begin
             ##### Testing if the number of strings is correct, on the larger molecule #####
             
             # this was manually calculated using the original author's code applied to the
-            # above molecule
+            # above molecule "mol"
             ref_shingling_snippet_circular_substructures = [
                 "CC",
                 "CCC",
@@ -224,7 +219,7 @@
                 "Cn(c)n",
                 "Cn(nc)c(c)c"]
 
-            ## calculating with radius 3, min_radius 1 
+                ## calculating with radius 3, min_radius 1 
             calc_shingling_snippet_circ_subst_r_3_mr_1 = MolecularFingerprints.smiles_from_circular_substructures(
                 mol, 3, 1)
             # ensure length of shingling is the same as the reference shingling
@@ -254,10 +249,51 @@
             @test issubset(calc_shingling_snippet_circ_subst_r_3_mr_2, 
                 calc_shingling_snippet_circ_subst_r_3_mr_1)
 
+            ##### testing if the actual strings are correct, for the smaller molecule #####
+
+            # this was manually calculated using the original author's code applied to the
+            # above molecule "simpler_mol"
+            ref_shingling_snippet_circular_substructures_simplermol = [
+                "c(c)c",
+                "c(cc)cc",
+                "c1cccc(C)c1",
+                "c(c)c",
+                "c(cc)c(c)C",
+                "c1ccccc1C(=O)O",
+                "c(c)(c)C",
+                "c(cc)(cc)C(=O)O",
+                "c1(C(=O)O)ccccc1",
+                "C(c)(=O)O",
+                "C(=O)(O)c(c)c",
+                "C(=O)(O)c(cc)cc",
+                "OC",
+                "OC(c)=O",
+                "OC(=O)c(c)c",
+                "O=C",
+                "O=C(c)O",
+                "O=C(O)c(c)c",
+                "c(c)c",
+                "c(cc)c(c)C",
+                "c1ccccc1C(=O)O",
+                "c(c)c",
+                "c(cc)cc",
+                "c1cccc(C)c1",
+                "c(c)c",
+                "c(cc)cc",
+                "c1ccccc1"]
+
+            # Note: the case of the letters in the strings doesn't match (as our 
+            # implementation seems to lose some information on aromaticity), so we can only
+            # test disregarding the case.
+            @test issetequal(
+                lowercase.(ref_shingling_snippet_circular_substructures_simplermol),
+                lowercase.(MolecularFingerprints.smiles_from_circular_substructures(
+                    simpler_mol, 3, 1))
+                    )
         end
 
         @testset "Complete shingling tests" begin
-            ##### Testing MolecularFingerprints.mhfp_shingling_from_mol #########################################
+            ##### Testing mhfp_shingling_from_mol #########################################
             
             # set up calculator with parameters
             calculator = MHFP(3, 0, true)  # radius, min_radius, rings
@@ -265,15 +301,15 @@
             # calculate shingling
             calculated_shingling = MolecularFingerprints.mhfp_shingling_from_mol(mol, calculator)
 
-            # Test that the shingling returned from MolecularFingerprints.mhfp_shingling_from_mol is the union
-            # of MolecularFingerprints.smiles_from_rings, MolecularFingerprints.smiles_from_atoms & MolecularFingerprints.smiles_from_circular_substructures
+            # Test that the shingling returned from mhfp_shingling_from_mol is the union
+            # of smiles_from_rings, smiles_from_atoms & smiles_from_circular_substructures
             @test symdiff(calculated_shingling, union(MolecularFingerprints.smiles_from_rings(mol), 
                 MolecularFingerprints.smiles_from_atoms(mol), 
                 # Note: min_radius is now 1, even though we set it to 0 in the calculator 
-                # above. This is because the MolecularFingerprints.mhfp_shingling_from_mol function increases the
+                # above. This is because the mhfp_shingling_from_mol function increases the
                 # min_radius to at least 1 before calling
-                # MolecularFingerprints.smiles_from_circular_substructures, as the special case of radius 0 is 
-                # already taken care of by the function MolecularFingerprints.smiles_from_atoms
+                # smiles_from_circular_substructures, as the special case of radius 0 is 
+                # already taken care of by the function smiles_from_atoms
                 MolecularFingerprints.smiles_from_circular_substructures(mol, 3, 1))  # radius, min_radius
                 ) == []
             
@@ -293,7 +329,7 @@
     end
 
     @testset "MHFP Hashing function tests" begin
-        ##### Testing MolecularFingerprints.mhfp_hash_from_molecular_shingling ##################################
+        ##### Testing mhfp_hash_from_molecular_shingling ##################################
 
         for fp_size in [512, 2048]  # test default 2048, and 2048/4 = 512
             for seed in [42, (1 << 31)]  # test default value 42 and some high number
@@ -322,9 +358,9 @@
                 ## original vectors #######################################################
                 
                 # The original authors claim that the MinHash can be used to estimate the 
-                # tanimoto_similarity similarity of two sets.
+                # tanimoto similarity of two sets.
                 # However, testing the claim with their own implementation yields that the 
-                # tanimoto_similarity similarity of the hashed vectors indeed relates to the similarity
+                # tanimoto similarity of the hashed vectors indeed relates to the similarity
                 # of the sets that were hashed, but it's not a 1:1 relation.
                 # Instead, for sets with low similarity, the corresponding hashed vectors 
                 # have a similarity which is only around half as large.
@@ -334,8 +370,8 @@
                 
                 # To verify that our hashing implementation behaves similarly, we generate 
                 # pairs of sets that share a certain amount of entries, respectively, which 
-                # implies a certain tanimoto_similarity similarity of the pair of sets.
-                # Then their MinHash vectors are generated, and then the tanimoto_similarity similarity
+                # implies a certain tanimoto similarity of the pair of sets.
+                # Then their MinHash vectors are generated, and then the tanimoto similarity
                 # is calculated for these vectors.
                 # This is repeated 1000 times and the average calculated, to avoid random 
                 # effects.
@@ -358,7 +394,6 @@
                     original_tanimoto_similarity_values = []
                     minhash_tanimoto_similarity_values = []
                     for j in 1:500  # repeat 500 times to avoid random factors
-                        # seed!(j)
                         
                         # random set of strings of size 100
                         test_set = [randstring(25) for k in 1:100]
@@ -369,18 +404,19 @@
                         test_set_2 = test_set[50 + 1 - overlap_radius:end]
 
                         # As probably almost all non-overlapping strings are pairwise 
-                        # different, we should get a tanimoto_similarity (jaccard) similarity of 
+                        # different, we should get a tanimoto (jaccard) similarity of 
                         # approximately:
                         # 2 / 100 = 0.02,
                         # 12 / 100 = 0.12,
                         # 30 / 100 = 0.3,
                         # 50 / 100 = 0.5 and
                         # 80 / 100 = 0.8, respectively.
-                        original_tanimoto_similarity_similarity = length(
+                        original_tanimoto_similarity = length(
                             intersect(test_set_1, test_set_2)) / length(
                                 union(test_set_1, test_set_2))
 
-                        push!(original_tanimoto_similarity_values, original_tanimoto_similarity_similarity)
+                        push!(original_tanimoto_similarity_values, 
+                            original_tanimoto_similarity)
                         
                         # Calculate hash vectors from the given test sets
                         minhash_1 = MolecularFingerprints.mhfp_hash_from_molecular_shingling(
@@ -397,14 +433,14 @@
             
                     end
 
-                    # Calculate average tanimoto_similarity similarity for original sets
+                    # Calculate average tanimoto similarity for original sets
                     avg_original_tanimoto_similarity_value = sum(original_tanimoto_similarity_values) / length(
                         original_tanimoto_similarity_values)
-                    # Calculate average tanimoto_similarity similarity for the hashed vectors
+                    # Calculate average tanimoto similarity for the hashed vectors
                     avg_minhash_tanimoto_similarity_value = sum(minhash_tanimoto_similarity_values) / length(
                         minhash_tanimoto_similarity_values)
 
-                    # test whether the average tanimoto_similarity similarity is off less than 5 % 
+                    # test whether the average tanimoto similarity is off less than 5 % 
                     # compared to the reference values
                     @test avg_minhash_tanimoto_similarity_value ≈ ref_minhash_tanimoto_similarity_values[i] rtol=0.05
                     
@@ -454,7 +490,7 @@
         # giving non-positive fp_size
         @test_throws "must be strictly positive" MHFP(fp_size = 0)
 
-        ##### Testing MolecularFingerprints.smiles_from_circular_substructures ##################################
+        ##### Testing smiles_from_circular_substructures ##################################
         test_mol = smilestomol("c1cc(C(O)=O)ccc1")
         
         # giving non-positive radius
