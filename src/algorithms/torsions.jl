@@ -8,14 +8,16 @@
 # the topological torsion fingerprint uses the number of non-hydrogen branches, the number of pi-bonds 
 # and the atomic number for each atom in certain paths of the molecular graph to generate an integer ("atom code") 
 # for each atom in the path here we assign how many bits each these three properties gets in the atom code 
-numBranchBits = UInt32(3)
-maxNumBranches = UInt32((1 << numBranchBits) - 1)
-numPiBits = UInt32(2)
-maxNumPi = UInt32((1 << numPiBits) - 1)
-numTypeBits = 4
-atomNumberTypes = zeros(UInt32, 1 << numTypeBits)
-atomNumberTypes[1:1 << numTypeBits - 1] = [5, 6, 7, 8, 9, 14, 15, 16, 17, 33, 34, 35, 51, 52, 53]
-codeSize = UInt32(numTypeBits + numPiBits + numBranchBits) 
+const numBranchBits = UInt32(3)
+const maxNumBranches = UInt32((1 << numBranchBits) - 1)
+const numPiBits = UInt32(2)
+const maxNumPi = UInt32((1 << numPiBits) - 1)
+const numTypeBits = UInt32(4)
+atomNumberTypesHelper = zeros(UInt32, 1 << numTypeBits)
+atomNumberTypesHelper[1:1 << numTypeBits - 1] = [5, 6, 7, 8, 9, 14, 15, 16, 17, 33, 34, 35, 51, 52, 53]  
+const atomNumberTypes = atomNumberTypesHelper
+const codeSize = UInt32(numTypeBits + numPiBits + numBranchBits) 
+const nTypes = UInt32(1 << numTypeBits) 
 
 """
 	TopologicalTorsion(pathLength::Int=4)
@@ -27,7 +29,7 @@ Topological Torsion fingerprint calculator.
 struct TopologicalTorsion <: AbstractFingerprint
 	pathLength::Int
 
-	function TopologicalTorsion(pathLength::Int = 4)  # default pathLength = 4
+	function TopologicalTorsion(pathLength::Int = 4) 
 		return new(pathLength)
 	end
 end
@@ -68,39 +70,40 @@ function getTopologicalTorsionFP(mol::MolGraph, pathLength::Int)
 	# get list of indices of all simple paths of length N and N-1-cycles in the molecular graph 
 	paths = getPathsOfLengthN(mol, pathLength)
 	# get chemical properties to generate an Atom Code for each atom in the path
-	piBonds = pi_electron(mol) 
+	piBonds = numPiBonds(mol) 
 	atomicNumber = atom_number(mol)
 	deg = degree(mol)
 	atomCodes = zeros(UInt32, nv(mol))
 	for vertex = 1:nv(mol)
 		atomCodes[vertex] = getAtomCode(deg[vertex], piBonds[vertex], atomicNumber[vertex])
 	end
-	sz  = UInt64(UInt64(1) <<  (UInt(pathLength) * codeSize))
-	res = spzeros(Int32, sz)
+	sz  = UInt64(one(UInt64) <<  (UInt32(pathLength) * codeSize))
+	sz = UInt64(sz - 1)
+	res = spzeros(Int64, sz)
 	for path in paths
 		keepIt = true
-		pathCodes = []
+		pathCodes = UInt32[]
 		if path[1] == path[end]
-		# every cycle will appear pathLength times, 
+		# a cycle could be found several times, 
 		# so we only keep cycles which start at the smallest index 
-			keepIt = canonicalize(path)
+			keepIt = handleRings(path)
 		end
-		if ~keepIt
+		if !keepIt
 			continue
 		end
 		for (ipT, pIt) in enumerate(path) 
 			code = atomCodes[pIt] - 1
-			# deduct one at beginning and end of path
+			# deduct one in middle of path
 			if ipT != 1 && ipT != pathLength
 				code -= 1
 			end
 			push!(pathCodes, UInt32(code))
 		end
-		if ~isempty(pathCodes)
+		if !isempty(pathCodes)
 			# get index from list of path codes
 			ind = getTTFPCode(pathCodes)
 			# increase fingerprint by one at calculated index
-			res[ind] += 1 
+			res[ind + 1] += 1 
 		end
 			
 	end
@@ -120,14 +123,14 @@ function getPathsOfLengthN(mol::MolGraph, N::Int)
 	paths = []
 	for v in vertices(mol)
 		# avoid searching for paths from v to w and w to v
-		for w in vertices(mol)[v:end]
+		for w in vertices(mol)[v + 1:end]
 			# get all simple paths of length ≤ N, the cutoff in all_simple_paths is for number of edges so we subtract 1 
 			thesePaths = collect(all_simple_paths(mol, v, w, cutoff = N - 1))
 			if isempty(thesePaths) == false
 				pathLength = length.(thesePaths)
 				# we only want to keep paths of length N
 				indNPath = findall(pathLength .== N)
-				if ~isempty(indNPath)
+				if !isempty(indNPath)
 					append!(paths, thesePaths[indNPath])
 				end
 				# look for a path of length N - 1 starting at v and ending at w
@@ -135,7 +138,7 @@ function getPathsOfLengthN(mol::MolGraph, N::Int)
 				# look for a path of length 2 starting at v and ending w
 				twoPathInds = findall(pathLength .== 2)		
 				# if there is a path {v,...,w} of length N - 1 a path {v,w} of length 2, combining them yields a cycle of length N - 1
-				if ~isempty(posCycleInd) && ~isempty(twoPathInds)			
+				if !isempty(posCycleInd) && !isempty(twoPathInds)			
 					for shortPath in thesePaths[posCycleInd]
 						push!(paths, vcat(shortPath, v))
 					end
@@ -149,41 +152,38 @@ end
 
 
 """
-	canonicalize(path::Vector{Int})
+	handleRings(path::Vector{Int})
 
 # Arguments
 - `path::Vector`: Vertex indices of a cycle from the molecular graph
 
-Canonicalization is done to obtain unique fingerprints for different smiles strings
-as described in https://depth-first.com/articles/2021/10/06/molecular-graph-canonicalization/.  
-Since every ring is found pathLength times, we have to abandon all but one ring.  
+Since every ring can be found several times, we have to abandon all but one ring.  
 We only keep the ring which starts at the lowest numbered vertex.
 """
-function canonicalize(path::Vector) 
-	# if we have a ring with n vertices, this will be found n times by getPathsOfLengthN.
-	# e.g.:  [5,1,3,4,5], [1,3,4,5,1], [3,4,5,1,3], [4,5,1,3,4]. We only want unique paths.
-	# Thus we only keep the ring which starts at the lowest numbered vertex ([1,3,4,5,1])
+function handleRings(path::Vector) 
+	# A ring could be found multiple times by getPathsOfLengthN, e.g.:  [1,3,2,1] and [2,1,3,2].
+	# [3,2,1,3] would not be found because we only look for paths with start_vertex < end_vertex 
+	# to avoid finding every path twice. To find rings we check if 
+	# all_simple_paths() found an N - 1 - path and a 2-path. If so, there must be a cycle.
+	# So here [3,2,1,3] would not be found because 3 > 1. )
+	# We only want unique paths.
+	# Thus we only keep the ring which starts at the lowest numbered vertex ([1,3,2,1])
 	sorting = sortperm(path)
-	if sorting[1] == 1
-		keepIt = true
-	else
-		keepIt = false
-	end
+	keepIt = isone(first(sorting))
 	return keepIt
 end
 
-
-""" 
-	getTTFPCode(pathCodes::Vector)
-Calculates an integer from a number calculated from the atom codes of a path which will serve 
-as an index for which the fingerprint will be increased by 1.
-# Arguments
-- `pathCodes::Vector`: contains a code generated from the atom codes of molecules of a path
 """
-function getTTFPCode(pathCodes::Vector)
-	# canonicalization
-	reverseIt = false
+	canonicalize(pathCodes::Vector)
 
+# Arguments
+- `pathCodes::Vector`: Vertex indices of a n-path from the molecular graph
+
+Canonicalization is done to obtain unique fingerprints for different smiles strings
+as described in https://depth-first.com/articles/2021/10/06/molecular-graph-canonicalization/.  
+"""
+function canonicalize(pathCodes::Vector)
+	reverseIt = false
   	i = 1
   	j = length(pathCodes)
   	while i < j 
@@ -196,16 +196,26 @@ function getTTFPCode(pathCodes::Vector)
 		i += 1
 		j -= 1
 	end
-
+	return reverseIt
+end
+""" 
+	getTTFPCode(pathCodes::Vector)
+Calculates an integer from a number calculated from the atom codes of a path which will serve 
+as an index for which the fingerprint will be increased by 1.
+# Arguments
+- `pathCodes::Vector`: contains a code generated from the atom codes of molecules of a path
+"""
+function getTTFPCode(pathCodes::Vector)
+	reverseIt = canonicalize(pathCodes)
   	shiftSize = codeSize
-  	res = UInt64(0)
+  	res = zero(UInt64)
   	if reverseIt 
 		for i = 1:length(pathCodes) 
-	  		res |= pathCodes[length(pathCodes) - i + 1] << (shiftSize * i)
+	  		res |= UInt64(pathCodes[length(pathCodes) - i + 1]) << (shiftSize * (i - 1))
 		end
     else 
 		for i = 1:length(pathCodes) 
-		  res |= pathCodes[i] << (shiftSize * i)
+		  res |= UInt64(pathCodes[i]) << (shiftSize * (i - 1))
 		end
 	end
   	return res
@@ -221,27 +231,49 @@ Calculates an integer for an atom of a molecule from number of non-hydrogen bran
 - `atomicNumber::Int`: atomic number
 """
 function getAtomCode(degree::Int, piBond::Int, atomicNumber::Int)  
-	code = UInt32(degree % maxNumBranches)
-	nPi = UInt32(piBond % maxNumPi)
-	code |= nPi << numBranchBits
-	typeIdx = UInt32(1)
-	nTypes = UInt32(1 << numTypeBits)
-	
+	code = UInt32(degree % maxNumBranches) 
+	nPi = UInt32(piBond % maxNumPi)     
+	code |= nPi << numBranchBits		
+	typeIdx = one(UInt32)
+   
 	while typeIdx < nTypes
-	    if atomNumberTypes[typeIdx] == atomicNumber
+	    if atomNumberTypes[typeIdx] == atomicNumber  
 	      break
-	    elseif atomNumberTypes[typeIdx] > atomicNumber
+	    elseif atomNumberTypes[typeIdx] > atomicNumber  
 	      typeIdx = nTypes
 	      break
 		end
 	    typeIdx += 1
 	end
-	
     if typeIdx == nTypes 
     	typeIdx -= 1
   	end
-
-  	code |= UInt32(typeIdx) << (numBranchBits + numPiBits)
+  	code |= (UInt32(typeIdx - 1) << UInt32(numBranchBits + numPiBits)) 
 	return code
+end
+
+"""
+	numPiBonds(mol::MolGraph)
+Returns the number of pi bonds of every atom in the molecular graph
+
+# Arguments
+- `mol::MolGraph`: the molecule for which to calculate the number of pi bonds
+"""
+function numPiBonds(mol::MolGraph)
+	# MolecularGraph has the function pi_electron(), which returns the number of pi bonds, 
+	# but unfortunately rdkit does not always calculate the number of pi bonds but has some specifications
+	hyb = hybridization(mol)
+	ind = findall(hyb .!= :sp3)
+	val = zeros(Int32, nv(mol))
+	for (edge, bond) in mol.eprops
+		val[edge.src] += bond.order
+		val[edge.dst] += bond.order
+	end
+	res = zeros(Int64, nv(mol))
+	if !isempty(ind)
+		res[ind] = val[ind] - degree(mol)[ind]
+	end
+	res[is_aromatic(mol)] .= 1
+	return res
 end
 

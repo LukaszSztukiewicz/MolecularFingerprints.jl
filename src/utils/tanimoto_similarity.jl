@@ -20,7 +20,7 @@ function tanimoto_similarity(a::BitVector, b::BitVector)
     return intersection / (union_sum - intersection)
 end
 
-function tanimoto_similarity(a::Vector{Int}, b::Vector{Int})
+function tanimoto_similarity(a::Vector{<:Integer}, b::Vector{<:Integer})
     if length(a) != length(b)
         throw(ArgumentError("Fingerprints must be of the same length"))
     end
