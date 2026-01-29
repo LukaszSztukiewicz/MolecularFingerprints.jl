@@ -99,6 +99,7 @@ molecular structure using paths of length pathLength.
 """
 function fingerprint(mol::MolGraph, calc::TopologicalTorsionHashed) 
 	calc.pathLength > 1 || throw(DomainError("pathLength must be larger than 1."))
+	calc.nBits > 0 || throw(DomainError("nBits must be positive."))
 	nv(mol) ≥ calc.pathLength || @warn "Number of atoms smaller than path length. This will result in an all zero fingerprint."
     FP = getTopologicalTorsionFP(mol, calc.pathLength, calc.nBits)
     return FP
@@ -117,6 +118,8 @@ molecular structure using paths of length pathLength.
 """
 function fingerprint(mol::MolGraph, calc::TopologicalTorsionHashedAsBitVec) 
 	calc.pathLength > 1 || throw(DomainError("pathLength must be larger than 1."))
+	calc.nBits > 0 || throw(DomainError("nBits must be positive."))
+	calc.nBitsPerEntry > 0 || throw(DomainError("nBitsPerEntry must be positive."))
 	calc.nBits % calc.nBitsPerEntry == 0 || throw(DomainError("nBits must be multiple of nBitsPerEntry."))
 	nv(mol) ≥ calc.pathLength || @warn "Number of atoms smaller than path length. This will result in an all zero fingerprint."
     FP = getTopologicalTorsionFP(mol, calc.pathLength, calc.nBits, calc.nBitsPerEntry)
@@ -127,8 +130,6 @@ end
 	getTopologicalTorsionFP(mol::MolGraph, pathLength::Int)
 
 Returns the Topological Torsion Fingerprint of a molecule as a sparse Int Vector.
-This function loops over all simple paths of length pathLength and all cycles of length pathLength - 1 of the molecular graph, 
-and gets a number for each atom in a path, an "Atom Code" from which a sparse IntVector is calculated.
 
 # Arguments
 - `mol::MolGraph`: the molecule for which to calculate the fingerprint
@@ -137,41 +138,9 @@ and gets a number for each atom in a path, an "Atom Code" from which a sparse In
 Matches rdkit's https://github.com/rdkit/rdkit/blob/4b92c2fa8c41410191cceae6f469b4b9fb980d2b/Code/GraphMol/Fingerprints/AtomPairs.cpp#L159
 """
 function getTopologicalTorsionFP(mol::MolGraph, pathLength::Int)
-	# disregard all hydrogen atoms
-	remove_all_hydrogens!(mol)
-	# get list of indices of all simple paths of length N and N-1-cycles in the molecular graph 
-	paths = getPathsOfLengthN(mol, pathLength)
-	atomCodes = getAtomCodes(mol)
 	sz  = UInt64(one(UInt64) <<  (UInt32(pathLength) * codeSize))
 	sz = UInt64(sz - 1)
-	res = spzeros(Int64, sz)
-	for path in paths
-		keepIt = true
-		pathCodes = UInt32[]
-		if path[1] == path[end]
-		# a cycle could be found several times, 
-		# so we only keep cycles which start at the smallest index 
-			keepIt = handleRings(path)
-		end
-		if !keepIt
-			continue
-		end
-		for (ipT, pIt) in enumerate(path) 
-			code = atomCodes[pIt] - 1
-			# deduct one in middle of path
-			if ipT != 1 && ipT != pathLength
-				code -= 1
-			end
-			push!(pathCodes, UInt32(code))
-		end
-		if !isempty(pathCodes)
-			# get index from list of path codes
-			ind = getTTFPCode(pathCodes)
-			# increase fingerprint by one at calculated index
-			res[ind + 1] += 1 
-		end
-			
-	end
+	res = TTFPHelper(mol, pathLength, sz, getTTFPCode)
 	return res
 end
 
@@ -179,23 +148,43 @@ end
 	getTopologicalTorsionFP(mol::MolGraph, pathLength::Int, nBits::Int)
 
 Returns the Topological Torsion Fingerprint of a molecule as a sparse Int Vector of length nBits.
-This function loops over all simple paths of length pathLength and all cycles of length pathLength - 1 of the molecular graph, 
-and gets a number for each atom in a path, an "Atom Code" from which a sparse IntVector is calculated.
 
 # Arguments
 - `mol::MolGraph`: the molecule for which to calculate the fingerprint
 - `pathLength::Int`: length of walks from molecular graph used to calculated fingerprint
 - `nBits::Int`: length of fingerprint vector
 
-Matches rdkit's https://github.com/rdkit/rdkit/blob/4b92c2fa8c41410191cceae6f469b4b9fb980d2b/Code/GraphMol/Fingerprints/AtomPairs.cpp#L298
 """
 function getTopologicalTorsionFP(mol::MolGraph, pathLength::Int, nBits::Int)
+	res = TTFPHelper(mol, pathLength, UInt64(nBits), getTTFPCodeHashed, nBits)
+	return res
+end
+
+"""
+	TTFPHelper(mol::MolGraph, pathLength::Int, size::UInt64, codeFunction::F, nBits::Int = typemax(Int)) where {F}
+
+Returns the Topological Torsion Fingerprint of a molecule as a sparse Int Vector of length size.
+This function loops over all simple paths of length pathLength and all cycles of length pathLength - 1 of the molecular graph, 
+and gets a number for each atom in a path, an "Atom Code" from which a sparse IntVector is calculated. 
+For the hashed version, we get the index where to increase the fingerprint by taking TTFPCode % nBits. 
+If a < b, a,b > 0, then a%b = a, which  is why as default we choode nBits = typemax(Int) for the unhashed version, where we do not want the modulo.
+
+# Arguments
+- `mol::MolGraph`: the molecule for which to calculate the fingerprint
+- `pathLength::Int`: length of walks from molecular graph used to calculated fingerprint
+- `size::UInt64`: length of fingerprint vector
+- `codeFunction::F`: function which calculates the index from the path codes
+- `nBits::Int`: either equal to size or just a large dummy value
+
+Matches rdkit's https://github.com/rdkit/rdkit/blob/4b92c2fa8c41410191cceae6f469b4b9fb980d2b/Code/GraphMol/Fingerprints/AtomPairs.cpp#L298
+"""
+function TTFPHelper(mol::MolGraph, pathLength::Int, size::UInt64, codeFunction::F, nBits::Int = typemax(Int)) where {F}
 	# disregard all hydrogen atoms
 	remove_all_hydrogens!(mol)
 	# get list of indices of all simple paths of length N and N-1-cycles in the molecular graph 
 	paths = getPathsOfLengthN(mol, pathLength)
 	atomCodes = getAtomCodes(mol)
-	res = spzeros(Int64, nBits)
+	res = spzeros(Int64, size)
 	for path in paths
 		keepIt = true
 		pathCodes = UInt32[]
@@ -217,11 +206,10 @@ function getTopologicalTorsionFP(mol::MolGraph, pathLength::Int, nBits::Int)
 		end
 		if !isempty(pathCodes)
 			# get index from list of path codes
-			ind = getTTFPCodeHashed(pathCodes) % nBits
+			ind = codeFunction(pathCodes) % nBits
 			# increase fingerprint by one at calculated index
 			res[ind + 1] += 1 
-		end
-			
+		end			
 	end
 	return res
 end
@@ -242,41 +230,9 @@ and gets a number for each atom in a path, an "Atom Code" from which a sparse In
 Matches rdkit's https://github.com/rdkit/rdkit/blob/4b92c2fa8c41410191cceae6f469b4b9fb980d2b/Code/GraphMol/Fingerprints/AtomPairs.cpp#L312
 """
 function getTopologicalTorsionFP(mol::MolGraph, pathLength::Int, nBits::Int, nBitsPerEntry::Int)
-	# disregard all hydrogen atoms
-	remove_all_hydrogens!(mol)
-	# get list of indices of all simple paths of length N and N-1-cycles in the molecular graph 
-	paths = getPathsOfLengthN(mol, pathLength)
-	atomCodes = getAtomCodes(mol)
-	blockLength = UInt(nBits / nBitsPerEntry)
-	sres = spzeros(Int64, blockLength)
+	blockLength = Int(nBits / nBitsPerEntry)
 	res = falses(nBits)
-	for path in paths
-		keepIt = true
-		pathCodes = UInt32[]
-		if path[1] == path[end]
-		# a cycle could be found several times, 
-		# so we only keep cycles which start at the smallest index 
-			keepIt = handleRings(path)
-		end
-		if !keepIt
-			continue
-		end
-		for (ipT, pIt) in enumerate(path) 
-			code = atomCodes[pIt] - 1
-			# deduct one in middle of path
-			if ipT != 1 && ipT != pathLength
-				code -= 1
-			end
-			push!(pathCodes, UInt32(code))
-		end
-		if !isempty(pathCodes)
-			# get index from list of path codes
-			ind = getTTFPCodeHashed(pathCodes) % blockLength
-			# increase fingerprint by one at calculated index
-			sres[ind + 1] += 1 
-		end
-			
-	end
+	sres = getTopologicalTorsionFP(mol, pathLength, blockLength)
 	indices, entries = findnz(sres)
 	if nBitsPerEntry != 4
 		for (indEntry, entry) in zip(indices, entries)
@@ -339,7 +295,7 @@ function getTTFPCodeHashed(pathCodes::Vector)
   	res = zero(UInt32)
   	if reverseIt 
 		for i = 1:length(pathCodes) 
-	  		res = ecfp_hash_combine(res, pathCodes[length(pathCodes) - i + 1])
+	  		res = ecfp_hash_combine(res, pathCodes[length(pathCodes) - i + 1]) 
 		end
     else 
 		for i = 1:length(pathCodes) 
