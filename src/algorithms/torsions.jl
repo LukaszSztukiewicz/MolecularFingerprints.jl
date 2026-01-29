@@ -25,8 +25,8 @@ const bounds = [1,2,4,8]
 	TopologicalTorsion(pathLength::Int=4)
 Topological Torsion fingerprint calculator.
 # Arguments
-- `pathLength`: Length of the paths in the molecular graph to consider (default is
- 4).
+- `pathLength`: Length of the paths in the molecular graph to consider, default is
+ 4
 """
 struct TopologicalTorsion <: AbstractFingerprint
 	pathLength::Int
@@ -38,6 +38,7 @@ end
 """
 	TopologicalTorsionHashed(pathLength::Int=4, nBits::Int = 2048)
 Topological Torsion fingerprint calculator.
+
 # Arguments
 - `pathLength`: Length of the paths in the molecular graph to consider, default is
  4
@@ -54,11 +55,14 @@ end
 """
 	TopologicalTorsionHashedAsBitVec(pathLength::Int=4, nBits::Int = 2048, nBitsPerEntry::Int = 4)
 Topological Torsion fingerprint calculator.
+
 # Arguments
 - `pathLength`: Length of the paths in the molecular graph to consider, default is
  4
 - `nBits::Int`: length of fingerprint vector, default is 2048
 - `nBitsPerEntry::Int`: number of bits to use for each torsion, default is 4
+
+nBits must be a multiple of nBitsPerEntry.
 """
 struct TopologicalTorsionHashedAsBitVec <: AbstractFingerprint
 	pathLength::Int
@@ -236,8 +240,8 @@ function getTopologicalTorsionFP(mol::MolGraph, pathLength::Int, nBits::Int, nBi
 	if nBitsPerEntry != 4
 		for (indEntry, entry) in zip(indices, entries)
 			for i = 1:nBitsPerEntry
-				if entry > i
-					res[indEntry * nBitsPerEntry + i] = 1
+				if entry > i - 1
+					res[(indEntry - 1) * nBitsPerEntry + i] = 1
 				end
 			end
 		end

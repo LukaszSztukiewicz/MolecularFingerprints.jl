@@ -240,6 +240,15 @@
         fp = fingerprint(mol, torsion_calc)
         @assert isempty(findall(fp .== 1))
 
+        torsion_calc = TopologicalTorsionHashedAsBitVec(4,2000, 5)
+        data = "CN2C(=O)N(C)C(=O)C1=C2N=CN1C"
+        mol = MolecularGraph.smilestomol(data)
+        fp = fingerprint(mol, torsion_calc)
+        rdkit_ind = [150, 151, 152, 280, 281, 620, 621, 622, 640, 641, 645, 720, 721, 722, 775, 970, 971, 
+        972, 973, 1015, 1100, 1130, 1131, 1135, 1260, 1290, 1291, 1295, 1440, 1515, 1516, 1575, 1640]
+        @assert findall(fp .== 1) == rdkit_ind .+ 1 # account for zero-based indexing in C++
+        @assert length(fp) == 2000
+
         torsion_calc = TopologicalTorsionHashed()
         data = "CCOC"
         mol = MolecularGraph.smilestomol(data)
