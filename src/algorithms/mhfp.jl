@@ -1,9 +1,9 @@
 """
-    MHFP(;
+    MHFP(
         radius::Int = 3,
         min_radius::Int = 1,
         rings::Bool = true,
-        n_permutations::Int = 2048,
+        fp_size::Int = 2048,
         seed::Int = 42
     )
 
@@ -29,52 +29,59 @@ The MHFP fingerprint is a vector of UInt32's, calculated for a given molecule by
         dependent on two vectors a and b, each of a given length k, which is also the length
         of the resulting fingerprint vector. The two vectors are sampled at random, but
         must be the same for comparable fingerprints. Note: in the fields of MHFP objects,
-        the vectors a, b and their length k are named `_permutations_a`, `_permutations_b` 
-        and `n_permutations`, respectively.
+        the vectors a, b and their length k are named `_a`, `_b` 
+        and `fp_size`, respectively.
 
 
 The avaliable parameters of the calculator object are:
 # Given as arguments to the constructor:
 - `radius::Int`: The *maximum* radius of circular substructures around each heavy atom 
-    of a molecule that are to be included in the fingerprint. Typical values are 2 or 3.
-- `min_radius::Int`: The *minimum* radius of circular substructures around each heavy atom
-    of a molecule that are to be considered. Will be 1 in most cases, however 0 is also 
-    valid; in this case information about the heavy atoms of the molecules is included 
-    explicitly in the fingerprints.
-- `rings::Int`: If true, information about rings in the molecules is included in the 
-    fingerprints explicitly.
+    of a molecule that are to be included in the fingerprint. Recommended values are 2 or 3
+    according to the original authors, with 3 (default) giving best results.
+- `min_radius::Int`: The *minimum* radius of circular substructures around each heavy 
+    atom of a molecule that are to be considered. Will be 1 (default) in most cases, however
+    0 is also valid; in this case information about the heavy atoms of the molecules is 
+    included explicitly in the fingerprints. The original paper only considers the case
+    `min_radius=1`.
+- `rings::Bool`: If true (default), information about rings in the molecules is included in 
+    the fingerprints explicitly. This matches the original authors description of the 
+    fingerprint in their paper.
 
 # Given as keyword arguments to the constructor:
-- `n_permutations::Int`: length of the random vectors a and b which are used in 
-    the hashing process. Also corresponds to the length of the final fingerprint.
+- `fp_size::Int`: length of the fingerprint. Also means that this is the length of the 
+    random vectors a and b which are used in the hashing process. Default is 2048, as 
+    recommended by the original authors in their paper.
 - `seed::Int`: seed for the generation of the random vectors `a` and `b` which are used
-     in the hashing process. Must be the same for comparable fingerprints.
+     in the hashing process. Must be the same for comparable fingerprints. Default is 42.
 
-Also contains the fields `_mersenne_prime`, `_max_hash`, `_permutations_a` and 
-`_permutations_b`, which are internal and cannot be set explicitly.
+Also contains the fields `_mersenne_prime`, `_max_hash`, `_a` and 
+`_b`, which are internal and cannot be set explicitly.
 The first two are constants, and the second two are random vectors which are generated 
 automatically based on the given `seed`.
+
+# References
+- [Probst D., Reymond, JL. 2018](https://doi.org/10.1186/s13321-018-0321-8)
 """
 struct MHFP <: AbstractFingerprint
     radius::Int
     min_radius::Int
     rings::Bool
-    n_permutations::Int
+    fp_size::Int
     seed::Int
-    _mersenne_prime::UInt64
+    _mersenne_prime::UInt64  # strict types below, as fields are set automatically anyway.
     _max_hash::UInt32
-    _permutations_a::Vector{UInt32}
-    _permutations_b::Vector{UInt32}
+    _a::Vector{UInt32}
+    _b::Vector{UInt32}
 
     # Inner constructor. Checks for invalid given parameters, initializes the constants
     # _max_hash and _mersenne_prime and generates the random vectors a and b based on the 
     # given seed.
     function MHFP(
-        radius::Int = 3, 
-        min_radius::Int = 1,
+        radius::Integer = 3, 
+        min_radius::Integer = 1,
         rings::Bool = true;
-        n_permutations::Int = 2048,  # keyword arguments
-        seed::Int = 42
+        fp_size::Integer = 2048,  # keyword arguments
+        seed::Integer = 42
         )
         
         ### Ensure given values are valid
@@ -88,51 +95,29 @@ struct MHFP <: AbstractFingerprint
             """Given radius must be larger or equal to given min_radius.
             Got radius=$radius but min_radius=$min_radius.""")
 
-        # Ensure n_permutations is positive
-        n_permutations > 0 || error("""n_permutations must be strictly positive. Got 
-            n_permutations=$n_permutations.""")
+        # Ensure fp_size is positive
+        fp_size > 0 || error("""fp_size must be strictly positive. Got 
+            fp_size=$fp_size.""")
 
         ### set fixed values
-        _mersenne_prime = UInt64((1 << 61) -1)
-        _max_hash = UInt32((1 << 32) - 1)
+        _mersenne_prime = (1 << 61) -1
+        _max_hash = (1 << 32) - 1
 
-        ### generate vectors a, b
-        # initialize vectors
-        _permutations_a = Vector{UInt32}()
-        _permutations_b = Vector{UInt32}()
-
-        # set seed
-        seed!(seed)
-
-        # fill vectors entry by entry, to ensure pairwise unique entries within the vectors
-        for i in 1:n_permutations
-            a = rand(UInt32(1):UInt32(_max_hash))
-            b = rand(UInt32(0):UInt32(_max_hash))
-
-            # redraw values if already present in _permutations_a
-            while a in _permutations_a
-                a = rand(UInt32(1):UInt32(_max_hash))
-            end
-
-            # redraw values if already present in _permutations_b
-            while b in _permutations_b
-                b = rand(UInt32(0):UInt32(_max_hash))
-            end
-
-            push!(_permutations_a, a)
-            push!(_permutations_b, b)
-        end
+        ### generate random vectors a, b
+        rng = MersenneTwister(seed)  # create rng
+        _a = sample(rng, UInt32(1):UInt32(_max_hash), fp_size, replace=false)
+        _b = sample(rng, UInt32(0):UInt32(_max_hash), fp_size, replace=false)
         
         return new(
             radius, 
             min_radius,
             rings,
-            n_permutations,
+            fp_size,
             seed,
             _mersenne_prime,
             _max_hash,
-            _permutations_a,
-            _permutations_b)
+            _a,
+            _b)
     end
 
 end
@@ -287,7 +272,7 @@ function mhfp_shingling_from_mol(
     # following steps
     remove_all_hydrogens!(mol)
 
-    shingling::Vector{String} = []
+    shingling = String[]
 
     # Consider rings of the molecule, if corresponding parameter is set
     if rings
@@ -332,7 +317,7 @@ In most cases, this will not have any effect, but for some molecules, such as cu
 will.
 """
 function smiles_from_rings(mol::MolGraph)
-    shingling_snippet::Vector{String} = []
+    shingling_snippet = String[]
 
 
     # Go through all rings in the sssr
@@ -353,7 +338,7 @@ end
 Return vector containing SMILES strings of all atoms of the given molecule.
 """
 function smiles_from_atoms(mol::MolGraph)
-    shingling_snippet::Vector{String} = []
+    shingling_snippet = String[]
 
     aromatic_atoms = is_aromatic(mol)
 
@@ -395,7 +380,7 @@ For each atom of the given molecule, extract the substructures of radii min_radi
 radius, and generate their corresponding SMILES strings.
 """
 function smiles_from_circular_substructures(mol::MolGraph, radius::Int, min_radius::Int)
-    shingling_snippet::Vector{String} = []
+    shingling_snippet = String[]
 
     # Ensure radius >= 1
     radius >=   0 || error("""radius must be strictly positive in this function.\nGot
@@ -405,10 +390,6 @@ function smiles_from_circular_substructures(mol::MolGraph, radius::Int, min_radi
     min_radius > 0 || error("""min_radius must be strictly positive in this function.\nGot
         min_radius=$min_radius.\nTo generate the SMILES strings for individual atoms, call 
         the function smiles_from_atoms instead.""")
-
-    # # Ensure radius >= min_radius
-    # min_radius ≤ radius || error("""radius must be larger or equal to min_radius.\nGot 
-    # radius=$radius but min_radius=$min_radius.""")
 
     for atom_index in vertices(mol)  # go through all atoms
         
@@ -438,9 +419,6 @@ function smiles_from_circular_substructures(mol::MolGraph, radius::Int, min_radi
                 Dict{String,Any}("rootedAtAtom" => pos_of_atom_index_in_submol),
             )
 
-            # TODO somehow deactivate kekulization on update, since it doesn't work on my subgraphs. HOWEVER: do it once in the beginning, since we probably want the info at the start, just not for the submols
-            # Document it somehow, so I can talk about it in the presentation.
-
             if !isnothing(smiles_of_substructure) && smiles_of_substructure != ""
                 # Add smiles of substructure to shingling.
                 push!(shingling_snippet, smiles_of_substructure)
@@ -462,42 +440,31 @@ are used in the hashing scheme, as well as the seed used when generating them.
 The algorithm is described in more detail in the original authors paper.
 """
 function mhfp_hash_from_molecular_shingling(shingling::Vector{String}, calc::MHFP)
-    hash_values = zeros(UInt32, (calc.n_permutations))
+    hash_values = Vector{UInt32}(undef, calc.fp_size)
     fill!(hash_values, calc._max_hash)
-    num = 0
+    
     for s in shingling
         # create sha1 hash from the string
         sha_from_string = sha1(s)[begin:4]
         
         # Note: we are only using the first 4 sha1 bytes, as we want a 32-bit hash
 
-        # let 
         buf = IOBuffer(sha_from_string)  # make the sha bytes a buffer
-        # @info buf
-        s_h = UInt32(  # read bytes from sha hash into integer
-            htol(  # ensure little-endian format of the integer
-                read(buf, UInt32))
-                )  # read the buffer bytes as unsigned integer
-        # end
-
-        # if num == 0
-        #     @info s
-        #     @info s_h
-        #     @info sha_from_string
-        #     num +=1
-        # end
+        
+        s_h = htol(  # ensure little-endian format of the integer
+                read(buf, UInt32)  # read the buffer bytes as unsigned integer
+                )  
+        
         # apply equation 2 from the original authors paper
         hashes = Vector{UInt32}(mod.(
             mod.(
-                calc._permutations_a * s_h + calc._permutations_b,
+                calc._a * s_h + calc._b,
                 calc._mersenne_prime
             ), calc._max_hash
         ))
         
         hash_values = min.(hash_values, hashes)
-        # @info hash_values[1:10]
-
-        
+                
     end
 
     return hash_values

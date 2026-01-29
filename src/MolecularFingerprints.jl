@@ -44,10 +44,11 @@ using MolecularGraph:
     sssr!,
     valence,
     valence!
-using Random: rand, randstring, seed!
+using Random: rand, randstring, seed!, MersenneTwister
 using RDKitMinimalLib: smiles
 using SHA: sha1
 using SparseArrays: sparse, spzeros, SparseVector
+using StatsBase: sample
 
 # NOTE: In Julia, order of includes matters for dependencies
 
