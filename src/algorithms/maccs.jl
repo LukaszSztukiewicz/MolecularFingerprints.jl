@@ -24,19 +24,7 @@ end
 # helper functions for MACCS rules 
 # ------------------------------------------------------------------------------
 
-
-#     safe_atom_symbol(atom)
-
-# Returns the atom symbol as a Symbol type (:C) not string ("C")
-# atom_symbol(atom) from MolecularGraph.jl can return either Symbol or String type - we need to ensure its always Symbol (:C)
-
-# function safe_atom_symbol(atom)
-#     sym = atom_symbol(atom)
-#     # ensure the symbol is a Symbol type, if yes -> return, if not -> convert to symbol -> return
-
-#     return sym isa Symbol ? sym : Symbol(sym)
-# end
-
+# Please note: This docstring was revised for spelling, formatting, and coherence with the implementation using ChatGPT
 """
     safe_atom_symbol(atom)
 
@@ -81,6 +69,16 @@ end
 
 
 """
+    count_neighbors(mol, neigh, sym::Symbol) -> Int 
+    
+Count how many neighbors (sym::Symbol) are in the neighbor list (neigh) of molecule (mol)
+"""
+count_neighbors(mol, neigh, sym::Symbol) =
+    count(u -> safe_atom_symbol(mol.vprops[u]) == sym, neigh)
+
+
+# Please note: This docstring was revised for spelling, formatting, and coherence with the implementation using ChatGPT
+"""
    has_bond(mol, s1::Symbol, s2::Symbol, order::Int) -> Bool
 
 Check whether a bond exists between atoms (s1::Symbol, s2::Symbol) with given order in molecule (mol)
@@ -124,11 +122,10 @@ end
 
 
 """
-    has_path3(mol, s1::Union{Symbol}, s2::Union{Symbol}, s3::Union{Symbol}) -> Bool
+    has_path3(mol, s1::Symbol, s2::Symbol, s3::Symbol)->Bool
 
 A~B~C - check whether there is a path of length 3 between atoms (s1::Symbol, s2::Symbol, s3::Symbol) in molecule (mol)
 """
-# function has_path3(mol, s1::Union{Symbol}, s2::Union{Symbol}, s3::Union{Symbol})
 function has_path3(mol, s1::Symbol, s2::Symbol, s3::Symbol)
     for v2 in vertices(mol.graph) # iteration over atoms of a molecule
         a2 = safe_atom_symbol(mol.vprops[v2])
@@ -306,7 +303,7 @@ end
 """
     is_CH3(mol, v) -> Bool
 
-Check wheter atom v is in group CH3 in molecule (mol)
+Check whether atom v is in group CH3 in molecule (mol)
 """
 function is_CH3(mol, v)
     safe_atom_symbol(mol.vprops[v]) != :C && return false
@@ -317,7 +314,7 @@ end
 """
     is_CH2(mol, v) -> Bool
 
-Check wheter atom v is in group CH2 in molecule (mol)
+Check whether atom v is in group CH2 in molecule (mol)
 """
 function is_CH2(mol, v)
     safe_atom_symbol(mol.vprops[v]) != :C && return false
@@ -337,6 +334,8 @@ end
 # ------------------------------------------------------------------------------
 # functions for MACCS rules 
 # ------------------------------------------------------------------------------
+
+# Please note: This docstring was revised for spelling, formatting, and coherence with the implementation using ChatGPT
 # rule_31
 function rule_31(mol)
     # for each atom in mol check if there is at least one, thats not C,H and if one neigbor is F, Cl, Br, I
@@ -348,7 +347,7 @@ end
 
 # rule_45
 function rule_45(mol)
-    # check wheter exists eny binding e, thats bond.order = 2 (C=C) and one neighbor is N
+    # check whether exists eny binding e, thats bond.order = 2 (C=C) and one neighbor is N
     any(e -> begin
         v1, v2 = src(e), dst(e)
         bond = mol.eprops[e]
@@ -364,9 +363,10 @@ function rule_45(mol)
     end, edges(mol.graph))
 end
 
+# Please note: This docstring was revised for spelling, formatting, and coherence with the implementation using ChatGPT
 # rule_50
 function rule_50(mol)
-    # check wheter C=C has at least 2C as neighbor
+    # check whether C=C has at least 2C as neighbor
     for e in edges(mol.graph)
         mol.eprops[e].order == 2 || continue
         v1, v2 = src(e), dst(e)
@@ -400,8 +400,8 @@ function rule_56(mol)
         # exactly 3 neighbors - 2O and 1C
         length(neigh) == 3 || continue
 
-        count(u -> safe_atom_symbol(mol.vprops[u]) == :O, neigh) == 2 &&
-        count(u -> safe_atom_symbol(mol.vprops[u]) == :C, neigh) == 1 &&
+        count_neighbors(mol, neigh, :O) == 2 &&
+        count_neighbors(mol, neigh, :C) == 1 &&
         return true
     end
     return false
@@ -419,6 +419,7 @@ function rule_57(mol)
     return false
 end
 
+# Please note: This docstring was revised for spelling, formatting, and coherence with the implementation using ChatGPT
 # rule_58
 function rule_58(mol)
     for s in vertices(mol.graph)
@@ -444,7 +445,8 @@ function rule_66(mol)
         length(neigh) == 4 || continue
 
         # 3 neighbors must be C and 1 optional
-        count(u -> safe_atom_symbol(mol.vprops[u]) == :C, neigh) == 3 &&
+        count_neighbors(mol, neigh, :C) == 3 &&
+
         return true
     end
     return false
@@ -493,6 +495,7 @@ function rule_72(mol)
     return false
 end
 
+# Please note: This docstring was revised for spelling, formatting, and coherence with the implementation using ChatGPT
 # rule_73
 function rule_73(mol)
     # We are looking for a double bond (order==2) where at least one end is S.
@@ -590,7 +593,7 @@ function rule_85(mol)
         # exactly 3 neighbours 
         length(neigh) == 3 || continue
 
-        count(u -> safe_atom_symbol(mol.vprops[u]) == :C, neigh) == 3 &&
+        count_neighbors(mol, neigh, :C) == 3 &&
         return true
     end
     return false
@@ -606,9 +609,9 @@ function rule_92(mol)
         # exactly 3 neighbours 
         length(neigh) == 3 || continue
 
-        count(u -> safe_atom_symbol(mol.vprops[u]) == :O, neigh) == 1 &&
-        count(u -> safe_atom_symbol(mol.vprops[u]) == :N, neigh) == 1 &&
-        count(u -> safe_atom_symbol(mol.vprops[u]) == :C, neigh) == 1 &&
+        count_neighbors(mol, neigh, :O) == 1 &&
+        count_neighbors(mol, neigh, :N) == 1 &&
+        count_neighbors(mol, neigh, :C) == 1 &&
         return true
     end
     return false
@@ -785,6 +788,7 @@ function rule_124(mol)
     return false
 end
 
+# Please note: This docstring was revised for spelling, formatting, and coherence with the implementation using ChatGPT
 # rule_132
 function rule_132(mol)
     # search for atom O
@@ -813,8 +817,8 @@ function rule_152(mol)
         length(neigh) == 3 || continue
         # exactly 3 neighbors, 1O,2C
 
-        count(u -> safe_atom_symbol(mol.vprops[u]) == :O, neigh) == 1 &&
-        count(u -> safe_atom_symbol(mol.vprops[u]) == :C, neigh) == 2 &&
+        count_neighbors(mol, neigh, :O) == 1 &&
+        count_neighbors(mol, neigh, :C) == 2 &&
         return true
     end
     return false
