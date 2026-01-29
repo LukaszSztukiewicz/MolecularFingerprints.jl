@@ -167,7 +167,7 @@ Returns the Topological Torsion Fingerprint of a molecule as a sparse Int Vector
 This function loops over all simple paths of length pathLength and all cycles of length pathLength - 1 of the molecular graph, 
 and gets a number for each atom in a path, an "Atom Code" from which a sparse IntVector is calculated. 
 For the hashed version, we get the index where to increase the fingerprint by taking TTFPCode % nBits. 
-If a < b, a,b > 0, then a%b = a, which  is why as default we choode nBits = typemax(Int) for the unhashed version, where we do not want the modulo.
+If a < b, a,b > 0, then a%b = a, which  is why as default we choose nBits = typemax(Int) for the unhashed version, where we do not want the modulo.
 
 # Arguments
 - `mol::MolGraph`: the molecule for which to calculate the fingerprint
