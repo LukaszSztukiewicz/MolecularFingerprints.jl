@@ -218,8 +218,7 @@ end
 	getTopologicalTorsionFP(mol::MolGraph, pathLength::Int, nBits::Int, nBitsPerEntry::Int)
 
 Returns the Topological Torsion Fingerprint of a molecule as a Bitvector of length nBits.
-This function loops over all simple paths of length pathLength and all cycles of length pathLength - 1 of the molecular graph, 
-and gets a number for each atom in a path, an "Atom Code" from which a sparse IntVector is calculated.
+This function transforms the sparse int vector from the hashed fingerprint to a Bit Vector.
 
 # Arguments
 - `mol::MolGraph`: the molecule for which to calculate the fingerprint
