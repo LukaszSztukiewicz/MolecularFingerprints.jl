@@ -269,15 +269,14 @@ Matches rdkit's https://github.com/rdkit/rdkit/blob/e598f608fe620e88689efdff615b
 """
 function getTTFPCode(pathCodes::Vector)
 	reverseIt = canonicalize(pathCodes)
-  	shiftSize = codeSize
   	res = zero(UInt64)
   	if reverseIt 
 		for i = 1:length(pathCodes) 
-	  		res |= UInt64(pathCodes[length(pathCodes) - i + 1]) << (shiftSize * (i - 1))
+	  		res |= UInt64(pathCodes[length(pathCodes) - i + 1]) << (codeSize * (i - 1))
 		end
     else 
 		for i = 1:length(pathCodes) 
-		  res |= UInt64(pathCodes[i]) << (shiftSize * (i - 1))
+		  res |= UInt64(pathCodes[i]) << (codeSize * (i - 1))
 		end
 	end
   	return res
