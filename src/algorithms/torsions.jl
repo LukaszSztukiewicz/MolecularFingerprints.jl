@@ -165,6 +165,45 @@ function getTopologicalTorsionFP(mol::MolGraph, pathLength::Int, nBits::Int)
 end
 
 """
+	getTopologicalTorsionFP(mol::MolGraph, pathLength::Int, nBits::Int, nBitsPerEntry::Int)
+
+Returns the Topological Torsion Fingerprint of a molecule as a Bitvector of length nBits.
+This function transforms the sparse int vector from the hashed fingerprint to a Bit Vector.
+
+# Arguments
+- `mol::MolGraph`: the molecule for which to calculate the fingerprint
+- `pathLength::Int`: length of walks from molecular graph used to calculated fingerprint
+- `nBits::Int`: length of fingerprint vector
+- `nBitsPerEntry::Int`: number of bits to use for each torsion
+
+Matches rdkit's https://github.com/rdkit/rdkit/blob/4b92c2fa8c41410191cceae6f469b4b9fb980d2b/Code/GraphMol/Fingerprints/AtomPairs.cpp#L312
+"""
+function getTopologicalTorsionFP(mol::MolGraph, pathLength::Int, nBits::Int, nBitsPerEntry::Int)
+	blockLength = Int(nBits / nBitsPerEntry)
+	res = falses(nBits)
+	sres = getTopologicalTorsionFP(mol, pathLength, blockLength)
+	indices, entries = findnz(sres)
+	if nBitsPerEntry != 4
+		for (indEntry, entry) in zip(indices, entries)
+			for i = 1:nBitsPerEntry
+				if entry > i - 1
+					res[(indEntry - 1) * nBitsPerEntry + i] = 1
+				end
+			end
+		end
+	else
+		for (indEntry, entry) in zip(indices, entries)
+			for i = 1:nBitsPerEntry
+				if entry >= bounds[i]
+					res[(indEntry - 1) * nBitsPerEntry + i] = 1
+				end
+			end
+		end
+	end
+	return res
+end
+
+"""
 	TTFPHelper(mol::MolGraph, pathLength::Int, size::UInt64, codeFunction::F, nBits::Int = typemax(Int)) where {F}
 
 Returns the Topological Torsion Fingerprint of a molecule as a sparse Int Vector of length size.
@@ -218,45 +257,6 @@ function TTFPHelper(mol::MolGraph, pathLength::Int, size::UInt64, codeFunction::
 	return res
 end
 
-"""
-	getTopologicalTorsionFP(mol::MolGraph, pathLength::Int, nBits::Int, nBitsPerEntry::Int)
-
-Returns the Topological Torsion Fingerprint of a molecule as a Bitvector of length nBits.
-This function transforms the sparse int vector from the hashed fingerprint to a Bit Vector.
-
-# Arguments
-- `mol::MolGraph`: the molecule for which to calculate the fingerprint
-- `pathLength::Int`: length of walks from molecular graph used to calculated fingerprint
-- `nBits::Int`: length of fingerprint vector
-- `nBitsPerEntry::Int`: number of bits to use for each torsion
-
-Matches rdkit's https://github.com/rdkit/rdkit/blob/4b92c2fa8c41410191cceae6f469b4b9fb980d2b/Code/GraphMol/Fingerprints/AtomPairs.cpp#L312
-"""
-function getTopologicalTorsionFP(mol::MolGraph, pathLength::Int, nBits::Int, nBitsPerEntry::Int)
-	blockLength = Int(nBits / nBitsPerEntry)
-	res = falses(nBits)
-	sres = getTopologicalTorsionFP(mol, pathLength, blockLength)
-	indices, entries = findnz(sres)
-	if nBitsPerEntry != 4
-		for (indEntry, entry) in zip(indices, entries)
-			for i = 1:nBitsPerEntry
-				if entry > i - 1
-					res[(indEntry - 1) * nBitsPerEntry + i] = 1
-				end
-			end
-		end
-	else
-		for (indEntry, entry) in zip(indices, entries)
-			for i = 1:nBitsPerEntry
-				if entry >= bounds[i]
-					res[(indEntry - 1) * nBitsPerEntry + i] = 1
-				end
-			end
-		end
-	end
-	return res
-end
- 
 """ 
 	getTTFPCode(pathCodes::Vector)
 Calculates an integer from a number calculated from the atom codes of a path which will serve 
