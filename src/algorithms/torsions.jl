@@ -73,7 +73,7 @@ end
 	fingerprint(mol::MolGraph, calc::TopologicalTorsion)
 
 Returns a topological torsion fingerprint as a sparse integer vector for the molecule belonging to mol. 
-The Topological Torsion fingerprint is based on the molecular structure using paths of length pathLength.
+The Topological Torsion fingerprint is calculated based on the molecular structure using paths of length pathLength.
 
 # Arguments
 - `mol::MolGraph`: the molecule for which to calculate the fingerprint
@@ -90,7 +90,7 @@ end
 	fingerprint(mol::MolGraph, calc::TopologicalTorsionHashed)
 
 Returns a topological torsion fingerprint as a sparse integer vector for the molecule belonging to mol. 
-The Topological Torsion fingerprint is based on the molecular structure using paths of length pathLength.
+The Topological Torsion fingerprint is calculated based on the molecular structure using paths of length pathLength.
 
 # Arguments
 - `mol::MolGraph`: the molecule for which to calculate the fingerprint
@@ -108,8 +108,7 @@ end
 	fingerprint(mol::MolGraph, calc::TopologicalTorsionHashedAsBitVec)
 
 Returns a topological torsion fingerprint as Bitvector for the molecule belonging to mol. 
-This function returns the Topological Torsion fingerprint based on the
-molecular structure using paths of length pathLength.
+The Topological Torsion fingerprint is calculated based on the molecular structure using paths of length pathLength.
 
 # Arguments
 - `mol::MolGraph`: the molecule for which to calculate the fingerprint
