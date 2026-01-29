@@ -25,8 +25,7 @@ const bounds = [1,2,4,8]
 	TopologicalTorsion(pathLength::Int=4)
 Topological Torsion fingerprint calculator.
 # Arguments
-- `pathLength`: Length of the paths in the molecular graph to consider, default is
- 4
+- `pathLength`: Length of the paths in the molecular graph to consider, default is 4
 """
 struct TopologicalTorsion <: AbstractFingerprint
 	pathLength::Int
@@ -40,8 +39,7 @@ end
 Topological Torsion fingerprint calculator.
 
 # Arguments
-- `pathLength`: Length of the paths in the molecular graph to consider, default is
- 4
+- `pathLength`: Length of the paths in the molecular graph to consider, default is 4
 - `nBits::Int`: length of fingerprint vector, default is 2048
 """
 struct TopologicalTorsionHashed <: AbstractFingerprint
@@ -57,8 +55,7 @@ end
 Topological Torsion fingerprint calculator.
 
 # Arguments
-- `pathLength`: Length of the paths in the molecular graph to consider, default is
- 4
+- `pathLength`: Length of the paths in the molecular graph to consider, default is 4
 - `nBits::Int`: length of fingerprint vector, default is 2048
 - `nBitsPerEntry::Int`: number of bits to use for each torsion, default is 4
 
@@ -75,9 +72,8 @@ end
 """
 	fingerprint(mol::MolGraph, calc::TopologicalTorsion)
 
-Returns a topological torsion fingerprint as an integer vector for the molecule belonging to mol. 
-This function calls function which computes the Topological Torsion fingerprint based on the
-molecular structure using paths of length pathLength.
+Returns a topological torsion fingerprint as a sparse integer vector for the molecule belonging to mol. 
+The Topological Torsion fingerprint is based on the molecular structure using paths of length pathLength.
 
 # Arguments
 - `mol::MolGraph`: the molecule for which to calculate the fingerprint
@@ -93,9 +89,8 @@ end
 """
 	fingerprint(mol::MolGraph, calc::TopologicalTorsionHashed)
 
-Returns a topological torsion fingerprint as an integer vector for the molecule belonging to mol. 
-This function calls function which computes the Topological Torsion fingerprint based on the
-molecular structure using paths of length pathLength.
+Returns a topological torsion fingerprint as a sparse integer vector for the molecule belonging to mol. 
+The Topological Torsion fingerprint is based on the molecular structure using paths of length pathLength.
 
 # Arguments
 - `mol::MolGraph`: the molecule for which to calculate the fingerprint
@@ -112,8 +107,8 @@ end
 """
 	fingerprint(mol::MolGraph, calc::TopologicalTorsionHashedAsBitVec)
 
-Returns a topological torsion fingerprint as an integer vector for the molecule belonging to mol. 
-This function calls function which computes the Topological Torsion fingerprint based on the
+Returns a topological torsion fingerprint as Bitvector for the molecule belonging to mol. 
+This function returns the Topological Torsion fingerprint based on the
 molecular structure using paths of length pathLength.
 
 # Arguments
@@ -260,7 +255,7 @@ end
 """ 
 	getTTFPCode(pathCodes::Vector)
 Calculates an integer from a number calculated from the atom codes of a path which will serve 
-as an index for which the fingerprint will be increased by 1.
+as an index at which the fingerprint will be increased by 1.
 
 # Arguments
 - `pathCodes::Vector`: contains a code generated from the atom codes of molecules of a path
@@ -285,7 +280,7 @@ end
 """ 
 	getTTFPCodeHashed(pathCodes::Vector)
 Calculates an integer from a number calculated from the atom codes of a path which will serve 
-as an index for which the fingerprint will be increased by 1.
+as an index at which the fingerprint will be increased by 1.
 
 # Arguments
 - `pathCodes::Vector`: contains a code generated from the atom codes of molecules of a path
@@ -349,7 +344,7 @@ Gets vector with atom codes of each atom in the molecular graph
 - `mol::MolGraph`: the molecule for which to calculate the atom codes
 """
 function getAtomCodes(mol::MolGraph)  
-	# get chemical properties to generate an Atom Code for each atom in the path
+	# get chemical properties for atom codes 
 	piBonds = numPiBonds(mol) 
 	atomicNumber = atom_number(mol)
 	deg = degree(mol)
@@ -457,7 +452,7 @@ end
 	canonicalize(pathCodes::Vector)
 
 # Arguments
-- `pathCodes::Vector`: Vertex indices of a n-path or a ring from the molecular graph
+- `pathCodes::Vector`: Vertex indices of an n-path or a ring from the molecular graph
 
 Canonicalization is done to obtain unique fingerprints for different smiles strings
 as described in https://depth-first.com/articles/2021/10/06/molecular-graph-canonicalization/.  
