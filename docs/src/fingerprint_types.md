@@ -10,9 +10,9 @@ ECFPs are the industry standard for most tasks today. In the CS world, you can t
 
 If ECFPs are like a dynamic hashing algorithm, MACCS keys are more like a checklist. This is a dictionary-based approach where each bit in the vector corresponds to a specific, predefined chemical question. For instance, bit 160 might ask: "Is there at least one oxygen atom present?" and bit 161 might ask: "Is there a nitrogen-hydrogen bond?". There are 166 of these keys in total. While this is a older and much more rigid approach than modern hashing methods, it remains very popular because the results are highly interpretable. You know exactly what each bit represents, which is not usually the case with hashed fingerprints.
 
-## MHFP (Molecular Hash Fingerprints)
+## MHFP (MinHash Fingerprints)
 
-MHFP is a more recent development designed specifically for very large-scale datasets. It borrows heavily from the MinHash technique used in natural language processing and document deduplication. Instead of just hashing structural fragments into a bit vector, MHFP uses a MinHash-based scheme to create a signature that is very efficient for locality-sensitive hashing (LSH). This makes it possible to perform similarity searches across billions of molecules in sub-second time. If you are building a search engine for chemical space, this is likely the algorithm you would reach for.
+MHFP is a more recent development, [proposed by Probst and Reymond in 2018](https://doi.org/10.1186/s13321-018-0321-8), designed specifically for very large-scale datasets. It borrows heavily from the MinHash technique used in natural language processing and document deduplication. Similarly as ECFP, the fingerprint is based around encoding information of circular substructures, i.e., neighborhoods of atoms. Instead of just hashing structural fragments into a bit vector, MHFP uses a MinHash-based scheme to create a signature that is very efficient for locality-sensitive hashing (LSH). This makes it possible to perform similarity searches across billions of molecules in sub-second time. If you are building a search engine for chemical space, this is likely the algorithm you would reach for.
 
 ## Topological Torsion Fingerprints
 
