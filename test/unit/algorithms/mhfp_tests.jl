@@ -295,12 +295,12 @@
     @testset "MHFP Hashing function tests" begin
         ##### Testing MolecularFingerprints.mhfp_hash_from_molecular_shingling ##################################
 
-        for n_permutations in [512, 2048]  # test default 2048, and 2048/4 = 512
+        for fp_size in [512, 2048]  # test default 2048, and 2048/4 = 512
             for seed in [42, (1 << 31)]  # test default value 42 and some high number
 
                 # the values radius, min_radius, rins can be left at default because they
                 # are not used in hashing process
-                mhfp_calc = MHFP(n_permutations=n_permutations, seed=seed)
+                mhfp_calc = MHFP(fp_size=fp_size, seed=seed)
 
                 ## Testing length of generated shingling ##################################
 
@@ -313,7 +313,7 @@
                 # (See https://github.com/reymond-group/mhfp/blob/ea514f8fd4b21b0d0d732452cf7062c282edfbde/test/test_encoder.py#L12)
                 ref_shingling = sort(["c1cnnc1", "Cn(nc)c(c)c", "C(C)Oc", "c1(OCC)ccccc1-c([nH])n", "S(c)(N)(=O)=O", "c(nc)([nH]c)-c(c)c", "CN(C)C", "n(c(-c)[nH])c(c)=O", "C(C)O", "N(C)(C)S", "S(=O)(=O)(c(cc)cc)N(CC)CC", "CC", "c1(CCC)nn(C)c(c)c1[nH]c", "c1(S(=O)(=O)N(C)C)cccc(-c)c1", "N(C)(C)C", "c(cc)c(c)S", "N1(S(=O)(=O)c(c)c)CCNCC1", "c(c)(c)[nH]", "O=c(nc)c(c)n", "N(C)(CC)CC", "n(c(c)C)n(c)C", "C1CNCCN1", "c1ccccc1", "C(C)N", "n(c)(C)n", "C(CC)c(c)n", "c(c(c)-c)c(c)S", "O(c)C", "CCO", "CN(CC)CC", "[nH](c)c", "n(c)c", "n1c(-c(c)c)[nH]cc(n)c1=O", "N(CC)(CC)S(c)(=O)=O", "C(CN)N(C)C", "S(=O)(=O)(c(c)c)N(C)C", "O(CC)c(cc)c(c)-c", "C(C)Oc(c)c", "C(C)Cc", "C(CN)N(C)S", "c1(-c(nc)[nH]c)cc(S)ccc1OC", "c(cc)(OC)c(c)-c", "n1c(CC)c([nH])c(c)n1C", "c(c)(c)-c", "c([nH]c)(c(C)n)c(c)n", "c(c)(c)O", "c1cc(O)ccc1S(N)(=O)=O", "O=S(c)(N)=O", "c12[nH]c(-c)nc(=O)c1n(C)nc2CC", "c(-c)([nH])n", "c1(=O)nc(-c)[nH]c(c)c1n(C)n", "c1cc(S)cc(-c)c1OC", "O(CC)c(c)c", "c(c)(c)n", "C(C)C", "n(c)n", "CCOc", "c(cc)(-c([nH])n)c(c)O", "c(CC)(nn)c(c)[nH]", "c(c)(c)S", "CCC", "N1(C)CCNCC1", "c(c(n)=O)(c(c)[nH])n(C)n", "n(C)(nc)c(c)c", "c(c)(n)=O", "Cn(c)n", "c(cc)(cc)S(N)(=O)=O", "O=c(c)n", "c(c)c", "n1(C)nc(C)c([nH])c1c(n)=O", "c1c(S(N)(=O)=O)ccc(O)c1-c([nH])n", "C(C)Cc(c)n", "C(C)c", "c(=O)(nc)c(c)n","[nH](c(-c)n)c(c)c", "C(CC)c(nn)c(c)[nH]", "O=c", "c1(-c(cc)c(c)O)nc(=O)cc(c)[nH]1", "c(cc)c(c)O", "c(c)(C)n", "O=S", "c1cnc[nH]c1", "O=S(=O)(c(c)c)N(C)C", "C1CN(C)CCN1S(c)(=O)=O", "c12c(=O)nc[nH]c1c(C)nn2C", "C1CN(S)CCN1C", "[nH]1c(-c(c)c)ncc(n)c1c(C)n", "Cn", "CCCc", "CN"])
                 
-                @test n_permutations == length(MolecularFingerprints.mhfp_hash_from_molecular_shingling(
+                @test fp_size == length(MolecularFingerprints.mhfp_hash_from_molecular_shingling(
                     ref_shingling, 
                     mhfp_calc))
 
@@ -419,7 +419,7 @@
         # We go through combinations of different input parameters and verify the correct
         # length of the fingerprint, and that the resulting fingerprints are not identical
 
-        for n_permutations in [512, 2048]
+        for fp_size in [512, 2048]
             fingerprint_results = []
             for seed in [42, (1 << 31)]
                 for radius in 1:4
@@ -429,14 +429,14 @@
                             mhfp_calc = MHFP(
                                 radius, 
                                 min_radius, rings, 
-                                n_permutations=n_permutations, 
+                                fp_size=fp_size, 
                                 seed=seed)
 
                             fp = fingerprint(mol, mhfp_calc)
                             push!(fingerprint_results, fp)
 
                             # verify correct length
-                            @test length(fp) == n_permutations
+                            @test length(fp) == fp_size
                         end
                     end
                 end
@@ -451,8 +451,8 @@
         @test_throws "must be non-negative" MHFP(-3)  # giving negative radius
         @test_throws "must be non-negative" MHFP(2, -1)  # giving negative min_radius
         @test_throws "must be larger or equal" MHFP(2, 3)  # giving min_radius >= radius
-        # giving non-positive n_permutations
-        @test_throws "must be strictly positive" MHFP(n_permutations = 0)
+        # giving non-positive fp_size
+        @test_throws "must be strictly positive" MHFP(fp_size = 0)
 
         ##### Testing MolecularFingerprints.smiles_from_circular_substructures ##################################
         test_mol = smilestomol("c1cc(C(O)=O)ccc1")
