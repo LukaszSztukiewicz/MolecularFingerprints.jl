@@ -1,3 +1,5 @@
+# ACKNOWLEDGEMENT: this code was partly written with the support of Microsoft Copilot AI (completion mode, not chat mode) 
+
 using MolecularFingerprints
 using Test
 

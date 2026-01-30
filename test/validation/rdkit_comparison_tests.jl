@@ -1,3 +1,5 @@
+# ACKNOWLEDGEMENT: this code was partly written with the support of Microsoft Copilot AI (completion mode, not chat mode) 
+
 using CSV
 using DataFrames
 using BenchmarkTools
@@ -67,7 +69,11 @@ function load_test_data(dataset::AbstractString; folder_path::AbstractString="./
 end
 
 folder_path = "./validation"
+
+# data is downloaded from https://moleculenet.org/datasets-1
+# BACE dataset is a standard benchmark dataset used in industry and research
 ds_bace = load_test_data("bace"; folder_path=folder_path) # could be also esol qm8 BBBP
+
 ds_hard = SMILES_EDGE_CASES
 all_datasets = unique(vcat(ds_bace, ds_hard)) #26 431 molecules
 
@@ -125,9 +131,19 @@ function run_similarity_comparison(smiles_list::Vector{String}, calc::AbstractCa
         score = cosine_similarity(jl_fp, rd_fp)
         push!(cosine_scores, score)
     end
-    println("Completed similarity comparison for $(length(smiles_list)) molecules using $(typeof(calc)).")
-    println("Tanimoto Similarity Mean=$(mean(tanimoto_scores)), Median=$(median(tanimoto_scores)), Std=$(std(tanimoto_scores)), Minimum=$(minimum(tanimoto_scores)), Maximum=$(maximum(tanimoto_scores))")
-    println("Cosine Similarity: Mean=$(mean(cosine_scores)), Median=$(median(cosine_scores)), Std=$(std(cosine_scores)), Minimum=$(minimum(cosine_scores)), Maximum=$(maximum(cosine_scores))")
+    @info """Completed similarity comparison:
+        Molecules: $(length(smiles_list))
+        Method: $(typeof(calc))
+        
+        Tanimoto Similarity: 
+        Mean: $(mean(tanimoto_scores))
+        Min:  $(minimum(tanimoto_scores))
+        Max:  $(maximum(tanimoto_scores))
+        
+        Cosine Similarity: 
+        Mean: $(mean(cosine_scores))
+        Min:  $(minimum(cosine_scores))
+        Max:  $(maximum(cosine_scores))"""
     return tanimoto_scores, cosine_scores
 end
 
@@ -136,9 +152,8 @@ function run_all_tests()
     limit = 1500  # Limit number of molecules for testing purposes
     # Iterate over all calculators and datasets
     for (calc_name, calc) in CALCULATORS
-        println("=== Testing Calculator: $calc_name ===")
+        @info "Testing Calculator: $calc_name ..."
         for (ds_name, _) in DATASET_CONFIG
-            println("---- Dataset: $ds_name ----")
             smiles_list = load_test_data(ds_name; folder_path=folder_path)
             smiles_list = smiles_list[1:limit]
             tanimoto_scores, cosine_scores = run_similarity_comparison(smiles_list, calc)
@@ -149,26 +164,26 @@ function run_all_tests()
     end
 
     # Edge Case Tests
-    println("=== Testing Edge Cases ===")
+    @info "Testing Edge Cases..."
     for (calc_name, calc) in CALCULATORS
-        println("---- Calculator: $calc_name ----")
+        @info "Calculator: $calc_name "
         tanimoto_scores, cosine_scores = run_similarity_comparison(SMILES_EDGE_CASES, calc)
         @assert all(0.0 .<= tanimoto_scores .<= 1.000001) "Tanimoto scores out of bounds in edge cases!"
         @assert all(0.0 .<= cosine_scores .<= 1.000001) "Cosine scores out of bounds in edge cases!"
     end
 
     # Benchmarking
-    println("=== Benchmarking Fingerprint Calculations ===")
+    @info "Benchmarking Fingerprint Calculations..."
     sample_smiles = all_datasets[1:100]  # Sample 100 molecules for benchmarking
     for (calc_name, calc) in CALCULATORS
-        println("---- Calculator: $calc_name ----")
+        @info "Calculator: $calc_name "
         @btime fingerprint($sample_smiles, $calc)
     end
 
     # Benchmarking vs RDKit
-    println("=== Benchmarking vs RDKit ===")
+    @info "Benchmarking vs RDKit ..."
     for (calc_name, calc) in CALCULATORS
-        println("---- Calculator: $calc_name ----")
+        @info "Calculator: $calc_name "
         jl_time = @belapsed begin 
             for smi in $sample_smiles
                 fingerprint(smi, $calc)
@@ -179,16 +194,16 @@ function run_all_tests()
                 fingerprint_rdkit(smi, $calc)
             end
         end
-        println("Julia Time: $(jl_time) seconds for 100 molecules.")
-        println("RDKit Time: $(rd_time) seconds for 100 molecules.")
+        @info "Julia Time: $(jl_time) seconds for 100 molecules."
+        @info "RDKit Time: $(rd_time) seconds for 100 molecules."
     end
 
     # Compare results of similarity search between Julia and RDKit
-    println("=== Similarity Search Comparison ===")
+    @info "Similarity Search Comparison..."
     query_smiles = all_datasets[1:10]  # 10 query molecules
     db_smiles = all_datasets[11:110]   # 100 database molecules
     for (calc_name, calc) in CALCULATORS
-        println("---- Calculator: $calc_name ----")
+        @info "Calculator: $calc_name "
         for q_smi in query_smiles
             jl_scores = Float64[]
             rd_scores = Float64[]
@@ -207,25 +222,28 @@ function run_all_tests()
             # Compare top 10 results
             jl_top10 = sortperm(jl_scores, rev=true)[1:10]
             rd_top10 = sortperm(rd_scores, rev=true)[1:10]
-            println("Query SMILES: $q_smi")
-            println("Julia Top 10 Indices: $jl_top10")
-            println("RDKit Top 10 Indices: $rd_top10")
-            println("Recall@10: $(length(intersect(jl_top10, rd_top10)) / 10)")
             ndcg = 0.0
             for (rank, idx) in enumerate(jl_top10)
                 if idx in rd_top10
                     ndcg += 1 / log2(rank + 1)
                 end
             end
-            println("NDCG@10: $ndcg")
+            @info """Top 10 Comparison Results:
+                -------------------------------------------
+                Julia:  $jl_top10
+                RDKit:  $rd_top10
+                
+                Metrics:
+                - Recall@10: $(length(intersect(jl_top10, rd_top10)) / 10)
+                - NDCG@10:   $ndcg
+                -------------------------------------------"""
         end
-        println("Similarity search results match between Julia and RDKit for calculator $calc_name.")
     end
 
     #calculate average recall at 10 for 100 queries for tanimoto similarity and cosine similarity
-    println("=== Average Recall@10 over 100 Queries ===")
+    @info "Computing Average Recall@10 over 100 Queries..."
     for (calc_name, calc) in CALCULATORS
-        println("---- Calculator: $calc_name ----")
+        @info "Calculator: $calc_name "
         total_recall_tanimoto = 0.0
         total_recall_cosine = 0.0
         if calc isa MHFP
@@ -268,8 +286,9 @@ function run_all_tests()
         end
         avg_recall_tanimoto = total_recall_tanimoto / num_queries
         avg_recall_cosine = total_recall_cosine / num_queries
-        println("Average Recall@10 (Tanimoto): $avg_recall_tanimoto")
-        println("Average Recall@10 (Cosine): $avg_recall_cosine")
+        @info """Mean Performance Metrics (Recall@10):
+            • Tanimoto: $(avg_recall_tanimoto)
+            • Cosine:   $(avg_recall_cosine)"""
     
     end
         
