@@ -131,9 +131,19 @@ function run_similarity_comparison(smiles_list::Vector{String}, calc::AbstractCa
         score = cosine_similarity(jl_fp, rd_fp)
         push!(cosine_scores, score)
     end
-    @info "Completed similarity comparison for $(length(smiles_list)) molecules using $(typeof(calc))."
-    @info "Tanimoto Similarity: Mean=$(mean(tanimoto_scores)), Min=$(minimum(tanimoto_scores)), Max=$(maximum(tanimoto_scores))"
-    @info "Cosine Similarity: Mean=$(mean(cosine_scores)), Min=$(minimum(cosine_scores)), Max=$(maximum(cosine_scores))"
+    @info """Completed similarity comparison:
+        Molecules: $(length(smiles_list))
+        Method: $(typeof(calc))
+        
+        Tanimoto Similarity: 
+        Mean: $(mean(tanimoto_scores))
+        Min:  $(minimum(tanimoto_scores))
+        Max:  $(maximum(tanimoto_scores))
+        
+        Cosine Similarity: 
+        Mean: $(mean(cosine_scores))
+        Min:  $(minimum(cosine_scores))
+        Max:  $(maximum(cosine_scores))"""
     return tanimoto_scores, cosine_scores
 end
 
@@ -167,7 +177,7 @@ function run_all_tests()
     sample_smiles = all_datasets[1:100]  # Sample 100 molecules for benchmarking
     for (calc_name, calc) in CALCULATORS
         @info "Calculator: $calc_name "
-        @info @btime fingerprint($sample_smiles, $calc)
+        @btime fingerprint($sample_smiles, $calc)
     end
 
     # Benchmarking vs RDKit
@@ -212,16 +222,21 @@ function run_all_tests()
             # Compare top 10 results
             jl_top10 = sortperm(jl_scores, rev=true)[1:10]
             rd_top10 = sortperm(rd_scores, rev=true)[1:10]
-            @info "Julia Top 10 Indices: $jl_top10"
-            @info "RDKit Top 10 Indices: $rd_top10"
-            @info "Recall@10: $(length(intersect(jl_top10, rd_top10)) / 10)"
             ndcg = 0.0
             for (rank, idx) in enumerate(jl_top10)
                 if idx in rd_top10
                     ndcg += 1 / log2(rank + 1)
                 end
             end
-            @info "NDCG@10: $ndcg"
+            @info """Top 10 Comparison Results:
+                -------------------------------------------
+                Julia:  $jl_top10
+                RDKit:  $rd_top10
+                
+                Metrics:
+                - Recall@10: $(length(intersect(jl_top10, rd_top10)) / 10)
+                - NDCG@10:   $ndcg
+                -------------------------------------------"""
         end
     end
 
@@ -271,8 +286,9 @@ function run_all_tests()
         end
         avg_recall_tanimoto = total_recall_tanimoto / num_queries
         avg_recall_cosine = total_recall_cosine / num_queries
-        @info "Average Recall@10 (Tanimoto similarity): $avg_recall_tanimoto"
-        @info "Average Recall@10 (Cosine similarity): $avg_recall_cosine"
+        @info """Mean Performance Metrics (Recall@10):
+            • Tanimoto: $(avg_recall_tanimoto)
+            • Cosine:   $(avg_recall_cosine)"""
     
     end
         
