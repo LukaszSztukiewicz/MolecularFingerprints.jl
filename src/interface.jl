@@ -1,3 +1,5 @@
+# ACKNOWLEDGEMENT: docstings were partly written with the support of Microsoft Copilot AI (completion mode, not chat mode) 
+
 # --- Abstract Interfaces for Fingerprint Calculators ---
 
 """
