@@ -4,7 +4,7 @@ using MolecularGraph: smilestomol, MolGraph
 using MolecularFingerprints
 using Random: seed!, randstring
 using SparseArrays
-using Graphs: nv, all_simple_paths, degree
+using Graphs: nv, all_simple_paths, degree, vertices
 using PythonCall: Py, pyimport, pyconvert
 using Distances: cosine_dist
 
