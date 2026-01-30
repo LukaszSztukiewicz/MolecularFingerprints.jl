@@ -63,7 +63,7 @@ automatically based on the given `seed`.
 
 # Example
 ```jldoctest; output = false
-smiles_benzene = "C1=CC=CC=C1"
+julia> smiles_benzene = "C1=CC=CC=C1"
 "C1=CC=CC=C1"
 
 julia> calc = MHFP(3, 0, true, fp_size=2048, seed=42)  # radius, min_radius, rings, ...
