@@ -62,12 +62,12 @@ The first two are constants, and the second two are random vectors which are gen
 automatically based on the given `seed`.
 
 # Example
-```jldoctest; output = false
+```julia
 julia> smiles_benzene = "C1=CC=CC=C1"
 "C1=CC=CC=C1"
 
 julia> calc = MHFP(3, 0, true, fp_size=2048, seed=42)  # radius, min_radius, rings, ...
-MHFP(3, 0, true, 2048, 42, 0x1fffffffffffffff, 0xffffffff, UInt32[0x36264e68, 0xe431e2de, 0x618bc3c6, 0xa75b1716, 0xaf3d1635, 0xb640bdbc, 0xfab73393, 0xc1aa36ee, 0x335fce7a, 0x1e22874a  …  0x90a94f56, 0x19d5434a, 0x2171a5f0, 0xed5a6f33, 0x6160c48b, 0x2a9db3fb, 0x24b3c36d, 0xe1ecc588, 0x25ca3847, 0xc3b15ac8], UInt32[0x7495f081, 0xf269b823, 0x46bd6b35, 0xdff947ce, 0x2d090e29, 0xb944ba36, 0xf91e3f9d, 0xe81c0eb0, 0xba5db0c1, 0x3706adca  …  0x57465b38, 0xaed188bb, 0xe49419a2, 0xa11ab128, 0xcb2cfb93, 0xcd80f776, 0x51b4b021, 0x2af666db, 0xf9db4e52, 0x4ae6d1b1])
+MHFP(3, 0, true, 2048, 42, ...)
 
 julia> fingerprint(smiles_benzene, calc)
 2048-element Vector{UInt32}:
@@ -257,14 +257,14 @@ documentation of the MHFP calculator type `MHFP`.
 - `calc::MHFP`: MHFP calculator object, contains settings and parameters for the calculation
 
 # Example
-```jldoctest; output = false
+```julia
 julia> using MolecularGraph  # required to define MolGraph objects
 
 julia> benzene = smilestomol("C1=CC=CC=C1")
 {6, 6} simple molecular graph SMILESMolGraph
 
 julia> calc = MHFP(3, 0, true, fp_size=2048, seed=42)  # radius, min_radius, rings, ...
-MHFP(3, 0, true, 2048, 42, 0x1fffffffffffffff, 0xffffffff, UInt32[0x36264e68, 0xe431e2de, 0x618bc3c6, 0xa75b1716, 0xaf3d1635, 0xb640bdbc, 0xfab73393, 0xc1aa36ee, 0x335fce7a, 0x1e22874a  …  0x90a94f56, 0x19d5434a, 0x2171a5f0, 0xed5a6f33, 0x6160c48b, 0x2a9db3fb, 0x24b3c36d, 0xe1ecc588, 0x25ca3847, 0xc3b15ac8], UInt32[0x7495f081, 0xf269b823, 0x46bd6b35, 0xdff947ce, 0x2d090e29, 0xb944ba36, 0xf91e3f9d, 0xe81c0eb0, 0xba5db0c1, 0x3706adca  …  0x57465b38, 0xaed188bb, 0xe49419a2, 0xa11ab128, 0xcb2cfb93, 0xcd80f776, 0x51b4b021, 0x2af666db, 0xf9db4e52, 0x4ae6d1b1])
+MHFP(3, 0, true, 2048, 42, ...)
 
 julia> fingerprint(benzene, calc)
 2048-element Vector{UInt32}:
