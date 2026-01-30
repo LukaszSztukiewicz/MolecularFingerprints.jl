@@ -86,7 +86,7 @@ The Topological Torsion fingerprint is calculated based on the molecular structu
 - `calc::TopologicalTorsion`: struct containing parameters for fingerprint computation
 
 # Returns
-- SparseVector: Fingerprint as Sparse Integer Vector of fixed length with nonzero entries set through molecular features of simple paths and cycles 
+- `SparseVector`: Fingerprint as Sparse Integer Vector of fixed length with nonzero entries set through molecular features of simple paths and cycles 
 """
 function fingerprint(mol::MolGraph, calc::TopologicalTorsion) 
 	calc.pathLength > 1 || throw(DomainError("pathLength must be larger than 1."))
@@ -105,7 +105,7 @@ The Topological Torsion fingerprint is calculated based on the molecular structu
 - `calc::TopologicalTorsionHashed`: struct containing parameters for fingerprint computation
 
 # Returns
-- SparseVector: Fingerprint as Sparse Integer Vector of length nBits with nonzero entries set through molecular features of simple paths and cycles
+- `SparseVector`: Fingerprint as Sparse Integer Vector of length nBits with nonzero entries set through molecular features of simple paths and cycles
 """
 function fingerprint(mol::MolGraph, calc::TopologicalTorsionHashed) 
 	calc.pathLength > 1 || throw(DomainError("pathLength must be larger than 1."))
@@ -125,7 +125,7 @@ The Topological Torsion fingerprint is calculated based on the molecular structu
 - `calc::TopologicalTorsionHashedAsBitVec`: struct containing parameters for fingerprint computation
 
 # Returns
-- BitVector: Binary fingerprint of length nBits with bits set through molecular features of simple paths and cycles of fixed length 
+- `BitVector`: Binary fingerprint of length nBits with bits set through molecular features of simple paths and cycles of fixed length 
 """
 function fingerprint(mol::MolGraph, calc::TopologicalTorsionHashedAsBitVec) 
 	calc.pathLength > 1 || throw(DomainError("pathLength must be larger than 1."))
@@ -146,7 +146,7 @@ Get the Topological Torsion Fingerprint of a molecule as a sparse Int Vector.
 - `pathLength::Int`: length of walks from molecular graph used to calculated fingerprint
 
 # Returns
-- SparseVector: Fingerprint as Sparse Integer Vector of fixed length with nonzero entries set through molecular features of simple paths and cycles 
+- `SparseVector`: Fingerprint as Sparse Integer Vector of fixed length with nonzero entries set through molecular features of simple paths and cycles 
 """
 function getTopologicalTorsionFP(mol::MolGraph, pathLength::Int)
 	sz  = UInt64(one(UInt64) <<  (UInt32(pathLength) * codeSize))
@@ -165,7 +165,7 @@ Get the Topological Torsion Fingerprint of a molecule as a sparse Int Vector of 
 - `nBits::Int`: length of fingerprint vector
 
 # Returns
-- SparseVector: Fingerprint as Sparse Integer Vector of length nBits with nonzero entries set through molecular features of simple paths and cycles
+- `SparseVector`: Fingerprint as Sparse Integer Vector of length nBits with nonzero entries set through molecular features of simple paths and cycles
 """
 function getTopologicalTorsionFP(mol::MolGraph, pathLength::Int, nBits::Int)
 	res = TTFPHelper(mol, pathLength, UInt64(nBits), getTTFPCodeHashed, nBits)
@@ -183,7 +183,7 @@ This function transforms the sparse int vector from the hashed fingerprint to a 
 - `nBitsPerEntry::Int`: number of bits to use for each torsion
 
 # Returns
-- BitVector: Binary fingerprint of length nBits with bits set through molecular features of simple paths and cycles
+- `BitVector`: Binary fingerprint of length nBits with bits set through molecular features of simple paths and cycles
 
 # References
 - [RDKit implementation] (https://github.com/rdkit/rdkit/blob/4b92c2fa8c41410191cceae6f469b4b9fb980d2b/Code/GraphMol/Fingerprints/AtomPairs.cpp#L312)
@@ -228,7 +228,7 @@ If a < b, a,b > 0, then a%b = a, which  is why as default we choose nBits = type
 - `nBits::Int`: either equal to size or just a large dummy value
 
 # Returns
-- SparseVector: Sparse Integer Vector as basic topological torsion fingerprint or hashed fingerprint
+- `SparseVector`: Sparse Integer Vector as basic topological torsion fingerprint or hashed fingerprint
 
 # References
 - [RDKit implementation] (https://github.com/rdkit/rdkit/blob/4b92c2fa8c41410191cceae6f469b4b9fb980d2b/Code/GraphMol/Fingerprints/AtomPairs.cpp#L159)
@@ -278,7 +278,7 @@ as an index at which the fingerprint will be increased by 1.
 - `pathCodes::Vector`: contains a code generated from the atom codes of molecules of a path
 
 # Returns
-- Vector: Vector which will be used to index basic topological torsion fingerprint
+- `Vector`: Vector which will be used to index basic topological torsion fingerprint
 
 # References
 - [RDKit implementation] (https://github.com/rdkit/rdkit/blob/e598f608fe620e88689efdff615beb4bc761d697/Code/GraphMol/Fingerprints/FingerprintUtil.cpp#L125-L136)
@@ -306,7 +306,7 @@ Calculates an integer from a number calculated from the atom codes of a path to 
 - `pathCodes::Vector`: contains a code generated from the atom codes of molecules of a path
 
 # Returns
-- Vector: Vector which will be used to index hashed topological torsion fingerprint
+- `Vector`: Vector which will be used to index hashed topological torsion fingerprint
 
 # References
 - [RDKit implementation] (https://github.com/rdkit/rdkit/blob/e598f608fe620e88689efdff615beb4bc761d697/Code/GraphMol/Fingerprints/FingerprintUtil.cpp#L156-L167)
@@ -336,7 +336,7 @@ Calculates an integer for an atom of a molecule from number of non-hydrogen bran
 - `atomicNumber::Int`: atomic number
 
 # Returns
-- UInt32: code for each atom in path from which "pathCodes" will be calculated
+- `UInt32`: code for each atom in path from which "pathCodes" will be calculated
 
 # References
 - [RDKit implementation] (https://github.com/rdkit/rdkit/blob/e598f608fe620e88689efdff615beb4bc761d697/Code/GraphMol/Fingerprints/FingerprintUtil.cpp#L45)
@@ -371,7 +371,7 @@ Gets vector with atom codes of each atom in the molecular graph
 - `mol::MolGraph`: the molecule for which to calculate the atom codes
 
 # Returns
-- Vector: contains all atom codes of the molecular graph sorted by vertex numbers
+- `Vector`: contains all atom codes of the molecular graph sorted by vertex numbers
 """
 function getAtomCodes(mol::MolGraph)  
 	# get chemical properties for atom codes 
@@ -393,7 +393,7 @@ Calculates the number of pi bonds of every atom in the molecular graph
 - `mol::MolGraph`: the molecule for which to calculate the number of pi bonds
 
 # Returns
-- Vector: number of pi bonds of each atom in the molecular graph sorted by vertex numbers
+- `Vector`: number of pi bonds of each atom in the molecular graph sorted by vertex numbers
 
 # References
 - [RDKit implementation] (https://github.com/rdkit/rdkit/blob/d3d4170e7cf5513835e00eb9739aadffca6c3a4e/Code/GraphMol/Atom.cpp#L934)
@@ -430,7 +430,7 @@ Finds all simple paths of length N and cycles of length N - 1 in the Molecular G
 - `N::Int`: length of the walks, meaning number of vertices in walk
 
 # Returns
-- Vector: contains all simple paths of length N or cycles of length N - 1 of the molecular graph 
+- `Vector`: contains all simple paths of length N or cycles of length N - 1 of the molecular graph 
 """
 function getPathsOfLengthN(mol::MolGraph, N::Int) 
 	paths = []
@@ -471,7 +471,7 @@ We only keep the ring which starts at the lowest numbered vertex.
 - `path::Vector`: Vertex indices of a ring from the molecular graph
 
 # Returns
-- bool: if true, keep this path, if false abandon this path
+- `bool`: if true, keep this path, if false abandon this path
 """
 function handleRings(path::Vector) 
 	# A ring could be found multiple times by getPathsOfLengthN, e.g.:  [1,3,2,1] and [2,1,3,2].
@@ -494,7 +494,7 @@ as described in https://depth-first.com/articles/2021/10/06/molecular-graph-cano
 - `pathCodes::Vector`: Vertex indices of an n-path or a ring from the molecular graph
 
 # Returns 
-- bool: if true, reverse this path, if false, keep it in its current order
+- `bool`: if true, reverse this path, if false, keep it in its current order
 
 # References
 - [RDKit implementation] (https://github.com/rdkit/rdkit/blob/e598f608fe620e88689efdff615beb4bc761d697/Code/GraphMol/Fingerprints/FingerprintUtil.cpp#L111-L123)
