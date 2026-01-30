@@ -11,11 +11,6 @@ using LinearAlgebra
 const rdBase = pyimport("rdkit.rdBase")
 rdBase.DisableLog("rdApp.*")
 
-# # --- Julia logging setup ---
-# import Logging
-# const logger = Logging.SimpleLogger(stderr, Logging.Debug)
-# global_logger(logger)
-
 # --- SETUP RDKIT UTILS VIA PYTHONCALL ---
 const Chem = pyimport("rdkit.Chem")
 const AllChem = pyimport("rdkit.Chem.AllChem")
@@ -136,9 +131,9 @@ function run_similarity_comparison(smiles_list::Vector{String}, calc::AbstractCa
         score = cosine_similarity(jl_fp, rd_fp)
         push!(cosine_scores, score)
     end
-    @debug "Completed similarity comparison for $(length(smiles_list)) molecules using $(typeof(calc))."
-    @debug "Tanimoto Similarity: Mean=$(mean(tanimoto_scores)), Min=$(minimum(tanimoto_scores)), Max=$(maximum(tanimoto_scores))"
-    @debug "Cosine Similarity: Mean=$(mean(cosine_scores)), Min=$(minimum(cosine_scores)), Max=$(maximum(cosine_scores))"
+    @info "Completed similarity comparison for $(length(smiles_list)) molecules using $(typeof(calc))."
+    @info "Tanimoto Similarity: Mean=$(mean(tanimoto_scores)), Min=$(minimum(tanimoto_scores)), Max=$(maximum(tanimoto_scores))"
+    @info "Cosine Similarity: Mean=$(mean(cosine_scores)), Min=$(minimum(cosine_scores)), Max=$(maximum(cosine_scores))"
     return tanimoto_scores, cosine_scores
 end
 
@@ -172,7 +167,7 @@ function run_all_tests()
     sample_smiles = all_datasets[1:100]  # Sample 100 molecules for benchmarking
     for (calc_name, calc) in CALCULATORS
         @info "Calculator: $calc_name "
-        @debug@btime fingerprint($sample_smiles, $calc)
+        @info @btime fingerprint($sample_smiles, $calc)
     end
 
     # Benchmarking vs RDKit
@@ -189,8 +184,8 @@ function run_all_tests()
                 fingerprint_rdkit(smi, $calc)
             end
         end
-        @debug "Julia Time: $(jl_time) seconds for 100 molecules."
-        @debug "RDKit Time: $(rd_time) seconds for 100 molecules."
+        @info "Julia Time: $(jl_time) seconds for 100 molecules."
+        @info "RDKit Time: $(rd_time) seconds for 100 molecules."
     end
 
     # Compare results of similarity search between Julia and RDKit
@@ -217,16 +212,16 @@ function run_all_tests()
             # Compare top 10 results
             jl_top10 = sortperm(jl_scores, rev=true)[1:10]
             rd_top10 = sortperm(rd_scores, rev=true)[1:10]
-            @debug "Julia Top 10 Indices: $jl_top10"
-            @debug "RDKit Top 10 Indices: $rd_top10"
-            @debug "Recall@10: $(length(intersect(jl_top10, rd_top10)) / 10)"
+            @info "Julia Top 10 Indices: $jl_top10"
+            @info "RDKit Top 10 Indices: $rd_top10"
+            @info "Recall@10: $(length(intersect(jl_top10, rd_top10)) / 10)"
             ndcg = 0.0
             for (rank, idx) in enumerate(jl_top10)
                 if idx in rd_top10
                     ndcg += 1 / log2(rank + 1)
                 end
             end
-            @debug "NDCG@10: $ndcg"
+            @info "NDCG@10: $ndcg"
         end
     end
 
@@ -276,8 +271,8 @@ function run_all_tests()
         end
         avg_recall_tanimoto = total_recall_tanimoto / num_queries
         avg_recall_cosine = total_recall_cosine / num_queries
-        @debug "Average Recall@10 (Tanimoto similarity): $avg_recall_tanimoto"
-        @debug "Average Recall@10 (Cosine similarity): $avg_recall_cosine"
+        @info "Average Recall@10 (Tanimoto similarity): $avg_recall_tanimoto"
+        @info "Average Recall@10 (Cosine similarity): $avg_recall_cosine"
     
     end
         
