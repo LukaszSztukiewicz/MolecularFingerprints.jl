@@ -1,11 +1,13 @@
 using Test
+using MolecularGraph
 using MolecularFingerprints
 
-using MolecularGraph: smilestomol, MolGraph
 using Random: seed!, randstring
 using Graphs: nv, all_simple_paths, degree, vertices
 using PythonCall: Py, pyimport, pyconvert
 using Distances: cosine_dist
+using MolecularGraph: smilestomol, MolGraph, add_hydrogens!
+using SparseArrays: SparseVector, sparsevec, spzeros, findnz
 
 # Set seed for reproducibility across all tests
 seed!(42)
